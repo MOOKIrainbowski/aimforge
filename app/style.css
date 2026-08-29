@@ -198,11 +198,25 @@ body {
 /* Right-mouse ADS: a hard-edged circular mask (the box-shadow spread trick,
    no image asset) simulating a scope lens. #crosshair sits after this in the
    DOM so it naturally paints on top and stays visible through the lens. */
+/* Blurs everything outside the lens circle (rather than darkening it) by
+   backdrop-blurring the whole overlay, then masking a clear hole out of its
+   center with a radial-gradient mask — inside the hole the overlay has no
+   effect at all, so the range renders through it completely sharp. */
 .scope-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 3;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  mask-image: radial-gradient(circle at center, transparent 0, transparent 22vmin, black 22.5vmin, black 100%);
+  -webkit-mask-image: radial-gradient(
+    circle at center,
+    transparent 0,
+    transparent 22vmin,
+    black 22.5vmin,
+    black 100%
+  );
 }
 
 .scope-lens {
@@ -213,8 +227,8 @@ body {
   height: 44vmin;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 9999px #000;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
 }
 
 .loading-screen {

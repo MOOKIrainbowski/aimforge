@@ -14,7 +14,7 @@ const MODEL_PATHS = {
 // Every model swapped to this length (its longest bounding-box axis) so the
 // three differently-authored, differently-scaled source files all read as a
 // consistent size in view-space without hand-tuned per-model constants.
-const TARGET_LENGTH = 0.6;
+const TARGET_LENGTH = 0.68;
 
 function normalizeModel(root) {
   root.traverse((child) => {
@@ -72,7 +72,7 @@ export function loadWeaponModels(onProgress) {
 // Rotation is the same in both poses (it's the mandatory correction for the
 // source models' own export axis convention, not a stylistic cant, so it
 // isn't something that should shift when aiming).
-const HIP_OFFSET = new THREE.Vector3(0.36, -0.36, -0.62);
+const HIP_OFFSET = new THREE.Vector3(0.38, -0.5, -0.62);
 const AIM_OFFSET = new THREE.Vector3(0.04, -0.07, -0.3);
 const VIEW_ROTATION = new THREE.Euler(0, Math.PI / 2, 0);
 const AIM_SCALE_MULT = 1.5;
