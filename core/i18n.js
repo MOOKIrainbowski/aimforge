@@ -86,6 +86,7 @@ const STRINGS = {
     "cta.title": "Your aim isn't going to train itself.",
     "cta.sub": "No sign-up. No download. Just click, and start flicking.",
     "footer.tagline": "Runs entirely in your browser. No accounts, no tracking, no ads.",
+    "footer.credit": "Weapon models by Quaternius (CC0)",
 
     // App: home screen
     "app.title": "AimonSite — Range",
@@ -105,6 +106,7 @@ const STRINGS = {
     "duration.90": "90s",
     "weapon.rifle": "Rifle",
     "weapon.smg": "SMG",
+    "weapon.sniper": "Sniper",
     "cta.enterRange": "Enter the Range",
     "home.best": "Best {value}",
     "start.title": "Click to Start",
@@ -113,6 +115,7 @@ const STRINGS = {
     "loading.renderer": "Preparing renderer…",
     "loading.range": "Building the range…",
     "loading.effects": "Loading effects…",
+    "loading.weapons": "Loading weapons…",
 
     // Pause / summary
     "pause.title": "Paused",
@@ -297,6 +300,7 @@ const STRINGS = {
     "cta.title": "에임은 저절로 늘지 않습니다.",
     "cta.sub": "회원가입도, 다운로드도 필요 없습니다. 클릭 한 번으로 바로 플릭을 시작하세요.",
     "footer.tagline": "브라우저에서 100% 동작합니다. 계정도, 추적도, 광고도 없습니다.",
+    "footer.credit": "무기 모델 제공: Quaternius (CC0)",
 
     "app.title": "AimonSite — 사격장",
     "home.eyebrow": "훈련 사격장",
@@ -315,6 +319,7 @@ const STRINGS = {
     "duration.90": "90초",
     "weapon.rifle": "라이플",
     "weapon.smg": "SMG",
+    "weapon.sniper": "저격총",
     "cta.enterRange": "사격장 입장",
     "home.best": "최고 {value}",
     "start.title": "클릭해서 시작",
@@ -323,6 +328,7 @@ const STRINGS = {
     "loading.renderer": "렌더러 준비 중…",
     "loading.range": "사격장 구성 중…",
     "loading.effects": "이펙트 로딩 중…",
+    "loading.weapons": "무기 로딩 중…",
 
     "pause.title": "일시정지",
     "pause.hint": "아무 곳이나 클릭하면 재개됩니다",

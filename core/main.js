@@ -31,6 +31,7 @@ import {
   showHitMarker,
 } from "./ui/feedback.js";
 import { spawnKillBurst, updateParticles } from "./particles.js";
+import { loadWeaponModels, Viewmodel } from "./weaponModel.js";
 import { applyTranslations, t } from "./i18n.js";
 
 applyTranslations(document);
@@ -58,6 +59,11 @@ setLoadingProgress("loading.renderer");
 const renderer = createRenderer(canvas, quality);
 const camera = createCamera(rangeConfig.fov);
 const scene = new THREE.Scene();
+// The renderer only traverses/renders scene.render(scene, camera)'s `scene`
+// graph — the camera itself is just used for its view/projection matrices.
+// Camera-attached objects (the weapon viewmodel, via camera.add() below)
+// only render if the camera is itself part of that graph.
+scene.add(camera);
 
 setLoadingProgress("loading.range");
 const sceneRefs = buildRange(scene, quality, rangeConfig);
@@ -81,6 +87,11 @@ if (quality.postProcessing) {
   composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.35, 0.4, 0.85));
   composer.addPass(new OutputPass());
 }
+
+setLoadingProgress("loading.weapons");
+const weaponModels = await loadWeaponModels();
+const viewmodel = new Viewmodel(camera);
+viewmodel.setWeapon("rifle", weaponModels);
 
 // `?duration=<ms>` overrides whatever duration the home screen selected —
 // used for fast dev/test iteration instead of waiting out a real session.
@@ -152,6 +163,7 @@ function startSession(now) {
   drill = createDrill(lastConfig, { scene, camera, targetManager, controls });
   drill.start(now);
   showHud();
+  viewmodel.setWeapon(lastConfig.viewmodelWeapon, weaponModels);
 }
 
 function returnToMenu() {
@@ -271,6 +283,7 @@ canvas.addEventListener("mousedown", () => {
   if (appState === "PLAYING" && controls.locked && drill) {
     const result = drill.handleShot(performance.now());
     if (result) {
+      viewmodel.kick();
       flashCrosshair(crosshair, result.hit);
       if (result.hit) {
         playHitSound();
@@ -298,6 +311,7 @@ function tick(now) {
 
   controls.update(dt);
   updateParticles(dt);
+  viewmodel.update(dt);
 
   if (appState === "PLAYING" && controls.locked && drill) {
     const expired = targetManager.update(dt, now);

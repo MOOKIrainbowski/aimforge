@@ -7,7 +7,6 @@ const difficultyButtons = Array.from(document.querySelectorAll("#difficulty-grou
 const durationButtons = Array.from(document.querySelectorAll("#duration-group button"));
 const recoilSwitch = document.getElementById("recoil-switch");
 const weaponButtons = Array.from(document.querySelectorAll("#weapon-group button"));
-const weaponRow = document.getElementById("weapon-row");
 const startButton = document.getElementById("home-start");
 
 // A single difficulty knob drives per-mode parameters: target size for all
@@ -79,7 +78,6 @@ export function initHome(onStart) {
   recoilSwitch.addEventListener("click", () => {
     recoilEnabled = !recoilEnabled;
     setSwitch(recoilSwitch, recoilEnabled, "common.on", "common.off");
-    weaponRow.classList.toggle("hidden", !recoilEnabled);
   });
 
   for (const btn of weaponButtons) {
@@ -94,7 +92,12 @@ export function initHome(onStart) {
       mode: selectedMode,
       durationMs: selectedDurationMs,
       ...DIFFICULTY_PRESETS[selectedDifficulty],
+      // weaponId gates the Recoil Control training pattern (core/weapon.js);
+      // viewmodelWeapon is purely cosmetic and applies regardless of that
+      // toggle — a player can look like they're holding a Sniper without
+      // fighting (or having) a recoil pattern for it.
       weaponId: recoilEnabled ? selectedWeapon : "none",
+      viewmodelWeapon: selectedWeapon,
     });
   });
 
