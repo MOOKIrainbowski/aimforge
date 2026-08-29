@@ -48,6 +48,7 @@ const quality = getQuality();
 const canvas = document.getElementById("scene");
 const crosshair = document.getElementById("crosshair");
 const hitmarker = document.getElementById("hitmarker");
+const scopeOverlay = document.getElementById("scope-overlay");
 const startPrompt = document.getElementById("start-prompt");
 const pauseScreen = document.getElementById("pause-screen");
 
@@ -113,6 +114,23 @@ const controls = new PointerLockCameraControls(camera, canvas, {
 });
 controls.connect();
 
+// Right-mouse ADS/zoom: `zoomed` is the discrete "is RMB held" state,
+// `zoomT` eases toward it each frame (see tick()) so FOV/sensitivity/the
+// viewmodel's aim pose all transition smoothly together instead of
+// snapping. `hipSensitivity` is the un-zoomed baseline to scale from and
+// restore to — kept in sync with the Sensitivity screen below.
+const ZOOM_FOV = 28;
+let zoomed = false;
+let zoomT = 0;
+let hipSensitivity = persistedSettings.sensitivity;
+
+function setZoomed(next) {
+  if (next === zoomed) return;
+  zoomed = next;
+  viewmodel.setAimed(zoomed);
+  scopeOverlay.classList.toggle("hidden", !zoomed);
+}
+
 // Dev-only inspection hook, opt-in via `?debug=1` — lets test/dev tooling
 // read live camera/target/control state without exposing it by default.
 if (new URLSearchParams(window.location.search).has("debug")) {
@@ -148,7 +166,9 @@ function beginSession(config) {
   lastConfig = {
     ...config,
     durationMs: durationOverride > 0 ? durationOverride : config.durationMs,
-    targetColor: rangeConfig.targetColor,
+    // Targets always match whatever crosshair color the player has set —
+    // see currentCrosshairColor below — rather than a separate setting.
+    targetColor: currentCrosshairColor,
   };
   appState = "PLAYING";
   hideHome();
@@ -196,8 +216,14 @@ document.getElementById("pause-quit").addEventListener("click", () => {
 
 initHome(beginSession);
 initHistory();
+// Live-tracked so target color always matches whatever the player currently
+// has set on the Crosshair screen — see beginSession() above.
+let currentCrosshairColor = loadCrosshairConfig().color;
 renderCrosshairInto(crosshair, loadCrosshairConfig());
-initCrosshairEditor((newConfig) => renderCrosshairInto(crosshair, newConfig));
+initCrosshairEditor((newConfig) => {
+  renderCrosshairInto(crosshair, newConfig);
+  currentCrosshairColor = newConfig.color;
+});
 
 function openHistory() {
   appState = "HISTORY";
@@ -225,6 +251,7 @@ document.getElementById("crosshair-back").addEventListener("click", () => {
 
 initSensitivityCalculator((newSettings) => {
   controls.sensitivity = newSettings.sensitivity;
+  hipSensitivity = newSettings.sensitivity;
 });
 document.getElementById("home-sensitivity").addEventListener("click", () => {
   appState = "SENSITIVITY";
@@ -273,27 +300,42 @@ function handleLockChange(locked) {
     pauseStartedAt = performance.now();
     showPauseScreen();
   }
+  // Losing pointer lock (pause, Esc, session end) always drops zoom
+  // immediately — no lingering narrowed FOV/sensitivity across a pause.
+  if (!locked) setZoomed(false);
 }
 
 canvas.addEventListener("click", () => {
   if (appState === "PLAYING" && !controls.locked) controls.requestLock();
 });
 
-canvas.addEventListener("mousedown", () => {
-  if (appState === "PLAYING" && controls.locked && drill) {
-    const result = drill.handleShot(performance.now());
-    if (result) {
-      viewmodel.kick();
-      flashCrosshair(crosshair, result.hit);
-      if (result.hit) {
-        playHitSound();
-        showHitMarker(hitmarker);
-        spawnKillBurst(scene, result.position, result.streak);
-      } else {
-        playMissSound();
-      }
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+canvas.addEventListener("mousedown", (e) => {
+  if (!(appState === "PLAYING" && controls.locked && drill)) return;
+
+  if (e.button === 2) {
+    setZoomed(true);
+    return;
+  }
+  if (e.button !== 0) return;
+
+  const result = drill.handleShot(performance.now());
+  if (result) {
+    viewmodel.kick();
+    flashCrosshair(crosshair, result.hit);
+    if (result.hit) {
+      playHitSound();
+      showHitMarker(hitmarker);
+      spawnKillBurst(scene, result.position, result.streak);
+    } else {
+      playMissSound();
     }
   }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+  if (e.button === 2) setZoomed(false);
 });
 
 window.addEventListener("resize", () => {
@@ -308,6 +350,16 @@ let firstFrameRendered = false;
 function tick(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
   lastFrameTime = now;
+
+  // Eases FOV/sensitivity toward the zoomed or hip target together so ADS
+  // reads as one smooth transition rather than snapping to the scope.
+  const zoomTarget = zoomed ? 1 : 0;
+  if (zoomT !== zoomTarget) {
+    const zoomStep = dt / 0.15;
+    zoomT += Math.sign(zoomTarget - zoomT) * Math.min(Math.abs(zoomTarget - zoomT), zoomStep);
+    applyFov(camera, rangeConfig.fov + (ZOOM_FOV - rangeConfig.fov) * zoomT);
+    controls.sensitivity = hipSensitivity * (1 + (ZOOM_FOV / rangeConfig.fov - 1) * zoomT);
+  }
 
   controls.update(dt);
   updateParticles(dt);

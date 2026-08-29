@@ -195,6 +195,28 @@ body {
   animation: hitmarker-pop-anim 260ms ease-out;
 }
 
+/* Right-mouse ADS: a hard-edged circular mask (the box-shadow spread trick,
+   no image asset) simulating a scope lens. #crosshair sits after this in the
+   DOM so it naturally paints on top and stays visible through the lens. */
+.scope-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.scope-lens {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44vmin;
+  height: 44vmin;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 9999px #000;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
 .loading-screen {
   position: fixed;
   inset: 0;

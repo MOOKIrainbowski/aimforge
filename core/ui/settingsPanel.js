@@ -4,7 +4,6 @@ import { t } from "../i18n.js";
 const screen = document.getElementById("settings-screen");
 const themeSwitch = document.getElementById("theme-switch");
 const soundSwitch = document.getElementById("sound-switch");
-const targetColorInput = document.getElementById("settings-target-color");
 const wallColorInput = document.getElementById("settings-wall-color");
 const floorColorInput = document.getElementById("settings-floor-color");
 const brightnessInput = document.getElementById("settings-brightness");
@@ -24,7 +23,6 @@ function setSwitch(button, checked, onKey, offKey) {
 function syncControls() {
   setSwitch(themeSwitch, config.theme === "light", "theme.light", "theme.dark");
   setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
-  targetColorInput.value = config.targetColor;
   wallColorInput.value = config.wallColor;
   floorColorInput.value = config.floorColor;
   brightnessInput.value = String(Math.round(config.brightness * 100));
@@ -48,10 +46,6 @@ export function initSettingsPanel(onChangeCallback) {
   soundSwitch.addEventListener("click", () => {
     config.soundEnabled = !config.soundEnabled;
     setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
-    persistAndApply();
-  });
-  targetColorInput.addEventListener("input", () => {
-    config.targetColor = targetColorInput.value;
     persistAndApply();
   });
   wallColorInput.addEventListener("input", () => {

@@ -9,7 +9,6 @@ const STORAGE_KEY = "aimonsite:rangeConfig";
 const DEFAULT_CONFIG = {
   theme: "light", // "dark" | "light"
   soundEnabled: true,
-  targetColor: "#38bdf8",
   wallColor: "#ffffff",
   floorColor: "#ffffff",
   brightness: 1.0,

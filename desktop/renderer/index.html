@@ -35,6 +35,9 @@
     <p id="loading-progress-text" data-i18n="loading.start">Starting…</p>
   </div>
   <canvas id="scene"></canvas>
+  <div id="scope-overlay" class="scope-overlay hidden">
+    <div class="scope-lens"></div>
+  </div>
   <div id="crosshair" class="hidden"></div>
   <div id="hitmarker"></div>
   <div id="start-prompt" class="start-prompt hidden">
@@ -371,12 +374,6 @@
             <span class="switch-thumb"></span>
           </span>
         </button>
-      </div>
-
-      <div class="option-row">
-        <span class="option-label" data-i18n="settings.targetColor">Target Color</span>
-        <input type="color" id="settings-target-color" value="#38bdf8" data-i18n-attr="aria-label:aria.targetColor"
-          aria-label="Target color" />
       </div>
 
       <div class="option-row">
