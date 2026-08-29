@@ -21,6 +21,7 @@ import { saveSession, getSessionsByMode } from "./stats.js";
 import { generateCoachTips } from "./coach.js";
 import {
   setSoundEnabled,
+  playShotSound,
   playHitSound,
   playMissSound,
   playTargetExpireSound,
@@ -31,6 +32,7 @@ import {
   showHitMarker,
 } from "./ui/feedback.js";
 import { spawnKillBurst, updateParticles } from "./particles.js";
+import { spawnTracer, updateTracers } from "./tracer.js";
 import { loadWeaponModels, Viewmodel } from "./weaponModel.js";
 import { applyTranslations, t } from "./i18n.js";
 
@@ -311,6 +313,28 @@ canvas.addEventListener("click", () => {
 
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
+// How far a missed shot's tracer travels before fading out — comfortably
+// past anything in the range, so it visually clips at whatever wall/floor
+// the renderer's own depth test hits rather than this needing its own
+// raycast against the range geometry.
+const MISS_TRACER_DISTANCE = 30;
+const tracerDirection = new THREE.Vector3();
+
+// Draws the tracer from an approximate muzzle position (the viewmodel's
+// current camera-local pose, converted to world space, so it follows the
+// hip/aim pose blend) to the shot's actual landing point — the target's
+// position on a hit, or a far point straight down the crosshair's aim
+// direction on a miss.
+function fireTracer(result) {
+  camera.updateMatrixWorld();
+  const muzzle = camera.localToWorld(viewmodel.group.position.clone());
+  const end =
+    result.hit && result.position
+      ? result.position.clone()
+      : camera.position.clone().addScaledVector(camera.getWorldDirection(tracerDirection), MISS_TRACER_DISTANCE);
+  spawnTracer(scene, muzzle, end, currentCrosshairColor);
+}
+
 canvas.addEventListener("mousedown", (e) => {
   if (!(appState === "PLAYING" && controls.locked && drill)) return;
 
@@ -323,6 +347,8 @@ canvas.addEventListener("mousedown", (e) => {
   const result = drill.handleShot(performance.now());
   if (result) {
     viewmodel.kick();
+    playShotSound();
+    fireTracer(result);
     flashCrosshair(crosshair, result.hit);
     if (result.hit) {
       playHitSound();
@@ -363,6 +389,7 @@ function tick(now) {
 
   controls.update(dt);
   updateParticles(dt);
+  updateTracers();
   viewmodel.update(dt);
 
   if (appState === "PLAYING" && controls.locked && drill) {

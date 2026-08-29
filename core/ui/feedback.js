@@ -69,6 +69,52 @@ function chime(notes, stepMs, durationMs, peakGain) {
   });
 }
 
+// One second of static noise generated once per AudioContext and reused
+// (sliced via a fresh BufferSource) for every shot — cheaper than
+// regenerating random samples on every trigger-pull.
+let noiseBuffer = null;
+function getNoiseBuffer(ctx) {
+  if (noiseBuffer && noiseBuffer.sampleRate === ctx.sampleRate) return noiseBuffer;
+  const length = ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+  noiseBuffer = buffer;
+  return buffer;
+}
+
+// The "crack" half of a synthesized gunshot: filtered noise burst, gated
+// through the same style of gain envelope as scheduleTone() above.
+function scheduleNoiseBurst(ctx, startTime, durationMs, peakGain, filterFreq) {
+  const source = ctx.createBufferSource();
+  source.buffer = getNoiseBuffer(ctx);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = filterFreq;
+  const gain = ctx.createGain();
+  const durationSec = durationMs / 1000;
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.003);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
+
+  source.connect(filter).connect(gain).connect(ctx.destination);
+  source.start(startTime);
+  source.stop(startTime + durationSec + 0.02);
+}
+
+// Fires on every trigger-pull, independent of hit/miss (those play their
+// own sound on top) — a filtered noise "crack" plus a fast pitch-dropping
+// low thump underneath, the standard cheap synthesized-gunshot recipe.
+export function playShotSound() {
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  scheduleNoiseBurst(ctx, now, 90, 0.22, 3200);
+  scheduleTone(ctx, now, 150, 60, 0.16, 70);
+}
+
 export function playHitSound() {
   beep(920, 70, 0.18);
 }
