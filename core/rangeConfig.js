@@ -5,11 +5,11 @@ const STORAGE_KEY = "aimforge:rangeConfig";
 // independently below, since a player might want a light-mode UI with a
 // dark range or vice versa.
 const DEFAULT_CONFIG = {
-  theme: "dark", // "dark" | "light"
+  theme: "light", // "dark" | "light"
   soundEnabled: true,
-  targetColor: "#ff5c5c",
-  wallColor: "#1b1d24",
-  floorColor: "#2a2d36",
+  targetColor: "#38bdf8",
+  wallColor: "#ffffff",
+  floorColor: "#ffffff",
   brightness: 1.0,
   fov: 96,
 };

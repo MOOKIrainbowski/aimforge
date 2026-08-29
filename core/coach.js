@@ -3,14 +3,16 @@ import { mean, stdDev } from "./utils.js";
 // Rule-based "Smart Coach" — no external API calls. Every tip is derived
 // deterministically from the just-finished SessionResult plus the player's
 // own recent history in the same mode (already in StatsStore). Each tip is
-// {level, text}; level drives styling in the UI ("positive" | "warning" |
-// "info").
+// {level, key, params}; level drives styling in the UI ("positive" |
+// "warning" | "info"), and key/params are resolved to localized text by the
+// caller via core/i18n.js's t() at render time — so a language switch
+// re-renders correctly instead of baking English in here.
 const MIN_SAMPLES_FOR_TREND = 3;
 const TREND_WINDOW = 10;
 const MAX_TIPS = 4;
 
-function tip(level, text) {
-  return { level, text };
+function tip(level, key, params) {
+  return { level, key, params };
 }
 
 // Compares this session's accuracy against the player's recent rolling
@@ -24,10 +26,10 @@ function trendTips(result, priorSessions) {
   const delta = result.accuracy - recentAvgAccuracy;
 
   if (delta >= 8) {
-    return [tip("positive", `Accuracy is up ${delta.toFixed(0)} points versus your recent average — whatever you just did, keep doing it.`)];
+    return [tip("positive", "tip.trendUp", { delta: delta.toFixed(0) })];
   }
   if (delta <= -8) {
-    return [tip("warning", `Accuracy dropped ${Math.abs(delta).toFixed(0)} points versus your recent average — maybe warm up a bit longer, or check your sensitivity hasn't drifted.`)];
+    return [tip("warning", "tip.trendDown", { delta: Math.abs(delta).toFixed(0) })];
   }
   return [];
 }
@@ -38,9 +40,9 @@ function gridshotTips(result) {
 
   if (result.shotsTotal >= 10) {
     if (result.accuracy < 60) {
-      tips.push(tip("warning", `${result.accuracy.toFixed(0)}% accuracy is on the low side for Gridshot — try slowing down slightly and confirming each shot before firing.`));
+      tips.push(tip("warning", "tip.gridshotLow", { accuracy: result.accuracy.toFixed(0) }));
     } else if (result.accuracy > 92) {
-      tips.push(tip("positive", `${result.accuracy.toFixed(0)}% accuracy is excellent — try a smaller target radius or shorter duration to raise the difficulty.`));
+      tips.push(tip("positive", "tip.gridshotHigh", { accuracy: result.accuracy.toFixed(0) }));
     }
   }
 
@@ -48,9 +50,9 @@ function gridshotTips(result) {
     const flickSamples = flickBias.overshoot + flickBias.undershoot + flickBias.accurate;
     if (flickSamples >= 5) {
       if (flickBias.overshoot >= 3 && flickBias.overshoot > flickBias.undershoot * 1.5) {
-        tips.push(tip("info", "Your first flick tends to overshoot past the target — try a slightly lower sensitivity or a shorter flick swing."));
+        tips.push(tip("info", "tip.gridshotOvershoot"));
       } else if (flickBias.undershoot >= 3 && flickBias.undershoot > flickBias.overshoot * 1.5) {
-        tips.push(tip("info", "Your first flick tends to fall short of the target — try a slightly higher sensitivity or committing more to the initial swing."));
+        tips.push(tip("info", "tip.gridshotUndershoot"));
       }
     }
   }
@@ -58,7 +60,7 @@ function gridshotTips(result) {
   if (timeToKillList && timeToKillList.length >= 5) {
     const cv = stdDev(timeToKillList) / (mean(timeToKillList) || 1);
     if (cv > 0.6) {
-      tips.push(tip("info", "Your time-to-kill varies a lot between targets — focus on a consistent rhythm rather than rushing some shots."));
+      tips.push(tip("info", "tip.gridshotTtkVariance"));
     }
   }
 
@@ -70,15 +72,15 @@ function trackingTips(result) {
   const { onTargetTimeMs, bestStreakMs } = result.extra;
 
   if (result.accuracy < 50) {
-    tips.push(tip("warning", `Only ${result.accuracy.toFixed(0)}% time-on-target — try reducing target speed or widening the target until tracking feels smooth.`));
+    tips.push(tip("warning", "tip.trackingLow", { accuracy: result.accuracy.toFixed(0) }));
   }
 
   if (onTargetTimeMs > 500) {
     const consistency = bestStreakMs / onTargetTimeMs;
     if (consistency < 0.35) {
-      tips.push(tip("info", "Your on-target time is made of many short bursts rather than one smooth hold — work on small continuous corrections instead of re-acquiring the target."));
+      tips.push(tip("info", "tip.trackingChoppy"));
     } else if (consistency > 0.85 && result.accuracy > 60) {
-      tips.push(tip("positive", "Great sustained tracking — most of your on-target time comes from one long, uninterrupted hold."));
+      tips.push(tip("positive", "tip.trackingSmooth"));
     }
   }
 
@@ -90,15 +92,15 @@ function switchingTips(result) {
   const { switchTimes, wavesCompleted } = result.extra;
 
   if (result.shotsTotal >= 10 && result.accuracy < 70) {
-    tips.push(tip("warning", `${result.accuracy.toFixed(0)}% accuracy — prioritize picking the right next target over speed between shots.`));
+    tips.push(tip("warning", "tip.switchingLow", { accuracy: result.accuracy.toFixed(0) }));
   }
 
   if (switchTimes && switchTimes.length >= 5) {
     const cv = stdDev(switchTimes) / (mean(switchTimes) || 1);
     if (cv > 0.55) {
-      tips.push(tip("info", "Switch times between targets are inconsistent — some transitions are much slower than others. Try scanning the next target before you finish the current one."));
+      tips.push(tip("info", "tip.switchingInconsistent"));
     } else if (wavesCompleted >= 3 && cv < 0.25) {
-      tips.push(tip("positive", "Very consistent switch times across targets — your target-to-target rhythm is solid."));
+      tips.push(tip("positive", "tip.switchingConsistent"));
     }
   }
 
@@ -111,20 +113,21 @@ function reactionTips(result) {
   const attempts = result.shotsTotal;
 
   if (falseStarts >= 3 && falseStarts / Math.max(1, attempts) > 0.15) {
-    tips.push(tip("warning", `${falseStarts} false start${falseStarts === 1 ? "" : "s"} — you're clicking before the target appears. Try waiting for the flash instead of anticipating it.`));
+    const key = falseStarts === 1 ? "tip.reactionFalseStartOne" : "tip.reactionFalseStartOther";
+    tips.push(tip("warning", key, { count: falseStarts }));
   }
 
   const timeoutRate = timeouts / Math.max(1, result.hits + timeouts);
   if (timeouts > 0 && timeoutRate > 0.25) {
-    tips.push(tip("warning", "You're missing the exposure window on a chunk of targets — that's about spotting the flash quickly, not just clicking faster."));
+    tips.push(tip("warning", "tip.reactionTimeouts"));
   }
 
   if (reactionTimes && reactionTimes.length >= 5) {
     const cv = stdDev(reactionTimes) / (mean(reactionTimes) || 1);
     if (cv > 0.4) {
-      tips.push(tip("info", "Reaction times are quite spread out rep to rep — try staying relaxed and ready rather than tensing up while waiting."));
+      tips.push(tip("info", "tip.reactionInconsistent"));
     } else if (avgReactionTimeMs < 250) {
-      tips.push(tip("positive", `Averaging ${avgReactionTimeMs.toFixed(0)}ms is very fast — strong reaction speed.`));
+      tips.push(tip("positive", "tip.reactionFast", { ms: avgReactionTimeMs.toFixed(0) }));
     }
   }
 
@@ -145,7 +148,7 @@ export function generateCoachTips(result, priorSessions) {
   const tips = [...trendTips(result, priorSessions), ...(MODE_TIP_FNS[result.mode]?.(result) ?? [])];
 
   if (tips.length === 0) {
-    tips.push(tip("info", "Solid session — nothing stands out as an issue. Keep at it."));
+    tips.push(tip("info", "tip.solidSession"));
   }
 
   return tips.slice(0, MAX_TIPS);
@@ -164,9 +167,9 @@ export function generateHistoryInsights(mode, sessions) {
     const laterAvg = mean(sessions.slice(half).map((s) => s.accuracy));
     const delta = laterAvg - earlierAvg;
     if (delta >= 5) {
-      tips.push(tip("positive", `Accuracy has improved ${delta.toFixed(0)} points on average since your earliest sessions in this mode.`));
+      tips.push(tip("positive", "tip.historyImproved", { delta: delta.toFixed(0) }));
     } else if (delta <= -5) {
-      tips.push(tip("warning", `Accuracy has dropped ${Math.abs(delta).toFixed(0)} points on average versus your earliest sessions — worth a check on sensitivity or warmup routine.`));
+      tips.push(tip("warning", "tip.historyDropped", { delta: Math.abs(delta).toFixed(0) }));
     }
   }
 
@@ -185,9 +188,9 @@ export function generateHistoryInsights(mode, sessions) {
     const total = totals.overshoot + totals.undershoot + totals.accurate;
     if (total >= 15) {
       if (totals.overshoot > totals.undershoot * 1.4) {
-        tips.push(tip("info", `Across your history, you overshoot flicks more often than you undershoot (${totals.overshoot} vs ${totals.undershoot}) — a small sensitivity reduction may help.`));
+        tips.push(tip("info", "tip.historyOvershootBias", { overshoot: totals.overshoot, undershoot: totals.undershoot }));
       } else if (totals.undershoot > totals.overshoot * 1.4) {
-        tips.push(tip("info", `Across your history, you undershoot flicks more often than you overshoot (${totals.undershoot} vs ${totals.overshoot}) — try a slightly higher sensitivity or fuller flicks.`));
+        tips.push(tip("info", "tip.historyUndershootBias", { undershoot: totals.undershoot, overshoot: totals.overshoot }));
       }
     }
   }

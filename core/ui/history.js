@@ -1,5 +1,10 @@
 import { getSessionsByMode } from "../stats.js";
 import { generateHistoryInsights } from "../coach.js";
+import { t, getLanguage } from "../i18n.js";
+
+function locale() {
+  return getLanguage() === "ko" ? "ko-KR" : "en-US";
+}
 
 const historyScreen = document.getElementById("history-screen");
 const canvas = document.getElementById("history-chart");
@@ -27,13 +32,6 @@ const HEATMAP_MODES = new Set(["gridshot", "reaction"]);
 // paint one solid blob.
 const HEATMAP_SESSION_WINDOW = 20;
 const HEATMAP_MAX_POINTS = 600;
-
-const MODE_LABELS = {
-  gridshot: "Gridshot",
-  tracking: "Tracking",
-  switching: "Target Switching",
-  reaction: "Reaction Time",
-};
 
 let selectedMode = "gridshot";
 let selectedMetric = "score";
@@ -63,7 +61,7 @@ function drawChart(sessions) {
     ctx.fillStyle = COLOR_TEXT_MUTED;
     ctx.font = "14px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("No sessions yet — play a round to start your trend.", w / 2, h / 2);
+    ctx.fillText(t("chart.empty"), w / 2, h / 2);
     return;
   }
 
@@ -135,7 +133,7 @@ function drawTable(sessions) {
     const td = document.createElement("td");
     td.colSpan = 4;
     td.className = "history-empty-row";
-    td.textContent = "No sessions recorded yet.";
+    td.textContent = t("table.empty");
     tr.appendChild(td);
     tableBody.appendChild(tr);
     return;
@@ -145,8 +143,8 @@ function drawTable(sessions) {
     const tr = document.createElement("tr");
     const date = new Date(s.timestamp);
     const cells = [
-      `${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })} ${date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`,
-      MODE_LABELS[s.mode] ?? s.mode,
+      `${date.toLocaleDateString(locale(), { month: "short", day: "numeric" })} ${date.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" })}`,
+      t(`mode.${s.mode}.name`),
       String(s.score),
       `${s.accuracy.toFixed(1)}%`,
     ];
@@ -161,7 +159,9 @@ function drawTable(sessions) {
 
 function renderInsights(sessions) {
   const insights = generateHistoryInsights(selectedMode, sessions);
-  insightsEl.innerHTML = insights.map((t) => `<p class="coach-tip coach-tip-${t.level}">${t.text}</p>`).join("");
+  insightsEl.innerHTML = insights
+    .map((insight) => `<p class="coach-tip coach-tip-${insight.level}">${t(insight.key, insight.params)}</p>`)
+    .join("");
 }
 
 function drawHeatmap(sessions) {
@@ -179,7 +179,7 @@ function drawHeatmap(sessions) {
     heatmapCtx.fillStyle = COLOR_TEXT_MUTED;
     heatmapCtx.font = "13px system-ui, -apple-system, sans-serif";
     heatmapCtx.textAlign = "center";
-    heatmapCtx.fillText("Not tracked for this mode.", w / 2, h / 2);
+    heatmapCtx.fillText(t("heatmap.notTracked"), w / 2, h / 2);
     return;
   }
 
@@ -192,7 +192,7 @@ function drawHeatmap(sessions) {
     heatmapCtx.fillStyle = COLOR_TEXT_MUTED;
     heatmapCtx.font = "13px system-ui, -apple-system, sans-serif";
     heatmapCtx.textAlign = "center";
-    heatmapCtx.fillText("No shots recorded yet.", w / 2, h / 2);
+    heatmapCtx.fillText(t("heatmap.empty"), w / 2, h / 2);
     return;
   }
 
@@ -271,7 +271,7 @@ canvas.addEventListener("mousemove", (e) => {
   const strong = document.createElement("strong");
   strong.textContent = label;
   const span = document.createElement("span");
-  span.textContent = ` ${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+  span.textContent = ` ${date.toLocaleDateString(locale(), { month: "short", day: "numeric" })}`;
   tooltip.appendChild(strong);
   tooltip.appendChild(span);
 

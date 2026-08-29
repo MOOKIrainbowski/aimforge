@@ -1,3 +1,5 @@
+import { t } from "../i18n.js";
+
 const hudEl = document.getElementById("hud");
 const scoreEl = document.getElementById("hud-score");
 const accuracyEl = document.getElementById("hud-accuracy");
@@ -13,8 +15,8 @@ export function hideHud() {
 }
 
 export function updateHud(stats) {
-  scoreEl.textContent = `Score: ${stats.score}`;
+  scoreEl.textContent = t("hud.score", { value: stats.score });
   accuracyEl.textContent = `${stats.accuracy.toFixed(1)}%`;
   timeEl.textContent = `${(stats.timeRemainingMs / 1000).toFixed(1)}s`;
-  streakEl.textContent = `Streak: ${stats.streak}`;
+  streakEl.textContent = t("hud.streak", { value: stats.streak });
 }

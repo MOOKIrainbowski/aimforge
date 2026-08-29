@@ -1,10 +1,11 @@
 import { getAggregateStats } from "../stats.js";
+import { t } from "../i18n.js";
 
 const homeScreen = document.getElementById("home-screen");
 const modeCards = Array.from(document.querySelectorAll(".mode-card"));
 const difficultyButtons = Array.from(document.querySelectorAll("#difficulty-group button"));
 const durationButtons = Array.from(document.querySelectorAll("#duration-group button"));
-const recoilButtons = Array.from(document.querySelectorAll("#recoil-toggle-group button"));
+const recoilSwitch = document.getElementById("recoil-switch");
 const weaponButtons = Array.from(document.querySelectorAll("#weapon-group button"));
 const weaponRow = document.getElementById("weapon-row");
 const startButton = document.getElementById("home-start");
@@ -29,6 +30,13 @@ function setPressed(button, pressed) {
   button.setAttribute("aria-pressed", String(pressed));
 }
 
+function setSwitch(button, checked, onKey, offKey) {
+  button.setAttribute("aria-checked", String(checked));
+  button.classList.toggle("on", checked);
+  const stateEl = button.querySelector(".switch-state");
+  if (stateEl) stateEl.textContent = t(checked ? onKey : offKey);
+}
+
 // Tracking's score is seconds-on-target (already fractional); every other
 // mode's score is a plain hit count.
 function formatBestScore(mode, value) {
@@ -41,7 +49,7 @@ function renderBestScores() {
     if (!badge) continue;
     const mode = badge.dataset.bestFor;
     const stats = getAggregateStats(mode);
-    badge.textContent = stats.count > 0 ? `Best ${formatBestScore(mode, stats.bestScore)}` : "";
+    badge.textContent = stats.count > 0 ? t("home.best", { value: formatBestScore(mode, stats.bestScore) }) : "";
   }
 }
 
@@ -68,13 +76,11 @@ export function initHome(onStart) {
     });
   }
 
-  for (const btn of recoilButtons) {
-    btn.addEventListener("click", () => {
-      recoilEnabled = btn.dataset.recoil === "on";
-      for (const b of recoilButtons) setPressed(b, b === btn);
-      weaponRow.classList.toggle("hidden", !recoilEnabled);
-    });
-  }
+  recoilSwitch.addEventListener("click", () => {
+    recoilEnabled = !recoilEnabled;
+    setSwitch(recoilSwitch, recoilEnabled, "common.on", "common.off");
+    weaponRow.classList.toggle("hidden", !recoilEnabled);
+  });
 
   for (const btn of weaponButtons) {
     btn.addEventListener("click", () => {

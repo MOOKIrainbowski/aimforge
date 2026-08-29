@@ -48,8 +48,13 @@ export function applyFov(camera, fov) {
 }
 
 export function buildRange(scene, quality, rangeConfig) {
-  scene.background = new THREE.Color(0x0d0f14);
-  scene.fog = new THREE.Fog(0x0d0f14, 15, 35);
+  // No ceiling and no front wall (the player only ever faces the back
+  // wall's targets), so anything visible past the walls — looking up, or
+  // back toward spawn — is this background/fog color. Tying it to the
+  // wall color keeps that "open" edge reading as a continuation of the
+  // room instead of a stray dark void when the room itself is light.
+  scene.background = new THREE.Color(rangeConfig.wallColor);
+  scene.fog = new THREE.Fog(rangeConfig.wallColor, 15, 35);
 
   const floorMat = new THREE.MeshStandardMaterial({ color: rangeConfig.floorColor, roughness: 0.9 });
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH), floorMat);
@@ -87,7 +92,7 @@ export function buildRange(scene, quality, rangeConfig) {
     maxZ: ROOM_DEPTH / 2 - 0.5,
   };
 
-  return { roomBounds, floorMat, wallMat, hemiLight, keyLight };
+  return { scene, roomBounds, floorMat, wallMat, hemiLight, keyLight };
 }
 
 // Live-updates room appearance from rangeConfig without rebuilding the
@@ -96,6 +101,8 @@ export function buildRange(scene, quality, rangeConfig) {
 export function applyRangeAppearance(refs, rangeConfig) {
   refs.floorMat.color.set(rangeConfig.floorColor);
   refs.wallMat.color.set(rangeConfig.wallColor);
+  refs.scene.background.set(rangeConfig.wallColor);
+  refs.scene.fog.color.set(rangeConfig.wallColor);
   refs.hemiLight.intensity = BASE_HEMI_INTENSITY * rangeConfig.brightness;
   refs.keyLight.intensity = BASE_KEY_INTENSITY * rangeConfig.brightness;
 }

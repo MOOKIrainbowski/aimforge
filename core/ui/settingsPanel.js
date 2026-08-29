@@ -1,8 +1,9 @@
 import { loadRangeConfig, saveRangeConfig, getDefaultRangeConfig } from "../rangeConfig.js";
+import { t } from "../i18n.js";
 
 const screen = document.getElementById("settings-screen");
-const themeButtons = Array.from(document.querySelectorAll("#theme-group button"));
-const soundButtons = Array.from(document.querySelectorAll("#sound-group button"));
+const themeSwitch = document.getElementById("theme-switch");
+const soundSwitch = document.getElementById("sound-switch");
 const targetColorInput = document.getElementById("settings-target-color");
 const wallColorInput = document.getElementById("settings-wall-color");
 const floorColorInput = document.getElementById("settings-floor-color");
@@ -13,14 +14,16 @@ const resetButton = document.getElementById("settings-reset");
 let config = loadRangeConfig();
 let onChange = () => {};
 
-function setPressed(button, pressed) {
-  button.classList.toggle("selected", pressed);
-  button.setAttribute("aria-pressed", String(pressed));
+function setSwitch(button, checked, onKey, offKey) {
+  button.setAttribute("aria-checked", String(checked));
+  button.classList.toggle("on", checked);
+  const stateEl = button.querySelector(".switch-state");
+  if (stateEl) stateEl.textContent = t(checked ? onKey : offKey);
 }
 
 function syncControls() {
-  for (const b of themeButtons) setPressed(b, b.dataset.theme === config.theme);
-  for (const b of soundButtons) setPressed(b, (b.dataset.sound === "on") === config.soundEnabled);
+  setSwitch(themeSwitch, config.theme === "light", "theme.light", "theme.dark");
+  setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
   targetColorInput.value = config.targetColor;
   wallColorInput.value = config.wallColor;
   floorColorInput.value = config.floorColor;
@@ -37,20 +40,16 @@ export function initSettingsPanel(onChangeCallback) {
   onChange = onChangeCallback;
   syncControls();
 
-  for (const btn of themeButtons) {
-    btn.addEventListener("click", () => {
-      config.theme = btn.dataset.theme;
-      for (const b of themeButtons) setPressed(b, b === btn);
-      persistAndApply();
-    });
-  }
-  for (const btn of soundButtons) {
-    btn.addEventListener("click", () => {
-      config.soundEnabled = btn.dataset.sound === "on";
-      for (const b of soundButtons) setPressed(b, b === btn);
-      persistAndApply();
-    });
-  }
+  themeSwitch.addEventListener("click", () => {
+    config.theme = config.theme === "light" ? "dark" : "light";
+    setSwitch(themeSwitch, config.theme === "light", "theme.light", "theme.dark");
+    persistAndApply();
+  });
+  soundSwitch.addEventListener("click", () => {
+    config.soundEnabled = !config.soundEnabled;
+    setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
+    persistAndApply();
+  });
   targetColorInput.addEventListener("input", () => {
     config.targetColor = targetColorInput.value;
     persistAndApply();

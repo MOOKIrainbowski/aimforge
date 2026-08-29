@@ -4,12 +4,13 @@ import {
   getDefaultCrosshairConfig,
   renderCrosshairInto,
 } from "../crosshairConfig.js";
+import { t } from "../i18n.js";
 
 const screen = document.getElementById("crosshair-screen");
 const preview = document.getElementById("crosshair-preview");
 const shapeButtons = Array.from(document.querySelectorAll("#crosshair-shape-group button"));
-const outlineButtons = Array.from(document.querySelectorAll("#crosshair-outline-group button"));
-const dotButtons = Array.from(document.querySelectorAll("#crosshair-dot-group button"));
+const outlineSwitch = document.getElementById("outline-switch");
+const dotSwitch = document.getElementById("dot-switch");
 const colorInput = document.getElementById("crosshair-color");
 const sizeInput = document.getElementById("crosshair-size");
 const thicknessInput = document.getElementById("crosshair-thickness");
@@ -25,14 +26,17 @@ function setPressed(button, pressed) {
   button.setAttribute("aria-pressed", String(pressed));
 }
 
+function setSwitch(button, checked, onKey, offKey) {
+  button.setAttribute("aria-checked", String(checked));
+  button.classList.toggle("on", checked);
+  const stateEl = button.querySelector(".switch-state");
+  if (stateEl) stateEl.textContent = t(checked ? onKey : offKey);
+}
+
 function syncControlsFromConfig() {
   for (const b of shapeButtons) setPressed(b, b.dataset.shape === config.shape);
-  for (const b of outlineButtons) {
-    setPressed(b, (b.dataset.outline === "on") === config.outline);
-  }
-  for (const b of dotButtons) {
-    setPressed(b, (b.dataset.dot === "on") === config.centerDot);
-  }
+  setSwitch(outlineSwitch, config.outline, "common.on", "common.off");
+  setSwitch(dotSwitch, config.centerDot, "common.on", "common.off");
   colorInput.value = config.color;
   sizeInput.value = String(config.size);
   thicknessInput.value = String(config.thickness);
@@ -58,20 +62,16 @@ export function initCrosshairEditor(onChangeCallback) {
       applyAndPersist();
     });
   }
-  for (const btn of outlineButtons) {
-    btn.addEventListener("click", () => {
-      config.outline = btn.dataset.outline === "on";
-      for (const b of outlineButtons) setPressed(b, b === btn);
-      applyAndPersist();
-    });
-  }
-  for (const btn of dotButtons) {
-    btn.addEventListener("click", () => {
-      config.centerDot = btn.dataset.dot === "on";
-      for (const b of dotButtons) setPressed(b, b === btn);
-      applyAndPersist();
-    });
-  }
+  outlineSwitch.addEventListener("click", () => {
+    config.outline = !config.outline;
+    setSwitch(outlineSwitch, config.outline, "common.on", "common.off");
+    applyAndPersist();
+  });
+  dotSwitch.addEventListener("click", () => {
+    config.centerDot = !config.centerDot;
+    setSwitch(dotSwitch, config.centerDot, "common.on", "common.off");
+    applyAndPersist();
+  });
   colorInput.addEventListener("input", () => {
     config.color = colorInput.value;
     applyAndPersist();

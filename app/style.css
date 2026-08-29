@@ -161,6 +161,143 @@ body {
   outline-offset: 2px;
 }
 
+/* Shared button vocabulary — every solid/bordered/ghost button on the site
+   pulls its attributes (radius, transitions, hover/active feedback) from
+   one of these three, instead of each screen defining its own variant. */
+button {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.btn-primary {
+  border: none;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.secondary {
+  padding: 10px 20px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-button-secondary);
+  color: var(--text-secondary);
+  font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.secondary:hover {
+  background: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* Toggle switch — used for every true on/off setting (Theme, Hit Sound,
+   Recoil Control, Crosshair Outline, Crosshair Dot). */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: 500 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text-secondary);
+}
+
+.switch-state {
+  min-width: 32px;
+  text-align: right;
+}
+
+.switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.switch:hover .switch-track {
+  border-color: var(--accent-border);
+}
+
+.switch.on .switch-track {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.switch.on .switch-thumb {
+  transform: translateX(18px);
+  background: var(--accent);
+}
+
+/* Square icon buttons — the home screen's corner controls. */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.btn-icon:hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.btn-icon:active {
+  transform: translateY(0);
+}
+
+.home-corner-btn {
+  position: fixed;
+  top: 24px;
+  z-index: 5;
+  box-shadow: var(--shadow-card);
+}
+
+.home-corner-btn-left {
+  left: 24px;
+}
+
+.home-corner-btn-right {
+  right: 24px;
+}
+
 @keyframes card-in {
   from {
     opacity: 0;
@@ -219,6 +356,11 @@ body {
   font-size: 12px;
 }
 
+.summary-score {
+  font-weight: 700;
+  font-size: 18px;
+}
+
 .summary-actions {
   display: flex;
   gap: 12px;
@@ -228,31 +370,8 @@ body {
 
 .summary-card button {
   padding: 10px 24px;
-  border: none;
   border-radius: 10px;
-  background: var(--accent);
-  color: var(--text-on-accent);
   font-weight: 600;
-  cursor: pointer;
-  transition: transform 150ms ease, filter 150ms ease;
-}
-
-.summary-card button:hover {
-  filter: brightness(1.08);
-}
-
-.summary-card button:active {
-  transform: scale(0.97);
-}
-
-.summary-card button.secondary {
-  background: var(--bg-button-secondary);
-  color: var(--text-secondary);
-}
-
-.summary-card button.secondary:hover {
-  filter: none;
-  background: var(--border-strong);
 }
 
 .coach-panel {
@@ -447,36 +566,24 @@ body {
   margin-top: 8px;
   width: 100%;
   padding: 14px;
-  border: none;
   border-radius: 12px;
-  background: var(--accent);
-  color: var(--text-on-accent);
   font: 600 16px system-ui, -apple-system, "Segoe UI", sans-serif;
-  cursor: pointer;
-  transition: transform 150ms ease, filter 150ms ease;
-}
-
-.start-button:hover {
-  filter: brightness(1.08);
-}
-
-.start-button:active {
-  transform: scale(0.98);
 }
 
 .link-button {
   margin-top: 14px;
-  background: none;
+  padding: 8px 14px;
   border: none;
+  border-radius: 8px;
+  background: none;
   color: var(--text-secondary);
   font: 500 13px system-ui, -apple-system, "Segoe UI", sans-serif;
-  text-decoration: underline;
-  text-underline-offset: 3px;
   cursor: pointer;
-  transition: color 150ms ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .link-button:hover {
+  background: var(--bg-input);
   color: var(--text-primary);
 }
 
@@ -513,25 +620,6 @@ body {
 
 .history-header h2 {
   font-size: 22px;
-}
-
-/* Shared by every screen's "Back" button (History, Crosshair, Sensitivity,
-   Settings all reuse the .history-header wrapper) — without this they fall
-   back to the browser's unstyled native button. */
-.history-header button.secondary {
-  padding: 8px 16px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-button-secondary);
-  color: var(--text-secondary);
-  font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif;
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.history-header button.secondary:hover {
-  background: var(--border-strong);
-  color: var(--text-primary);
 }
 
 .history-filters {

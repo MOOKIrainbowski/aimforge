@@ -20,6 +20,9 @@ import { loadRangeConfig } from "./rangeConfig.js";
 import { saveSession, getSessionsByMode } from "./stats.js";
 import { generateCoachTips } from "./coach.js";
 import { setSoundEnabled, playHitSound, playMissSound, flashCrosshair } from "./ui/feedback.js";
+import { applyTranslations } from "./i18n.js";
+
+applyTranslations(document);
 
 const quality = getQuality();
 
@@ -61,7 +64,6 @@ if (quality.postProcessing) {
 // used for fast dev/test iteration instead of waiting out a real session.
 const durationOverride = Number(new URLSearchParams(window.location.search).get("duration"));
 
-const START_HINT = "Click to enter the range · WASD to move · Shift to sprint · Esc to release mouse";
 
 // appState is the MENU -> PLAYING -> SUMMARY state machine (HISTORY is a
 // side-branch reachable from MENU or SUMMARY, always returning to MENU).
@@ -114,7 +116,6 @@ function beginSession(config) {
     targetColor: rangeConfig.targetColor,
   };
   appState = "PLAYING";
-  lockHint.textContent = START_HINT;
   hideHome();
   controls.requestLock();
 }
@@ -202,7 +203,7 @@ initSettingsPanel((newConfig) => {
   applyRangeAppearance(sceneRefs, newConfig);
   applyFov(camera, newConfig.fov);
 });
-document.getElementById("home-settings").addEventListener("click", () => {
+document.getElementById("home-settings-btn").addEventListener("click", () => {
   appState = "SETTINGS";
   hideHome();
   showSettingsPanel();

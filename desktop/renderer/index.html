@@ -1,17 +1,18 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AimForge Desktop</title>
-    <!-- Same stylesheet as the web build — one design system, no duplication. -->
-    <link rel="stylesheet" href="../../app/style.css" />
-    <script>
-      // Read by core/quality.js before anything else runs. Must be set
-      // before core/main.js is imported below.
-      window.__AIMFORGE_QUALITY__ = "desktop";
-    </script>
-    <script type="importmap">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AimForge Desktop</title>
+  <!-- Same stylesheet as the web build — one design system, no duplication. -->
+  <link rel="stylesheet" href="../../app/style.css" />
+  <script>
+    // Read by core/quality.js before anything else runs. Must be set
+    // before core/main.js is imported below.
+    window.__AIMFORGE_QUALITY__ = "desktop";
+  </script>
+  <script type="importmap">
       {
         "imports": {
           "three": "../../vendor/three/build/three.module.js",
@@ -19,292 +20,353 @@
         }
       }
     </script>
-  </head>
-  <body>
-    <canvas id="scene"></canvas>
-    <div id="crosshair" class="hidden"></div>
-    <div id="lock-hint" class="hidden">Click to enter the range &middot; WASD to move &middot; Shift to sprint &middot; Esc to release mouse</div>
+</head>
 
-    <div id="hud" class="hidden">
-      <span id="hud-score">Score: 0</span>
-      <span id="hud-accuracy">0%</span>
-      <span id="hud-time">0.0s</span>
-      <span id="hud-streak">Streak: 0</span>
-    </div>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="crosshair" class="hidden"></div>
+  <div id="lock-hint" class="hidden" data-i18n="hint.start">Click to enter the range &middot; WASD to move &middot;
+    Shift to sprint &middot; Esc to release mouse</div>
 
-    <div id="home-screen" class="screen">
-      <div class="home-card">
-        <h1>AimForge</h1>
-        <p class="home-subtitle">Pick a drill, tune it, and step into the range.</p>
+  <div id="hud" class="hidden">
+    <span id="hud-score">Score: 0</span>
+    <span id="hud-accuracy">0%</span>
+    <span id="hud-time">0.0s</span>
+    <span id="hud-streak">Streak: 0</span>
+  </div>
 
-        <div class="mode-grid">
-          <button class="mode-card selected" data-mode="gridshot" type="button">
-            <span class="mode-name">Gridshot</span>
-            <span class="mode-desc">Flick to one target at a time</span>
-          </button>
-          <button class="mode-card" data-mode="tracking" type="button">
-            <span class="mode-name">Tracking</span>
-            <span class="mode-desc">Keep crosshair on a moving target</span>
-          </button>
-          <button class="mode-card" data-mode="switching" type="button">
-            <span class="mode-name">Target Switching</span>
-            <span class="mode-desc">Clear waves of multiple targets</span>
-          </button>
-          <button class="mode-card" data-mode="reaction" type="button">
-            <span class="mode-name">Reaction Time</span>
-            <span class="mode-desc">Hit targets before they vanish</span>
-          </button>
-        </div>
+  <div id="home-screen" class="screen">
+    <a id="home-back" class="btn-icon home-corner-btn home-corner-btn-left" href="../../"
+      data-i18n-attr="aria-label:nav.backToLanding,title:nav.backToLanding">←</a>
+    <button id="home-settings-btn" class="btn-icon home-corner-btn home-corner-btn-right" type="button"
+      data-i18n-attr="aria-label:nav.settingsAria,title:nav.settingsAria">⚙</button>
 
-        <div class="option-row">
-          <span class="option-label">Difficulty</span>
-          <div class="option-group" id="difficulty-group">
-            <button data-difficulty="easy" type="button">Easy</button>
-            <button data-difficulty="normal" type="button" class="selected">Normal</button>
-            <button data-difficulty="hard" type="button">Hard</button>
-          </div>
-        </div>
+    <div class="home-card">
+      <h1>AimForge</h1>
+      <p class="home-subtitle" data-i18n="home.subtitle">Pick a drill, tune it, and step into the range.</p>
 
-        <div class="option-row">
-          <span class="option-label">Duration</span>
-          <div class="option-group" id="duration-group">
-            <button data-duration="30000" type="button">30s</button>
-            <button data-duration="60000" type="button" class="selected">60s</button>
-            <button data-duration="90000" type="button">90s</button>
-          </div>
-        </div>
+      <div class="mode-grid">
+        <button class="mode-card selected" data-mode="gridshot" type="button" aria-pressed="true">
+          <span class="mode-icon" aria-hidden="true">◎</span>
+          <span class="mode-name" data-i18n="mode.gridshot.name">Gridshot</span>
+          <span class="mode-desc" data-i18n="mode.gridshot.desc">Flick to one target at a time</span>
+          <span class="mode-best" data-best-for="gridshot"></span>
+        </button>
+        <button class="mode-card" data-mode="tracking" type="button" aria-pressed="false">
+          <span class="mode-icon" aria-hidden="true">〜</span>
+          <span class="mode-name" data-i18n="mode.tracking.name">Tracking</span>
+          <span class="mode-desc" data-i18n="mode.tracking.desc">Keep crosshair on a moving target</span>
+          <span class="mode-best" data-best-for="tracking"></span>
+        </button>
+        <button class="mode-card" data-mode="switching" type="button" aria-pressed="false">
+          <span class="mode-icon" aria-hidden="true">⤨</span>
+          <span class="mode-name" data-i18n="mode.switching.name">Target Switching</span>
+          <span class="mode-desc" data-i18n="mode.switching.desc">Clear waves of multiple targets</span>
+          <span class="mode-best" data-best-for="switching"></span>
+        </button>
+        <button class="mode-card" data-mode="reaction" type="button" aria-pressed="false">
+          <span class="mode-icon" aria-hidden="true">⚡</span>
+          <span class="mode-name" data-i18n="mode.reaction.name">Reaction Time</span>
+          <span class="mode-desc" data-i18n="mode.reaction.desc">Hit targets before they vanish</span>
+          <span class="mode-best" data-best-for="reaction"></span>
+        </button>
+      </div>
 
-        <div class="option-row">
-          <span class="option-label">Recoil Control<br /><small>Gridshot &amp; Switching only</small></span>
-          <div class="option-group" id="recoil-toggle-group">
-            <button data-recoil="off" type="button" class="selected">Off</button>
-            <button data-recoil="on" type="button">On</button>
-          </div>
-        </div>
-
-        <div class="option-row hidden" id="weapon-row">
-          <span class="option-label">Weapon</span>
-          <div class="option-group" id="weapon-group">
-            <button data-weapon="rifle" type="button" class="selected">Rifle</button>
-            <button data-weapon="smg" type="button">SMG</button>
-          </div>
-        </div>
-
-        <button id="home-start" class="start-button" type="button">Enter the Range</button>
-        <div class="link-row">
-          <button id="home-history" class="link-button" type="button">View History</button>
-          <button id="home-crosshair" class="link-button" type="button">Customize Crosshair</button>
-          <button id="home-sensitivity" class="link-button" type="button">Sensitivity</button>
-          <button id="home-settings" class="link-button" type="button">Settings</button>
+      <div class="option-row">
+        <span class="option-label" data-i18n="option.difficulty">Difficulty</span>
+        <div class="option-group" id="difficulty-group">
+          <button data-difficulty="easy" type="button" aria-pressed="false" data-i18n="difficulty.easy">Easy</button>
+          <button data-difficulty="normal" type="button" class="selected" aria-pressed="true"
+            data-i18n="difficulty.normal">Normal</button>
+          <button data-difficulty="hard" type="button" aria-pressed="false" data-i18n="difficulty.hard">Hard</button>
         </div>
       </div>
-    </div>
 
-    <div id="summary-screen" class="screen hidden">
-      <div class="summary-card">
-        <h2>Session Complete</h2>
-        <div id="summary-stats"></div>
-        <div class="summary-actions">
-          <button id="summary-retry" type="button">Retry</button>
-          <button id="summary-menu" class="secondary" type="button">Back to Menu</button>
-        </div>
-        <button id="summary-history" class="link-button" type="button">View History</button>
-      </div>
-    </div>
-
-    <div id="history-screen" class="screen hidden">
-      <div class="history-card">
-        <div class="history-header">
-          <h2>Progress</h2>
-          <button id="history-back" class="secondary" type="button">Back</button>
-        </div>
-
-        <div class="history-filters">
-          <div class="option-group" id="history-mode-group">
-            <button data-mode="gridshot" type="button" class="selected">Gridshot</button>
-            <button data-mode="tracking" type="button">Tracking</button>
-            <button data-mode="switching" type="button">Switching</button>
-            <button data-mode="reaction" type="button">Reaction</button>
-          </div>
-          <div class="option-group" id="history-metric-group">
-            <button data-metric="score" type="button" class="selected">Score</button>
-            <button data-metric="accuracy" type="button">Accuracy</button>
-          </div>
-        </div>
-
-        <div class="history-chart-wrap">
-          <canvas id="history-chart" width="640" height="220"></canvas>
-          <div id="history-tooltip" class="history-tooltip hidden"></div>
-        </div>
-
-        <div id="history-insights" class="history-insights"></div>
-
-        <div class="history-heatmap-wrap">
-          <p class="history-subheading">Hit Positions</p>
-          <canvas id="history-heatmap" width="320" height="200"></canvas>
-        </div>
-
-        <div class="history-table-wrap">
-          <table id="history-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Mode</th>
-                <th>Score</th>
-                <th>Accuracy</th>
-              </tr>
-            </thead>
-            <tbody id="history-table-body"></tbody>
-          </table>
+      <div class="option-row">
+        <span class="option-label" data-i18n="option.duration">Duration</span>
+        <div class="option-group" id="duration-group">
+          <button data-duration="30000" type="button" aria-pressed="false" data-i18n="duration.30">30s</button>
+          <button data-duration="60000" type="button" class="selected" aria-pressed="true"
+            data-i18n="duration.60">60s</button>
+          <button data-duration="90000" type="button" aria-pressed="false" data-i18n="duration.90">90s</button>
         </div>
       </div>
-    </div>
 
-    <div id="crosshair-screen" class="screen hidden">
-      <div class="crosshair-card">
-        <div class="history-header">
-          <h2>Crosshair</h2>
-          <button id="crosshair-back" class="secondary" type="button">Back</button>
-        </div>
+      <div class="option-row">
+        <span class="option-label"><span data-i18n="option.recoil">Recoil Control</span><br />
+          <small data-i18n="option.recoilNote">Gridshot &amp; Switching only</small></span>
+        <button type="button" class="switch" id="recoil-switch" role="switch" aria-checked="false">
+          <span class="switch-state" data-i18n="common.off">Off</span>
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </button>
+      </div>
 
-        <div class="crosshair-preview-wrap">
-          <div id="crosshair-preview"></div>
+      <div class="option-row hidden" id="weapon-row">
+        <span class="option-label" data-i18n="option.weapon">Weapon</span>
+        <div class="option-group" id="weapon-group">
+          <button data-weapon="rifle" type="button" class="selected" aria-pressed="true"
+            data-i18n="weapon.rifle">Rifle</button>
+          <button data-weapon="smg" type="button" aria-pressed="false" data-i18n="weapon.smg">SMG</button>
         </div>
+      </div>
 
-        <div class="option-row">
-          <span class="option-label">Shape</span>
-          <div class="option-group" id="crosshair-shape-group">
-            <button data-shape="cross" type="button" class="selected">Cross</button>
-            <button data-shape="t" type="button">T</button>
-            <button data-shape="circle" type="button">Circle</button>
-            <button data-shape="dot" type="button">Dot</button>
-          </div>
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Color</span>
-          <input type="color" id="crosshair-color" value="#f2f4f8" aria-label="Crosshair color" />
-        </div>
-
-        <div class="slider-row">
-          <label for="crosshair-size">Size</label>
-          <input type="range" id="crosshair-size" min="2" max="24" value="9" />
-        </div>
-        <div class="slider-row">
-          <label for="crosshair-thickness">Thickness</label>
-          <input type="range" id="crosshair-thickness" min="1" max="6" value="2" />
-        </div>
-        <div class="slider-row">
-          <label for="crosshair-gap">Gap</label>
-          <input type="range" id="crosshair-gap" min="0" max="16" value="4" />
-        </div>
-        <div class="slider-row">
-          <label for="crosshair-opacity">Opacity</label>
-          <input type="range" id="crosshair-opacity" min="20" max="100" value="100" />
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Outline</span>
-          <div class="option-group" id="crosshair-outline-group">
-            <button data-outline="on" type="button" class="selected">On</button>
-            <button data-outline="off" type="button">Off</button>
-          </div>
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Center Dot</span>
-          <div class="option-group" id="crosshair-dot-group">
-            <button data-dot="off" type="button" class="selected">Off</button>
-            <button data-dot="on" type="button">On</button>
-          </div>
-        </div>
-
-        <button id="crosshair-reset" class="link-button" type="button">Reset to Default</button>
+      <button id="home-start" class="start-button btn-primary" type="button" data-i18n="cta.enterRange">Enter the
+        Range</button>
+      <div class="link-row">
+        <button id="home-history" class="link-button" type="button" data-i18n="nav.history">View History</button>
+        <button id="home-crosshair" class="link-button" type="button" data-i18n="nav.crosshair">Customize
+          Crosshair</button>
+        <button id="home-sensitivity" class="link-button" type="button" data-i18n="nav.sensitivity">Sensitivity</button>
       </div>
     </div>
+  </div>
 
-    <div id="sensitivity-screen" class="screen hidden">
-      <div class="sensitivity-card">
-        <div class="history-header">
-          <h2>Sensitivity</h2>
-          <button id="sensitivity-back" class="secondary" type="button">Back</button>
+  <div id="pause-screen" class="screen pause-screen hidden">
+    <div class="summary-card">
+      <h2 data-i18n="pause.title">Paused</h2>
+      <p class="pause-hint" data-i18n="pause.hint">Click anywhere to resume</p>
+      <div class="summary-actions">
+        <button id="pause-resume" class="btn-primary" type="button" data-i18n="pause.resume">Resume</button>
+        <button id="pause-quit" class="secondary" type="button" data-i18n="pause.quit">Quit to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="summary-screen" class="screen hidden">
+    <div class="summary-card">
+      <h2 data-i18n="summary.title">Session Complete</h2>
+      <div id="summary-stats"></div>
+      <div class="summary-actions">
+        <button id="summary-retry" class="btn-primary" type="button" data-i18n="summary.retry">Retry</button>
+        <button id="summary-menu" class="secondary" type="button" data-i18n="summary.menu">Back to Menu</button>
+      </div>
+      <button id="summary-history" class="link-button" type="button" data-i18n="nav.history">View History</button>
+    </div>
+  </div>
+
+  <div id="history-screen" class="screen hidden">
+    <div class="history-card">
+      <div class="history-header">
+        <h2 data-i18n="history.title">Progress</h2>
+        <button id="history-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+
+      <div class="history-filters">
+        <div class="option-group" id="history-mode-group">
+          <button data-mode="gridshot" type="button" class="selected" aria-pressed="true"
+            data-i18n="mode.gridshot.name">Gridshot</button>
+          <button data-mode="tracking" type="button" aria-pressed="false" data-i18n="mode.tracking.name">Tracking</button>
+          <button data-mode="switching" type="button" aria-pressed="false"
+            data-i18n="mode.switching.short">Switching</button>
+          <button data-mode="reaction" type="button" aria-pressed="false"
+            data-i18n="mode.reaction.short">Reaction</button>
         </div>
-
-        <div class="option-row">
-          <span class="option-label">Mouse DPI</span>
-          <input type="number" id="sens-dpi" min="100" max="26000" step="50" value="800" aria-label="Mouse DPI" />
+        <div class="option-group" id="history-metric-group">
+          <button data-metric="score" type="button" class="selected" aria-pressed="true"
+            data-i18n="metric.score">Score</button>
+          <button data-metric="accuracy" type="button" aria-pressed="false"
+            data-i18n="metric.accuracy">Accuracy</button>
         </div>
+      </div>
 
-        <div class="slider-row">
-          <label for="sens-cm360">cm/360&deg;</label>
-          <input type="range" id="sens-cm360" min="5" max="80" step="0.5" value="35" />
-          <span id="sens-cm360-value">35.0</span>
-        </div>
+      <div class="history-chart-wrap">
+        <canvas id="history-chart" width="640" height="220"></canvas>
+        <div id="history-tooltip" class="history-tooltip hidden"></div>
+      </div>
 
-        <p class="sensitivity-note">
-          This sets your actual mouse sensitivity in AimForge. Use the table below to match it in other games.
-        </p>
+      <div id="history-insights" class="history-insights"></div>
 
-        <table id="sensitivity-table">
+      <div class="history-heatmap-wrap">
+        <p class="history-subheading" data-i18n="heatmap.heading">Hit Positions</p>
+        <canvas id="history-heatmap" width="320" height="200"></canvas>
+      </div>
+
+      <div class="history-table-wrap">
+        <table id="history-table">
           <thead>
             <tr>
-              <th>Game</th>
-              <th>Sensitivity</th>
+              <th data-i18n="table.date">Date</th>
+              <th data-i18n="table.mode">Mode</th>
+              <th data-i18n="table.score">Score</th>
+              <th data-i18n="table.accuracy">Accuracy</th>
             </tr>
           </thead>
-          <tbody id="sensitivity-table-body"></tbody>
+          <tbody id="history-table-body"></tbody>
         </table>
-
-        <p class="sensitivity-disclaimer">
-          Approximate — based on commonly published conversion constants; small differences may remain in-game.
-        </p>
       </div>
     </div>
+  </div>
 
-    <div id="settings-screen" class="screen hidden">
-      <div class="settings-card">
-        <div class="history-header">
-          <h2>Settings</h2>
-          <button id="settings-back" class="secondary" type="button">Back</button>
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Theme</span>
-          <div class="option-group" id="theme-group">
-            <button data-theme="dark" type="button" class="selected">Dark</button>
-            <button data-theme="light" type="button">Light</button>
-          </div>
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Target Color</span>
-          <input type="color" id="settings-target-color" value="#ff5c5c" aria-label="Target color" />
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Wall Color</span>
-          <input type="color" id="settings-wall-color" value="#1b1d24" aria-label="Wall color" />
-        </div>
-
-        <div class="option-row">
-          <span class="option-label">Floor Color</span>
-          <input type="color" id="settings-floor-color" value="#2a2d36" aria-label="Floor color" />
-        </div>
-
-        <div class="slider-row">
-          <label for="settings-brightness">Brightness</label>
-          <input type="range" id="settings-brightness" min="40" max="180" value="100" />
-        </div>
-
-        <div class="slider-row">
-          <label for="settings-fov">Field of View</label>
-          <input type="range" id="settings-fov" min="70" max="110" value="96" />
-        </div>
-
-        <button id="settings-reset" class="link-button" type="button">Reset to Default</button>
+  <div id="crosshair-screen" class="screen hidden">
+    <div class="crosshair-card">
+      <div class="history-header">
+        <h2 data-i18n="crosshair.title">Crosshair</h2>
+        <button id="crosshair-back" class="secondary" type="button" data-i18n="common.back">Back</button>
       </div>
-    </div>
 
-    <script type="module" src="../../core/main.js"></script>
-  </body>
+      <div class="crosshair-preview-wrap">
+        <div id="crosshair-preview"></div>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="crosshair.shape">Shape</span>
+        <div class="option-group" id="crosshair-shape-group">
+          <button data-shape="cross" type="button" class="selected" aria-pressed="true"
+            data-i18n="shape.cross">Cross</button>
+          <button data-shape="t" type="button" aria-pressed="false" data-i18n="shape.t">T</button>
+          <button data-shape="circle" type="button" aria-pressed="false" data-i18n="shape.circle">Circle</button>
+          <button data-shape="dot" type="button" aria-pressed="false" data-i18n="shape.dot">Dot</button>
+        </div>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="crosshair.color">Color</span>
+        <input type="color" id="crosshair-color" value="#f2f4f8" data-i18n-attr="aria-label:aria.crosshairColor"
+          aria-label="Crosshair color" />
+      </div>
+
+      <div class="slider-row">
+        <label for="crosshair-size" data-i18n="crosshair.size">Size</label>
+        <input type="range" id="crosshair-size" min="2" max="24" value="9" />
+      </div>
+      <div class="slider-row">
+        <label for="crosshair-thickness" data-i18n="crosshair.thickness">Thickness</label>
+        <input type="range" id="crosshair-thickness" min="1" max="6" value="2" />
+      </div>
+      <div class="slider-row">
+        <label for="crosshair-gap" data-i18n="crosshair.gap">Gap</label>
+        <input type="range" id="crosshair-gap" min="0" max="16" value="4" />
+      </div>
+      <div class="slider-row">
+        <label for="crosshair-opacity" data-i18n="crosshair.opacity">Opacity</label>
+        <input type="range" id="crosshair-opacity" min="20" max="100" value="100" />
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="crosshair.outline">Outline</span>
+        <button type="button" class="switch" id="outline-switch" role="switch" aria-checked="true">
+          <span class="switch-state" data-i18n="common.on">On</span>
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="crosshair.centerDot">Center Dot</span>
+        <button type="button" class="switch" id="dot-switch" role="switch" aria-checked="false">
+          <span class="switch-state" data-i18n="common.off">Off</span>
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <button id="crosshair-reset" class="link-button" type="button" data-i18n="common.reset">Reset to Default</button>
+    </div>
+  </div>
+
+  <div id="sensitivity-screen" class="screen hidden">
+    <div class="sensitivity-card">
+      <div class="history-header">
+        <h2 data-i18n="sensitivity.title">Sensitivity</h2>
+        <button id="sensitivity-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="sensitivity.dpi">Mouse DPI</span>
+        <input type="number" id="sens-dpi" min="100" max="26000" step="50" value="800"
+          data-i18n-attr="aria-label:aria.mouseDpi" aria-label="Mouse DPI" />
+      </div>
+
+      <div class="slider-row">
+        <label for="sens-cm360" data-i18n="sensitivity.cm360">cm/360&deg;</label>
+        <input type="range" id="sens-cm360" min="5" max="80" step="0.5" value="35" />
+        <span id="sens-cm360-value">35.0</span>
+      </div>
+
+      <p class="sensitivity-note" data-i18n="sensitivity.note">
+        This sets your actual mouse sensitivity in AimForge. Use the table below to match it in other games.
+      </p>
+
+      <table id="sensitivity-table">
+        <thead>
+          <tr>
+            <th data-i18n="table.game">Game</th>
+            <th data-i18n="table.sensitivity">Sensitivity</th>
+          </tr>
+        </thead>
+        <tbody id="sensitivity-table-body"></tbody>
+      </table>
+
+      <p class="sensitivity-disclaimer" data-i18n="sensitivity.disclaimer">
+        Approximate — based on commonly published conversion constants; small differences may remain in-game.
+      </p>
+    </div>
+  </div>
+
+  <div id="settings-screen" class="screen hidden">
+    <div class="settings-card">
+      <div class="history-header">
+        <h2 data-i18n="settings.title">Settings</h2>
+        <button id="settings-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.theme">Theme</span>
+        <button type="button" class="switch" id="theme-switch" role="switch" aria-checked="false">
+          <span class="switch-state" data-i18n="theme.dark">Dark</span>
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.sound">Hit Sound</span>
+        <button type="button" class="switch" id="sound-switch" role="switch" aria-checked="true">
+          <span class="switch-state" data-i18n="common.on">On</span>
+          <span class="switch-track">
+            <span class="switch-thumb"></span>
+          </span>
+        </button>
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.targetColor">Target Color</span>
+        <input type="color" id="settings-target-color" value="#38bdf8" data-i18n-attr="aria-label:aria.targetColor"
+          aria-label="Target color" />
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.wallColor">Wall Color</span>
+        <input type="color" id="settings-wall-color" value="#ffffff" data-i18n-attr="aria-label:aria.wallColor"
+          aria-label="Wall color" />
+      </div>
+
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.floorColor">Floor Color</span>
+        <input type="color" id="settings-floor-color" value="#ffffff" data-i18n-attr="aria-label:aria.floorColor"
+          aria-label="Floor color" />
+      </div>
+
+      <div class="slider-row">
+        <label for="settings-brightness" data-i18n="settings.brightness">Brightness</label>
+        <input type="range" id="settings-brightness" min="40" max="180" value="100" />
+      </div>
+
+      <div class="slider-row">
+        <label for="settings-fov" data-i18n="settings.fov">Field of View</label>
+        <input type="range" id="settings-fov" min="70" max="110" value="96" />
+      </div>
+
+      <button id="settings-reset" class="link-button" type="button" data-i18n="common.reset">Reset to Default</button>
+    </div>
+  </div>
+
+  <script type="module" src="../../core/main.js"></script>
+</body>
+
 </html>

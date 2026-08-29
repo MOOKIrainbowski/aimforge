@@ -2,6 +2,23 @@
 <html lang="en">
 
 <head>
+  <script>
+    // Blocking (not type=module) and placed first so the theme paints
+    // correctly on first frame — a deferred module script would flash the
+    // wrong theme for a frame. The landing page's own first-ever-visit
+    // default is dark (independent of the app's own "light" default, see
+    // core/rangeConfig.js) — but that default is never written back to
+    // storage, so it doesn't clobber the app's separate first-visit default.
+    (function () {
+      try {
+        var raw = localStorage.getItem("aimforge:rangeConfig");
+        var theme = raw ? (JSON.parse(raw).theme === "light" ? "light" : "dark") : "dark";
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AimForge — Free Browser Aim Trainer</title>
@@ -18,6 +35,7 @@
       --bg-page: #0c0d11;
       --bg-card: #15171e;
       --bg-card-hover: #191c24;
+      --bg-input: rgba(255, 255, 255, 0.04);
       --text-primary: #f2f4f8;
       --text-secondary: #9aa4b8;
       --text-muted: #5c6270;
@@ -27,6 +45,22 @@
       --border: rgba(255, 255, 255, 0.08);
       --border-strong: rgba(255, 255, 255, 0.14);
       --positive: #4ade80;
+    }
+
+    :root[data-theme="light"] {
+      --bg-page: #f5f5f7;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f7f8fa;
+      --bg-input: rgba(0, 0, 0, 0.03);
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-muted: #86868b;
+      --accent: #2a78d6;
+      --accent-2: #6d3fd6;
+      --accent-soft: rgba(42, 120, 214, 0.1);
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.14);
+      --positive: #1e9e56;
     }
 
     * {
@@ -44,6 +78,7 @@
       color: var(--text-primary);
       font: 400 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
       overflow-x: hidden;
+      transition: background 200ms ease, color 200ms ease;
     }
 
     a {
@@ -74,6 +109,10 @@
       backdrop-filter: blur(14px);
       background: rgba(12, 13, 17, 0.7);
       border-bottom: 1px solid var(--border);
+    }
+
+    :root[data-theme="light"] header {
+      background: rgba(255, 255, 255, 0.72);
     }
 
     nav.wrap {
@@ -112,6 +151,74 @@
 
     .nav-links a:hover {
       color: var(--text-primary);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Theme / language toggle switches */
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font: 700 11px system-ui, -apple-system, "Segoe UI", sans-serif;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+      transition: color 150ms ease;
+    }
+
+    .switch:hover {
+      color: var(--text-primary);
+    }
+
+    .switch-state {
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .switch-track {
+      position: relative;
+      width: 34px;
+      height: 20px;
+      flex-shrink: 0;
+      border-radius: 999px;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-strong);
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+
+    .switch-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      transition: transform 150ms ease, background 150ms ease;
+    }
+
+    .switch.on .switch-track {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .switch.on .switch-thumb {
+      transform: translateX(14px);
+      background: var(--accent);
     }
 
     .btn {
@@ -233,7 +340,9 @@
       gap: 6px;
     }
 
-    /* Hero visual: animated range preview, pure CSS/SVG */
+    /* Hero visual: animated range preview, pure CSS/SVG. Deliberately kept
+       on its own fixed dark styling regardless of page theme — it reads as
+       a stylized screenshot of the range, not page chrome. */
     .hero-visual {
       position: relative;
       aspect-ratio: 1 / 1;
@@ -260,8 +369,8 @@
       width: 46px;
       height: 46px;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #ff8a8a, #ff5c5c 60%, #c23f3f);
-      box-shadow: 0 0 24px rgba(255, 92, 92, 0.55);
+      background: radial-gradient(circle at 35% 30%, #7dd3fc, #38bdf8 60%, #0ea5e9);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.55);
       animation: target-hop 3.6s ease-in-out infinite;
     }
 
@@ -476,7 +585,7 @@
       right: 16px;
       font-size: 34px;
       font-weight: 800;
-      color: rgba(255, 255, 255, 0.05);
+      color: var(--border);
       line-height: 1;
     }
 
@@ -617,31 +726,51 @@
         AimForge
       </a>
       <div class="nav-links">
-        <a href="#why">Why AimForge</a>
-        <a href="#modes">Drills</a>
-        <a href="#how">How it works</a>
+        <a href="#why" data-i18n="nav.why">Why AimForge</a>
+        <a href="#modes" data-i18n="nav.drills">Drills</a>
+        <a href="#how" data-i18n="nav.how">How it works</a>
       </div>
-      <a class="btn btn-primary" href="app/">Launch AimForge</a>
+      <div class="nav-right">
+        <div class="nav-controls">
+          <button type="button" class="switch" id="lang-switch" role="switch" aria-checked="false"
+            aria-label="Switch language">
+            <span class="switch-state" id="lang-switch-state">EN</span>
+            <span class="switch-track">
+              <span class="switch-thumb"></span>
+            </span>
+          </button>
+          <button type="button" class="switch" id="theme-switch" role="switch" aria-checked="false"
+            aria-label="Switch theme">
+            <span class="switch-state" id="theme-switch-state">🌙</span>
+            <span class="switch-track">
+              <span class="switch-thumb"></span>
+            </span>
+          </button>
+        </div>
+        <a class="btn btn-primary" href="app/" data-i18n="cta.launchNav">Launch AimForge</a>
+      </div>
     </nav>
   </header>
 
   <main id="top">
     <div class="wrap hero">
       <div>
-        <span class="eyebrow"><span class="dot"></span> Free · No install · No account</span>
-        <h1>Sharpen your <span class="gradient">aim</span>,<br />right in your browser.</h1>
-        <p class="hero-sub">
+        <span class="eyebrow"><span class="dot"></span> <span data-i18n="hero.eyebrow">Free · No install · No
+            account</span></span>
+        <h1 data-i18n-html="hero.title.html">Sharpen your <span class="gradient">aim</span>,<br />right in your
+          browser.</h1>
+        <p class="hero-sub" data-i18n="hero.sub">
           AimForge is a fast, distraction-free FPS aim trainer that runs entirely client-side.
           Four drill types, a real mouse-sensitivity converter, and rule-based coach feedback —
           no download, no login, and your stats never leave your device.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary btn-large" href="app/">Launch AimForge →</a>
-          <a class="btn btn-secondary btn-large" href="#why">Why it's different</a>
+          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimForge →</a>
+          <a class="btn btn-secondary btn-large" href="#why" data-i18n="hero.secondaryBtn">Why it's different</a>
         </div>
         <div class="hero-meta">
-          <span>🖱️ Raw mouse input, sensitivity-matched to your main game</span>
-          <span>💾 Stats stored locally</span>
+          <span data-i18n="hero.meta1">🖱️ Raw mouse input, sensitivity-matched to your main game</span>
+          <span data-i18n="hero.meta2">💾 Stats stored locally</span>
         </div>
       </div>
 
@@ -649,8 +778,8 @@
         <div class="range-target"></div>
         <div class="range-crosshair"></div>
         <div class="hero-visual-caption">
-          <span>GRIDSHOT</span>
-          <span>LIVE PREVIEW</span>
+          <span data-i18n="hero.captionMode">GRIDSHOT</span>
+          <span data-i18n="hero.captionPreview">LIVE PREVIEW</span>
         </div>
       </div>
     </div>
@@ -658,47 +787,47 @@
     <section id="why">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow">Why AimForge</span>
-          <h2>Built like a tool, not a funnel</h2>
-          <p>Most browser aim trainers push you toward an account, a leaderboard, or a paid tier before you've even
-            taken a shot. AimForge skips all of that.</p>
+          <span class="eyebrow" data-i18n="why.eyebrow">Why AimForge</span>
+          <h2 data-i18n="why.title">Built like a tool, not a funnel</h2>
+          <p data-i18n="why.sub">Most browser aim trainers push you toward an account, a leaderboard, or a paid tier
+            before you've even taken a shot. AimForge skips all of that.</p>
         </div>
         <div class="feature-grid">
           <div class="feature-card reveal">
             <div class="feature-icon">⚡</div>
-            <h3>Instant, zero-install play</h3>
-            <p>WebGL in your browser — click Launch and you're on the range in seconds. No client, no updates, no
-              wasted disk space.</p>
+            <h3 data-i18n="feature.instant.title">Instant, zero-install play</h3>
+            <p data-i18n="feature.instant.desc">WebGL in your browser — click Launch and you're on the range in
+              seconds. No client, no updates, no wasted disk space.</p>
           </div>
           <div class="feature-card reveal">
             <div class="feature-icon">🔒</div>
-            <h3>Your data stays yours</h3>
-            <p>Every session, every stat, every crosshair preset is saved to your device's local storage — never
-              uploaded to a server you don't control.</p>
+            <h3 data-i18n="feature.privacy.title">Your data stays yours</h3>
+            <p data-i18n="feature.privacy.desc">Every session, every stat, every crosshair preset is saved to your
+              device's local storage — never uploaded to a server you don't control.</p>
           </div>
           <div class="feature-card reveal">
             <div class="feature-icon">🎯</div>
-            <h3>Real sensitivity conversion</h3>
-            <p>Set your actual DPI and cm/360, and AimForge instantly matches it across Valorant, CS2, Apex,
-              Overwatch 2, and Fortnite.</p>
+            <h3 data-i18n="feature.sens.title">Real sensitivity conversion</h3>
+            <p data-i18n="feature.sens.desc">Set your actual DPI and cm/360, and AimForge instantly matches it across
+              Valorant, CS2, Apex, Overwatch 2, and Fortnite.</p>
           </div>
           <div class="feature-card reveal">
             <div class="feature-icon">🧠</div>
-            <h3>Coach feedback that isn't generic</h3>
-            <p>After every session, rule-based tips compare you against <em>your own</em> trend — overshoot bias,
-              tracking consistency, reaction spread — not a canned tip list.</p>
+            <h3 data-i18n="feature.coach.title">Coach feedback that isn't generic</h3>
+            <p data-i18n="feature.coach.desc">After every session, rule-based tips compare you against your own
+              trend — overshoot bias, tracking consistency, reaction spread — not a canned tip list.</p>
           </div>
           <div class="feature-card reveal">
             <div class="feature-icon">🔫</div>
-            <h3>Recoil control training</h3>
-            <p>Practice canceling real per-shot recoil patterns on Rifle and SMG presets, scored on how well you
-              compensate — not just whether you hit.</p>
+            <h3 data-i18n="feature.recoil.title">Recoil control training</h3>
+            <p data-i18n="feature.recoil.desc">Practice canceling real per-shot recoil patterns on Rifle and SMG
+              presets, scored on how well you compensate — not just whether you hit.</p>
           </div>
           <div class="feature-card reveal">
             <div class="feature-icon">🖥️</div>
-            <h3>A free desktop app, too</h3>
-            <p>The exact same trainer as a lightweight desktop build with higher-fidelity shadows, bloom, and
-              reflections for offline practice.</p>
+            <h3 data-i18n="feature.desktop.title">A free desktop app, too</h3>
+            <p data-i18n="feature.desktop.desc">The exact same trainer as a lightweight desktop build with
+              higher-fidelity shadows, bloom, and reflections for offline practice.</p>
           </div>
         </div>
       </div>
@@ -707,35 +836,39 @@
     <section id="modes">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow">Drills</span>
-          <h2>Four drills, one range</h2>
-          <p>Each mode trains a distinct aiming skill, with difficulty presets that scale target size, speed, and
-            wave size together.</p>
+          <span class="eyebrow" data-i18n="modes.eyebrow">Drills</span>
+          <h2 data-i18n="modes.title">Four drills, one range</h2>
+          <p data-i18n="modes.sub">Each mode trains a distinct aiming skill, with difficulty presets that scale
+            target size, speed, and wave size together.</p>
         </div>
         <div class="mode-strip">
           <div class="mode-tile reveal">
             <span class="num">01</span>
             <span class="glyph">◎</span>
-            <h3>Gridshot</h3>
-            <p>Flick to one target at a time. Tracks flick overshoot/undershoot bias and time-to-kill.</p>
+            <h3 data-i18n="mode.gridshot.name">Gridshot</h3>
+            <p data-i18n="mode.gridshot.landingDesc">Flick to one target at a time. Tracks flick overshoot/undershoot
+              bias and time-to-kill.</p>
           </div>
           <div class="mode-tile reveal">
             <span class="num">02</span>
             <span class="glyph">〜</span>
-            <h3>Tracking</h3>
-            <p>Hold your crosshair on a strafing target. Scored by continuous time-on-target.</p>
+            <h3 data-i18n="mode.tracking.name">Tracking</h3>
+            <p data-i18n="mode.tracking.landingDesc">Hold your crosshair on a strafing target. Scored by continuous
+              time-on-target.</p>
           </div>
           <div class="mode-tile reveal">
             <span class="num">03</span>
             <span class="glyph">⤨</span>
-            <h3>Target Switching</h3>
-            <p>Clear waves of simultaneous targets, training fast re-acquisition between them.</p>
+            <h3 data-i18n="mode.switching.name">Target Switching</h3>
+            <p data-i18n="mode.switching.landingDesc">Clear waves of simultaneous targets, training fast
+              re-acquisition between them.</p>
           </div>
           <div class="mode-tile reveal">
             <span class="num">04</span>
             <span class="glyph">⚡</span>
-            <h3>Reaction Time</h3>
-            <p>Targets flash briefly and vanish. Measures raw reaction speed and false starts.</p>
+            <h3 data-i18n="mode.reaction.name">Reaction Time</h3>
+            <p data-i18n="mode.reaction.landingDesc">Targets flash briefly and vanish. Measures raw reaction speed
+              and false starts.</p>
           </div>
         </div>
       </div>
@@ -744,27 +877,27 @@
     <section id="how">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow">How it works</span>
-          <h2>From click to coach feedback in seconds</h2>
+          <span class="eyebrow" data-i18n="how.eyebrow">How it works</span>
+          <h2 data-i18n="how.title">From click to coach feedback in seconds</h2>
         </div>
         <div class="steps">
           <div class="step reveal">
             <div class="step-num">1</div>
-            <h3>Pick a drill &amp; tune it</h3>
-            <p>Choose a mode, difficulty, and session length. Turn on recoil control if you want a weapon pattern to
-              fight.</p>
+            <h3 data-i18n="step1.title">Pick a drill &amp; tune it</h3>
+            <p data-i18n="step1.desc">Choose a mode, difficulty, and session length. Turn on recoil control if you
+              want a weapon pattern to fight.</p>
           </div>
           <div class="step reveal">
             <div class="step-num">2</div>
-            <h3>Step into the range</h3>
-            <p>Click to lock your mouse, move with WASD, and shoot — raw input, matched to the sensitivity you set.
-            </p>
+            <h3 data-i18n="step2.title">Step into the range</h3>
+            <p data-i18n="step2.desc">Click to lock your mouse, move with WASD, and shoot — raw input, matched to the
+              sensitivity you set.</p>
           </div>
           <div class="step reveal">
             <div class="step-num">3</div>
-            <h3>Review &amp; improve</h3>
-            <p>See your score, accuracy, and coach tips instantly, then track trends and hit-position heatmaps over
-              time.</p>
+            <h3 data-i18n="step3.title">Review &amp; improve</h3>
+            <p data-i18n="step3.desc">See your score, accuracy, and coach tips instantly, then track trends and
+              hit-position heatmaps over time.</p>
           </div>
         </div>
       </div>
@@ -773,9 +906,9 @@
     <section>
       <div class="wrap">
         <div class="cta-band reveal">
-          <h2>Your aim isn't going to train itself.</h2>
-          <p>No sign-up. No download. Just click, and start flicking.</p>
-          <a class="btn btn-primary btn-large" href="app/">Launch AimForge →</a>
+          <h2 data-i18n="cta.title">Your aim isn't going to train itself.</h2>
+          <p data-i18n="cta.sub">No sign-up. No download. Just click, and start flicking.</p>
+          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimForge →</a>
         </div>
       </div>
     </section>
@@ -783,10 +916,66 @@
 
   <footer class="wrap">
     <span class="brand">AimForge</span>
-    <span>Runs entirely in your browser. No accounts, no tracking, no ads.</span>
+    <span data-i18n="footer.tagline">Runs entirely in your browser. No accounts, no tracking, no ads.</span>
   </footer>
 
-  <script>
+  <script type="module">
+    import { applyTranslations, getLanguage, setLanguage } from "./core/i18n.js";
+
+    applyTranslations(document);
+
+    const RANGE_KEY = "aimforge:rangeConfig";
+    function loadTheme() {
+      try {
+        const raw = localStorage.getItem(RANGE_KEY);
+        return raw ? (JSON.parse(raw).theme === "light" ? "light" : "dark") : "dark";
+      } catch {
+        return "dark";
+      }
+    }
+    function saveTheme(theme) {
+      try {
+        const raw = localStorage.getItem(RANGE_KEY);
+        const config = raw ? JSON.parse(raw) : {};
+        config.theme = theme;
+        localStorage.setItem(RANGE_KEY, JSON.stringify(config));
+      } catch {
+        // localStorage unavailable — the choice just won't persist.
+      }
+    }
+
+    const themeSwitch = document.getElementById("theme-switch");
+    const themeState = document.getElementById("theme-switch-state");
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const isLight = theme === "light";
+      themeSwitch.setAttribute("aria-checked", String(isLight));
+      themeSwitch.classList.toggle("on", isLight);
+      themeState.textContent = isLight ? "☀️" : "🌙";
+    }
+    applyTheme(loadTheme());
+    themeSwitch.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      applyTheme(next);
+      saveTheme(next);
+    });
+
+    const langSwitch = document.getElementById("lang-switch");
+    const langState = document.getElementById("lang-switch-state");
+    function applyLangUi(lang) {
+      const isKo = lang === "ko";
+      langSwitch.setAttribute("aria-checked", String(isKo));
+      langSwitch.classList.toggle("on", isKo);
+      langState.textContent = isKo ? "한" : "EN";
+    }
+    applyLangUi(getLanguage());
+    langSwitch.addEventListener("click", () => {
+      const next = getLanguage() === "ko" ? "en" : "ko";
+      setLanguage(next);
+      applyLangUi(next);
+      applyTranslations(document);
+    });
+
     const revealEls = document.querySelectorAll(".reveal");
     const io = new IntersectionObserver(
       (entries) => {
