@@ -1,0 +1,13 @@
+{
+  "name": "aimforge-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AimForge Desktop — Electron shell around the shared core/ game code at the higher \"desktop\" quality preset (shadows, bloom, env map, higher-poly targets).",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^43.2.0"
+  }
+}

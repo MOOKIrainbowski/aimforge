@@ -1,0 +1,12 @@
+{
+  "name": "aimforge-dev-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev-only tooling (Playwright smoke tests) for AimForge. The shipped app/ and desktop/ apps have no build step and don't depend on this package.",
+  "scripts": {
+    "serve": "python -m http.server 8123"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}
