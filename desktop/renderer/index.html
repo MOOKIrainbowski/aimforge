@@ -23,9 +23,26 @@
 </head>
 
 <body>
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-mark">
+      <svg width="40" height="40" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="8.5" fill="none" stroke="#4f8ef7" stroke-width="2.4" />
+        <circle cx="16" cy="16" r="2.1" fill="#4f8ef7" />
+        <path d="M16 3.5V9M16 23V28.5M3.5 16H9M23 16H28.5" stroke="#4f8ef7" stroke-width="2.4"
+          stroke-linecap="round" />
+      </svg>
+    </div>
+    <p id="loading-progress-text" data-i18n="loading.start">Starting…</p>
+  </div>
   <canvas id="scene"></canvas>
   <div id="crosshair" class="hidden"></div>
-  <div id="lock-hint" class="hidden" data-i18n="hint.start">Click to enter the range &middot; Esc to release mouse</div>
+  <div id="hitmarker"></div>
+  <div id="start-prompt" class="start-prompt hidden">
+    <div class="start-prompt-card">
+      <h2 data-i18n="start.title">Click to Start</h2>
+      <p data-i18n="start.hint">Esc releases the mouse mid-session</p>
+    </div>
+  </div>
 
   <div id="hud" class="hidden">
     <span id="hud-score">Score: 0</span>

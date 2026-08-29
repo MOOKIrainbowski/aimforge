@@ -5,7 +5,6 @@
   --bg-input: rgba(255, 255, 255, 0.03);
   --bg-button-secondary: rgba(255, 255, 255, 0.08);
   --bg-hud: rgba(15, 17, 22, 0.55);
-  --bg-hint: rgba(15, 17, 22, 0.6);
   --bg-tooltip: #0d0f14;
   --bg-checker-a: #20232b;
   --bg-checker-b: #24272f;
@@ -40,7 +39,6 @@
   --bg-input: rgba(0, 0, 0, 0.03);
   --bg-button-secondary: rgba(0, 0, 0, 0.06);
   --bg-hud: rgba(255, 255, 255, 0.75);
-  --bg-hint: rgba(255, 255, 255, 0.8);
   --bg-tooltip: #ffffff;
   --bg-checker-a: #ececee;
   --bg-checker-b: #e2e2e6;
@@ -141,17 +139,133 @@ body {
   animation: crosshair-miss-pop 180ms ease-out;
 }
 
-#lock-hint {
+/* Classic FPS "confirmed kill" X marker — layers on top of the crosshair's
+   own subtle flash rather than replacing it. */
+#hitmarker {
   position: fixed;
-  bottom: 24px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  color: var(--text-secondary);
-  font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: var(--bg-hint);
-  padding: 8px 16px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
   pointer-events: none;
+  opacity: 0;
+}
+
+#hitmarker::before,
+#hitmarker::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: #ffffff;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+}
+
+#hitmarker::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+#hitmarker::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+@keyframes hitmarker-pop-anim {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+#hitmarker.hitmarker-pop {
+  animation: hitmarker-pop-anim 260ms ease-out;
+}
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg-page);
+  transition: opacity 200ms ease;
+}
+
+.loading-screen.hidden {
+  display: none !important;
+}
+
+.loading-mark {
+  animation: loading-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+#loading-progress-text {
+  font: 500 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* Backdrop and card are both non-interactive — clicking anywhere on the
+   canvas underneath is what actually engages pointer lock. */
+.start-prompt {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.start-prompt-card {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 28px 44px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+  animation: card-in 220ms ease;
+}
+
+.start-prompt-card h2 {
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.start-prompt-card p {
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .hidden {

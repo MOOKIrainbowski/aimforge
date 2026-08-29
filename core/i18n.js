@@ -107,7 +107,12 @@ const STRINGS = {
     "weapon.smg": "SMG",
     "cta.enterRange": "Enter the Range",
     "home.best": "Best {value}",
-    "hint.start": "Click to enter the range · Esc to release mouse",
+    "start.title": "Click to Start",
+    "start.hint": "Esc releases the mouse mid-session",
+    "loading.start": "Starting…",
+    "loading.renderer": "Preparing renderer…",
+    "loading.range": "Building the range…",
+    "loading.effects": "Loading effects…",
 
     // Pause / summary
     "pause.title": "Paused",
@@ -312,7 +317,12 @@ const STRINGS = {
     "weapon.smg": "SMG",
     "cta.enterRange": "사격장 입장",
     "home.best": "최고 {value}",
-    "hint.start": "클릭해서 사격장 입장 · Esc로 마우스 잠금 해제",
+    "start.title": "클릭해서 시작",
+    "start.hint": "Esc로 세션 중 마우스 잠금 해제",
+    "loading.start": "시작하는 중…",
+    "loading.renderer": "렌더러 준비 중…",
+    "loading.range": "사격장 구성 중…",
+    "loading.effects": "이펙트 로딩 중…",
 
     "pause.title": "일시정지",
     "pause.hint": "아무 곳이나 클릭하면 재개됩니다",

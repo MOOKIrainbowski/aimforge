@@ -103,7 +103,9 @@ export class GridshotDrill extends Drill {
 
     const hit = this.targetManager.raycastHit(this.camera);
     let landed = false;
+    let hitPosition = null;
     if (hit && hit === this.currentTarget) {
+      hitPosition = hit.mesh.position.clone();
       hit.markHit();
       this.targetManager.remove(hit);
       this.hits++;
@@ -117,7 +119,7 @@ export class GridshotDrill extends Drill {
     }
 
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
-    return { hit: landed };
+    return { hit: landed, position: hitPosition, streak: this.currentStreak };
   }
 
   getLiveStats(now) {

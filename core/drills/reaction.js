@@ -80,7 +80,9 @@ export class ReactionDrill extends Drill {
     }
     const hit = this.targetManager.raycastHit(this.camera);
     let landed = false;
+    let hitPosition = null;
     if (hit && hit === this.currentTarget) {
+      hitPosition = hit.mesh.position.clone();
       hit.markHit();
       this.targetManager.remove(hit);
       this.reactionTimes.push(now - this.spawnedAt);
@@ -90,7 +92,7 @@ export class ReactionDrill extends Drill {
     }
     // A stray click that misses the armed target doesn't end the rep —
     // it stays live until hit or its exposure window times out above.
-    return { hit: landed };
+    return { hit: landed, position: hitPosition };
   }
 
   getLiveStats(now) {

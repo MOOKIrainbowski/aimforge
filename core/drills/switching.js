@@ -65,7 +65,9 @@ export class SwitchingDrill extends Drill {
     this.shotsTotal++;
     const hit = this.targetManager.raycastHit(this.camera);
     let landed = false;
+    let hitPosition = null;
     if (hit && this.currentWaveIds.has(hit.id)) {
+      hitPosition = hit.mesh.position.clone();
       hit.markHit();
       this.targetManager.remove(hit);
       this.currentWaveIds.delete(hit.id);
@@ -85,7 +87,7 @@ export class SwitchingDrill extends Drill {
     }
 
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
-    return { hit: landed };
+    return { hit: landed, position: hitPosition, streak: this.currentStreak };
   }
 
   getLiveStats(now) {

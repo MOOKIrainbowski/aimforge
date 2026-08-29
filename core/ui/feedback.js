@@ -116,3 +116,12 @@ export function flashCrosshair(el, hit) {
   void el.offsetWidth;
   el.classList.add(hit ? "crosshair-flash-hit" : "crosshair-flash-miss");
 }
+
+// A more pronounced "confirmed kill" marker layered on top of the subtle
+// flashCrosshair() glow — the classic FPS X hit-marker, not tied to sound
+// (the caller decides whether to also play a hit sound).
+export function showHitMarker(el) {
+  el.classList.remove("hitmarker-pop");
+  void el.offsetWidth;
+  el.classList.add("hitmarker-pop");
+}

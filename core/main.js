@@ -28,26 +28,38 @@ import {
   playMenuSound,
   initGlobalClickSounds,
   flashCrosshair,
+  showHitMarker,
 } from "./ui/feedback.js";
-import { applyTranslations } from "./i18n.js";
+import { spawnKillBurst, updateParticles } from "./particles.js";
+import { applyTranslations, t } from "./i18n.js";
 
 applyTranslations(document);
 initGlobalClickSounds();
+
+const loadingScreen = document.getElementById("loading-screen");
+const loadingProgressText = document.getElementById("loading-progress-text");
+function setLoadingProgress(key) {
+  loadingProgressText.textContent = t(key);
+}
 
 const quality = getQuality();
 
 const canvas = document.getElementById("scene");
 const crosshair = document.getElementById("crosshair");
-const lockHint = document.getElementById("lock-hint");
+const hitmarker = document.getElementById("hitmarker");
+const startPrompt = document.getElementById("start-prompt");
 const pauseScreen = document.getElementById("pause-screen");
 
 let rangeConfig = loadRangeConfig();
 document.documentElement.dataset.theme = rangeConfig.theme;
 setSoundEnabled(rangeConfig.soundEnabled);
 
+setLoadingProgress("loading.renderer");
 const renderer = createRenderer(canvas, quality);
 const camera = createCamera(rangeConfig.fov);
 const scene = new THREE.Scene();
+
+setLoadingProgress("loading.range");
 const sceneRefs = buildRange(scene, quality, rangeConfig);
 const targetManager = new TargetManager(scene, quality);
 applyEnvironment(renderer, scene, quality);
@@ -57,6 +69,7 @@ applyEnvironment(renderer, scene, quality);
 // safe here: both builds load this file as a native ES module.
 let composer = null;
 if (quality.postProcessing) {
+  setLoadingProgress("loading.effects");
   const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
     import("three/addons/postprocessing/EffectComposer.js"),
     import("three/addons/postprocessing/RenderPass.js"),
@@ -72,7 +85,6 @@ if (quality.postProcessing) {
 // `?duration=<ms>` overrides whatever duration the home screen selected —
 // used for fast dev/test iteration instead of waiting out a real session.
 const durationOverride = Number(new URLSearchParams(window.location.search).get("duration"));
-
 
 // appState is the MENU -> PLAYING -> SUMMARY state machine (HISTORY is a
 // side-branch reachable from MENU or SUMMARY, always returning to MENU).
@@ -117,6 +129,10 @@ function createDrill(config, deps) {
   }
 }
 
+// Entering a drill no longer grabs pointer lock instantly — the range shows
+// with the start-prompt overlay, and the player locks in explicitly by
+// clicking (see the canvas `click` listener below), matching a deliberate
+// "click to start" flow rather than an immediate lock on the menu click.
 function beginSession(config) {
   lastConfig = {
     ...config,
@@ -125,7 +141,10 @@ function beginSession(config) {
   };
   appState = "PLAYING";
   hideHome();
-  controls.requestLock();
+  // No pointerlockchange event fires just from entering this state (lock
+  // hasn't been requested yet), so the prompt needs to be shown directly
+  // rather than relying on handleLockChange()'s usual toggle.
+  startPrompt.classList.remove("hidden");
 }
 
 function startSession(now) {
@@ -224,9 +243,9 @@ document.getElementById("settings-back").addEventListener("click", () => {
 
 function handleLockChange(locked) {
   crosshair.classList.toggle("hidden", !locked);
-  // The click-to-start hint only applies before a drill's first lock; once
-  // a drill is running, a lost lock shows the pause overlay instead.
-  lockHint.classList.toggle("hidden", locked || appState !== "PLAYING" || Boolean(drill));
+  // The click-to-start prompt only applies before a drill's first lock;
+  // once a drill is running, a lost lock shows the pause overlay instead.
+  startPrompt.classList.toggle("hidden", locked || appState !== "PLAYING" || Boolean(drill));
 
   if (locked) {
     hidePauseScreen();
@@ -253,8 +272,13 @@ canvas.addEventListener("mousedown", () => {
     const result = drill.handleShot(performance.now());
     if (result) {
       flashCrosshair(crosshair, result.hit);
-      if (result.hit) playHitSound();
-      else playMissSound();
+      if (result.hit) {
+        playHitSound();
+        showHitMarker(hitmarker);
+        spawnKillBurst(scene, result.position, result.streak);
+      } else {
+        playMissSound();
+      }
     }
   }
 });
@@ -267,11 +291,13 @@ window.addEventListener("resize", () => {
 });
 
 let lastFrameTime = performance.now();
+let firstFrameRendered = false;
 function tick(now) {
   const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
   lastFrameTime = now;
 
   controls.update(dt);
+  updateParticles(dt);
 
   if (appState === "PLAYING" && controls.locked && drill) {
     const expired = targetManager.update(dt, now);
@@ -303,6 +329,12 @@ function tick(now) {
 
   if (composer) composer.render();
   else renderer.render(scene, camera);
+
+  if (!firstFrameRendered) {
+    firstFrameRendered = true;
+    loadingScreen.classList.add("hidden");
+  }
+
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);

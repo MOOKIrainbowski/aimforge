@@ -18,9 +18,12 @@ export class Drill {
 
   update(_dt, _now, _expiredTargets) {}
 
-  // Return { hit: boolean } to trigger crosshair/audio feedback in main.js,
-  // or leave unimplemented (undefined) for modes with no discrete "shot"
-  // concept (Tracking is scored continuously; clicking does nothing there).
+  // Return { hit: boolean, position?: THREE.Vector3, streak?: number } to
+  // trigger crosshair/audio/particle feedback in main.js — `position` (the
+  // hit target's world position, captured before it's removed) and `streak`
+  // are only meaningful when hit is true. Leave unimplemented (undefined)
+  // for modes with no discrete "shot" concept (Tracking is scored
+  // continuously; clicking does nothing there).
   handleShot(_now) {}
 
   getLiveStats(_now) {
