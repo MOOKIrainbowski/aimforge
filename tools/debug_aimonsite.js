@@ -14,7 +14,7 @@ const { chromium } = require("playwright");
   await page.goto("http://localhost:8123/app/index.html", { waitUntil: "load" });
   await page.waitForTimeout(2000);
 
-  await page.screenshot({ path: __dirname + "/aimforge_screenshot.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_screenshot.png" });
 
   console.log("---- CONSOLE / ERRORS ----");
   for (const m of messages) console.log(m);

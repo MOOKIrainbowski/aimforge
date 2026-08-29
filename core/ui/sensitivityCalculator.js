@@ -1,5 +1,5 @@
 import { loadSettings, saveSettings } from "../settings.js";
-import { aimforgeSensitivityToCm360, cm360ToAimforgeSensitivity, cm360ToGameSensitivity, GAME_LABELS } from "../sensitivity.js";
+import { aimonsiteSensitivityToCm360, cm360ToAimonsiteSensitivity, cm360ToGameSensitivity, GAME_LABELS } from "../sensitivity.js";
 
 const screen = document.getElementById("sensitivity-screen");
 const dpiInput = document.getElementById("sens-dpi");
@@ -32,7 +32,7 @@ function render() {
 function persistAndApply() {
   const dpi = Number(dpiInput.value);
   const cm360 = Number(cm360Input.value);
-  const settings = { dpi, sensitivity: cm360ToAimforgeSensitivity(cm360, dpi) };
+  const settings = { dpi, sensitivity: cm360ToAimonsiteSensitivity(cm360, dpi) };
   saveSettings(settings);
   onChange(settings);
   render();
@@ -42,7 +42,7 @@ export function initSensitivityCalculator(onChangeCallback) {
   onChange = onChangeCallback;
   const settings = loadSettings();
   dpiInput.value = String(settings.dpi);
-  cm360Input.value = aimforgeSensitivityToCm360(settings.sensitivity, settings.dpi).toFixed(1);
+  cm360Input.value = aimonsiteSensitivityToCm360(settings.sensitivity, settings.dpi).toFixed(1);
   render();
 
   dpiInput.addEventListener("input", persistAndApply);

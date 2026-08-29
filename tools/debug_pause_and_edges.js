@@ -13,7 +13,7 @@ const { chromium } = require("playwright");
   const lockedAfterClick = await page.evaluate(() => document.pointerLockElement !== null);
   console.log(`Locked after click: ${lockedAfterClick}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_dpr_locked.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_dpr_locked.png" });
 
   // Playwright's synthetic Escape doesn't reliably trigger the browser's
   // native pointer-unlock in headless mode, so call the API directly —
@@ -25,7 +25,7 @@ const { chromium } = require("playwright");
   const hintText = await page.evaluate(() => document.getElementById("lock-hint").textContent);
   console.log(`Hint text after Esc mid-session: "${hintText}"`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_dpr_paused.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_dpr_paused.png" });
 
   await browser.close();
 })();

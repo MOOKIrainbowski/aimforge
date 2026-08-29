@@ -31,7 +31,7 @@ async function playAndReturn(page, mode) {
   );
   console.log(`History screen visible: ${historyVisible}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_history.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history.png" });
 
   // Hover over the chart to trigger the tooltip.
   await page.hover("#history-chart", { position: { x: 300, y: 100 } });
@@ -40,7 +40,7 @@ async function playAndReturn(page, mode) {
     () => !document.getElementById("history-tooltip").classList.contains("hidden")
   );
   console.log(`Tooltip visible on hover: ${tooltipVisible}`);
-  await page.screenshot({ path: __dirname + "/aimforge_history_tooltip.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history_tooltip.png" });
 
   // Switch metric to accuracy and confirm the chart redraws without error.
   await page.click('#history-metric-group button[data-metric="accuracy"]');
@@ -49,7 +49,7 @@ async function playAndReturn(page, mode) {
   // Switch mode to a mode with zero sessions and confirm the empty state renders.
   await page.click('#history-mode-group button[data-mode="tracking"]');
   await page.waitForTimeout(150);
-  await page.screenshot({ path: __dirname + "/aimforge_history_empty.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history_empty.png" });
 
   // Back button returns to the home screen cleanly.
   await page.click("#history-back");

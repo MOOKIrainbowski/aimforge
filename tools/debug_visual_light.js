@@ -7,6 +7,6 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.evaluate(() => (document.documentElement.dataset.theme = "light"));
   await page.waitForTimeout(150);
-  await page.screenshot({ path: __dirname + "/aimforge_home_light.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_home_light.png" });
   await browser.close();
 })();

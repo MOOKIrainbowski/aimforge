@@ -1,4 +1,6 @@
-const STORAGE_KEY = "aimforge:settings";
+import { migrateKey } from "./storage.js";
+
+const STORAGE_KEY = "aimonsite:settings";
 
 const DEFAULT_SETTINGS = {
   sensitivity: 0.0022, // radians per pixel — matches controls.js's original built-in default
@@ -10,6 +12,7 @@ export function getDefaultSettings() {
 }
 
 export function loadSettings() {
+  migrateKey("settings");
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultSettings();

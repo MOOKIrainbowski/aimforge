@@ -85,14 +85,7 @@ export function buildRange(scene, quality, rangeConfig) {
   keyLight.castShadow = quality.shadows;
   scene.add(keyLight);
 
-  const roomBounds = {
-    minX: -ROOM_WIDTH / 2 + 0.5,
-    maxX: ROOM_WIDTH / 2 - 0.5,
-    minZ: -ROOM_DEPTH / 2 + 0.5,
-    maxZ: ROOM_DEPTH / 2 - 0.5,
-  };
-
-  return { scene, roomBounds, floorMat, wallMat, hemiLight, keyLight };
+  return { scene, floorMat, wallMat, hemiLight, keyLight };
 }
 
 // Live-updates room appearance from rangeConfig without rebuilding the

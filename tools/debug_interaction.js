@@ -20,12 +20,7 @@ const { chromium } = require("playwright");
   const lockedAfterClick = await page.evaluate(() => document.pointerLockElement !== null);
   messages.push(`pointerLockElement set after click: ${lockedAfterClick}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_locked.png" });
-
-  // Simulate WASD forward movement for half a second.
-  await page.keyboard.down("KeyW");
-  await page.waitForTimeout(500);
-  await page.keyboard.up("KeyW");
+  await page.screenshot({ path: __dirname + "/aimonsite_locked.png" });
 
   await page.mouse.move(700, 400, { steps: 5 });
   await page.mouse.down();
@@ -33,7 +28,7 @@ const { chromium } = require("playwright");
   await page.mouse.up();
 
   await page.waitForTimeout(300);
-  await page.screenshot({ path: __dirname + "/aimforge_after_move.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_after_move.png" });
 
   const hudText = await page.evaluate(() => {
     const hud = document.getElementById("hud");

@@ -30,13 +30,13 @@ const { chromium } = require("playwright");
   );
   console.log(`Table: ${tableText}`);
 
-  const stored = await page.evaluate(() => localStorage.getItem("aimforge:settings"));
+  const stored = await page.evaluate(() => localStorage.getItem("aimonsite:settings"));
   console.log(`Stored settings: ${stored}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_sensitivity.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_sensitivity.png" });
 
   // Confirm the change actually reached the live controls instance.
-  const liveSensitivity = await page.evaluate(() => window.__aimforgeDebug.controls.sensitivity);
+  const liveSensitivity = await page.evaluate(() => window.__aimonsiteDebug.controls.sensitivity);
   const expectedSensitivity = JSON.parse(stored).sensitivity;
   console.log(`Live controls.sensitivity: ${liveSensitivity}, matches stored: ${liveSensitivity === expectedSensitivity}`);
 
@@ -45,7 +45,7 @@ const { chromium } = require("playwright");
   await page.click("#sensitivity-back");
   await page.reload({ waitUntil: "load" });
   await page.waitForTimeout(300);
-  const afterReloadSensitivity = await page.evaluate(() => localStorage.getItem("aimforge:settings"));
+  const afterReloadSensitivity = await page.evaluate(() => localStorage.getItem("aimonsite:settings"));
   console.log(`Settings after reload: ${afterReloadSensitivity}`);
 
   console.log(`Page errors: ${pageErrors.length}`);

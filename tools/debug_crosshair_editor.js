@@ -27,10 +27,10 @@ const { chromium } = require("playwright");
   console.log(`Preview contains circle: ${previewSvg.includes("<circle")}`);
   console.log(`Preview contains chosen color: ${previewSvg.includes("#ff3355")}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_crosshair_editor.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_crosshair_editor.png" });
 
   // Confirm it persisted to localStorage.
-  const stored = await page.evaluate(() => localStorage.getItem("aimforge:crosshair"));
+  const stored = await page.evaluate(() => localStorage.getItem("aimonsite:crosshair"));
   console.log(`Stored config: ${stored}`);
 
   // Go back, start a session, and confirm the LIVE gameplay crosshair
@@ -45,7 +45,7 @@ const { chromium } = require("playwright");
   console.log(`Live crosshair contains circle: ${liveCrosshairSvg.includes("<circle")}`);
   console.log(`Live crosshair contains chosen color: ${liveCrosshairSvg.includes("#ff3355")}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_crosshair_live.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_crosshair_live.png" });
 
   // Reload the whole page fresh — confirm the customization survives via
   // localStorage without needing the editor to be reopened.

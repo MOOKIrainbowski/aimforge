@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
 
   const result = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     const target = [...d.targetManager.active.values()][0];
     d.camera.lookAt(target.mesh.position.x, target.mesh.position.y, target.mesh.position.z);
     d.camera.updateMatrixWorld(true);

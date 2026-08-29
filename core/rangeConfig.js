@@ -1,4 +1,6 @@
-const STORAGE_KEY = "aimforge:rangeConfig";
+import { migrateKey } from "./storage.js";
+
+const STORAGE_KEY = "aimonsite:rangeConfig";
 
 // `theme` controls only the 2D UI chrome (menus/HUD/summary/etc.) — the 3D
 // range's own appearance (wall/floor color, brightness) is configured
@@ -19,6 +21,7 @@ export function getDefaultRangeConfig() {
 }
 
 export function loadRangeConfig() {
+  migrateKey("rangeConfig");
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultRangeConfig();

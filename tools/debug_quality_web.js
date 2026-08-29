@@ -16,11 +16,11 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(500);
 
   const state = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return { hasTarget: !!d.drill?.currentTarget, cameraFov: d.camera.fov };
   });
   console.log("Web-quality live state:", JSON.stringify(state));
-  await page.screenshot({ path: __dirname + "/aimforge_web_quality.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_web_quality.png" });
 
   console.log(`Page errors: ${pageErrors.length}`);
   for (const e of pageErrors) console.log(e);

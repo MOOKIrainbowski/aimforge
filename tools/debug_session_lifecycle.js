@@ -35,7 +35,7 @@ const { chromium } = require("playwright");
   const summaryText = await page.evaluate(() => document.getElementById("summary-stats").textContent.trim());
   messages.push(`Summary content: ${summaryText.replace(/\s+/g, " ")}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_summary.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_summary.png" });
 
   // Click Retry and confirm a new session starts (pointer re-locks, HUD resets).
   await page.click("#summary-retry");

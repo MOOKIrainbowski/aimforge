@@ -1,8 +1,11 @@
-const STORAGE_KEY = "aimforge:sessions";
+import { migrateKey } from "./storage.js";
+
+const STORAGE_KEY = "aimonsite:sessions";
 const SCHEMA_VERSION = 1;
 const MAX_SESSIONS = 500;
 
 function readStore() {
+  migrateKey("sessions");
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { version: SCHEMA_VERSION, sessions: [] };

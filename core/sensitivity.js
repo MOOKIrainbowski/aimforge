@@ -21,16 +21,16 @@ export const GAME_LABELS = {
   fortnite: "Fortnite",
 };
 
-// AimForge's own controls.js sensitivity is radians-per-pixel; cm/360 (how
+// AimonSite's own controls.js sensitivity is radians-per-pixel; cm/360 (how
 // far you physically move the mouse for a full turn) is the portable unit
 // every other conversion is expressed in.
-export function aimforgeSensitivityToCm360(radiansPerPixel, dpi) {
+export function aimonsiteSensitivityToCm360(radiansPerPixel, dpi) {
   const countsPer360 = (2 * Math.PI) / radiansPerPixel;
   const inchesPer360 = countsPer360 / dpi;
   return inchesPer360 * CM_PER_INCH;
 }
 
-export function cm360ToAimforgeSensitivity(cm360, dpi) {
+export function cm360ToAimonsiteSensitivity(cm360, dpi) {
   const inchesPer360 = cm360 / CM_PER_INCH;
   const countsPer360 = inchesPer360 * dpi;
   return (2 * Math.PI) / countsPer360;

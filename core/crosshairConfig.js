@@ -1,4 +1,6 @@
-const STORAGE_KEY = "aimforge:crosshair";
+import { migrateKey } from "./storage.js";
+
+const STORAGE_KEY = "aimonsite:crosshair";
 
 const DEFAULT_CONFIG = {
   shape: "cross", // "cross" | "t" | "circle" | "dot"
@@ -16,6 +18,7 @@ export function getDefaultCrosshairConfig() {
 }
 
 export function loadCrosshairConfig() {
+  migrateKey("crosshair");
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultCrosshairConfig();

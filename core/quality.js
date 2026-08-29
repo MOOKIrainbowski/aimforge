@@ -16,7 +16,7 @@ const PRESETS = {
 };
 
 export function getQuality() {
-  const name = (typeof window !== "undefined" && window.__AIMFORGE_QUALITY__) || "web";
+  const name = (typeof window !== "undefined" && window.__AIMONSITE_QUALITY__) || "web";
   const preset = PRESETS[name] || PRESETS.web;
   return { name, ...preset };
 }

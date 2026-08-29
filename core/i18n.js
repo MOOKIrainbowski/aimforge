@@ -1,7 +1,9 @@
+import { migrateKey } from "./storage.js";
+
 // Dependency-free i18n. Shared by the landing page and the app — both are
-// same-origin, so the persisted language (and the theme, via rangeConfig)
-// carries across the "Launch AimForge" boundary automatically.
-const STORAGE_KEY = "aimforge:lang";
+// same-origin, so the persisted language carries across the "Launch
+// AimonSite" boundary automatically.
+const STORAGE_KEY = "aimonsite:lang";
 const DEFAULT_LANGUAGE = "en";
 
 const STRINGS = {
@@ -13,7 +15,7 @@ const STRINGS = {
     "common.reset": "Reset to Default",
 
     // Nav / shared CTAs
-    "nav.why": "Why AimForge",
+    "nav.why": "Why AimonSite",
     "nav.drills": "Drills",
     "nav.how": "How it works",
     "nav.history": "View History",
@@ -21,13 +23,13 @@ const STRINGS = {
     "nav.sensitivity": "Sensitivity",
     "nav.backToLanding": "Back to landing page",
     "nav.settingsAria": "Open settings",
-    "cta.launchNav": "Launch AimForge",
-    "cta.launch": "Launch AimForge →",
+    "cta.launchNav": "Launch AimonSite",
+    "cta.launch": "Launch AimonSite →",
 
     // Landing hero
     "hero.eyebrow": "Free · No install · No account",
     "hero.title.html": 'Sharpen your <span class="gradient">aim</span>,<br />right in your browser.',
-    "hero.sub": "AimForge is a fast, distraction-free FPS aim trainer that runs entirely client-side. Four drill types, a real mouse-sensitivity converter, and rule-based coach feedback — no download, no login, and your stats never leave your device.",
+    "hero.sub": "AimonSite is a fast, distraction-free FPS aim trainer that runs entirely client-side. Four drill types, a real mouse-sensitivity converter, and rule-based coach feedback — no download, no login, and your stats never leave your device.",
     "hero.secondaryBtn": "Why it's different",
     "hero.meta1": "🖱️ Raw mouse input, sensitivity-matched to your main game",
     "hero.meta2": "💾 Stats stored locally",
@@ -35,15 +37,15 @@ const STRINGS = {
     "hero.captionPreview": "LIVE PREVIEW",
 
     // Why section
-    "why.eyebrow": "Why AimForge",
+    "why.eyebrow": "Why AimonSite",
     "why.title": "Built like a tool, not a funnel",
-    "why.sub": "Most browser aim trainers push you toward an account, a leaderboard, or a paid tier before you've even taken a shot. AimForge skips all of that.",
+    "why.sub": "Most browser aim trainers push you toward an account, a leaderboard, or a paid tier before you've even taken a shot. AimonSite skips all of that.",
     "feature.instant.title": "Instant, zero-install play",
     "feature.instant.desc": "WebGL in your browser — click Launch and you're on the range in seconds. No client, no updates, no wasted disk space.",
     "feature.privacy.title": "Your data stays yours",
     "feature.privacy.desc": "Every session, every stat, every crosshair preset is saved to your device's local storage — never uploaded to a server you don't control.",
     "feature.sens.title": "Real sensitivity conversion",
-    "feature.sens.desc": "Set your actual DPI and cm/360, and AimForge instantly matches it across Valorant, CS2, Apex, Overwatch 2, and Fortnite.",
+    "feature.sens.desc": "Set your actual DPI and cm/360, and AimonSite instantly matches it across Valorant, CS2, Apex, Overwatch 2, and Fortnite.",
     "feature.coach.title": "Coach feedback that isn't generic",
     "feature.coach.desc": "After every session, rule-based tips compare you against your own trend — overshoot bias, tracking consistency, reaction spread — not a canned tip list.",
     "feature.recoil.title": "Recoil control training",
@@ -76,7 +78,7 @@ const STRINGS = {
     "step1.title": "Pick a drill & tune it",
     "step1.desc": "Choose a mode, difficulty, and session length. Turn on recoil control if you want a weapon pattern to fight.",
     "step2.title": "Step into the range",
-    "step2.desc": "Click to lock your mouse, move with WASD, and shoot — raw input, matched to the sensitivity you set.",
+    "step2.desc": "Click to lock your mouse and shoot — raw input, matched to the sensitivity you set.",
     "step3.title": "Review & improve",
     "step3.desc": "See your score, accuracy, and coach tips instantly, then track trends and hit-position heatmaps over time.",
 
@@ -86,7 +88,9 @@ const STRINGS = {
     "footer.tagline": "Runs entirely in your browser. No accounts, no tracking, no ads.",
 
     // App: home screen
-    "app.title": "AimForge — Range",
+    "app.title": "AimonSite — Range",
+    "home.eyebrow": "Training Range",
+    "home.heroTitle": "Choose your drill.",
     "home.subtitle": "Pick a drill, tune it, and step into the range.",
     "option.difficulty": "Difficulty",
     "option.duration": "Duration",
@@ -103,7 +107,7 @@ const STRINGS = {
     "weapon.smg": "SMG",
     "cta.enterRange": "Enter the Range",
     "home.best": "Best {value}",
-    "hint.start": "Click to enter the range · WASD to move · Shift to sprint · Esc to release mouse",
+    "hint.start": "Click to enter the range · Esc to release mouse",
 
     // Pause / summary
     "pause.title": "Paused",
@@ -169,7 +173,7 @@ const STRINGS = {
     "sensitivity.title": "Sensitivity",
     "sensitivity.dpi": "Mouse DPI",
     "sensitivity.cm360": "cm/360°",
-    "sensitivity.note": "This sets your actual mouse sensitivity in AimForge. Use the table below to match it in other games.",
+    "sensitivity.note": "This sets your actual mouse sensitivity in AimonSite. Use the table below to match it in other games.",
     "table.game": "Game",
     "table.sensitivity": "Sensitivity",
     "sensitivity.disclaimer": "Approximate — based on commonly published conversion constants; small differences may remain in-game.",
@@ -180,7 +184,7 @@ const STRINGS = {
     "settings.theme": "Theme",
     "theme.dark": "Dark",
     "theme.light": "Light",
-    "settings.sound": "Hit Sound",
+    "settings.sound": "Sound",
     "settings.targetColor": "Target Color",
     "settings.wallColor": "Wall Color",
     "settings.floorColor": "Floor Color",
@@ -222,7 +226,7 @@ const STRINGS = {
     "common.off": "꺼짐",
     "common.reset": "기본값으로 재설정",
 
-    "nav.why": "왜 AimForge인가",
+    "nav.why": "왜 AimonSite인가",
     "nav.drills": "훈련 모드",
     "nav.how": "이용 방법",
     "nav.history": "기록 보기",
@@ -230,21 +234,21 @@ const STRINGS = {
     "nav.sensitivity": "감도 변환",
     "nav.backToLanding": "랜딩 페이지로 돌아가기",
     "nav.settingsAria": "설정 열기",
-    "cta.launchNav": "AimForge 실행",
-    "cta.launch": "AimForge 실행하기 →",
+    "cta.launchNav": "AimonSite 실행",
+    "cta.launch": "AimonSite 실행하기 →",
 
     "hero.eyebrow": "무료 · 설치 불필요 · 계정 불필요",
     "hero.title.html": '브라우저에서 바로<br /><span class="gradient">에임</span>을 갈고닦으세요.',
-    "hero.sub": "AimForge는 브라우저에서 100% 클라이언트 측으로 동작하는 빠르고 군더더기 없는 FPS 에임 트레이너입니다. 4가지 훈련 모드, 실제 마우스 감도 변환기, 규칙 기반 코치 피드백까지 — 다운로드도, 로그인도 필요 없고 기록은 절대 기기 밖으로 나가지 않습니다.",
+    "hero.sub": "AimonSite는 브라우저에서 100% 클라이언트 측으로 동작하는 빠르고 군더더기 없는 FPS 에임 트레이너입니다. 4가지 훈련 모드, 실제 마우스 감도 변환기, 규칙 기반 코치 피드백까지 — 다운로드도, 로그인도 필요 없고 기록은 절대 기기 밖으로 나가지 않습니다.",
     "hero.secondaryBtn": "무엇이 다른가요",
     "hero.meta1": "🖱️ 본인 게임 감도에 맞춘 raw 마우스 입력",
     "hero.meta2": "💾 모든 기록은 기기에 저장",
     "hero.captionMode": "그리드샷",
     "hero.captionPreview": "실시간 미리보기",
 
-    "why.eyebrow": "왜 AimForge인가",
+    "why.eyebrow": "왜 AimonSite인가",
     "why.title": "깔때기가 아니라 도구로 만들었습니다",
-    "why.sub": "대부분의 브라우저 에임 트레이너는 첫 샷을 쏘기도 전에 회원가입, 리더보드, 유료 등급부터 요구합니다. AimForge는 그런 것 없이 바로 시작합니다.",
+    "why.sub": "대부분의 브라우저 에임 트레이너는 첫 샷을 쏘기도 전에 회원가입, 리더보드, 유료 등급부터 요구합니다. AimonSite는 그런 것 없이 바로 시작합니다.",
     "feature.instant.title": "설치 없이 즉시 플레이",
     "feature.instant.desc": "브라우저에서 바로 실행되는 WebGL — Launch를 누르면 몇 초 안에 사격장에 들어갑니다. 클라이언트도, 업데이트도, 낭비되는 저장공간도 없습니다.",
     "feature.privacy.title": "내 데이터는 내 것",
@@ -281,7 +285,7 @@ const STRINGS = {
     "step1.title": "훈련 선택 및 설정",
     "step1.desc": "모드, 난이도, 세션 길이를 선택하세요. 반동 패턴과 싸우고 싶다면 리코일 컨트롤을 켜세요.",
     "step2.title": "사격장 입장",
-    "step2.desc": "클릭해서 마우스를 잠그고, WASD로 이동하며 사격하세요 — 설정한 감도에 맞춘 raw 입력입니다.",
+    "step2.desc": "클릭해서 마우스를 잠그고 사격하세요 — 설정한 감도에 맞춘 raw 입력입니다.",
     "step3.title": "점검 및 향상",
     "step3.desc": "점수, 정확도, 코치 팁을 즉시 확인하고, 추세와 명중 위치 히트맵으로 장기적인 변화를 추적하세요.",
 
@@ -289,7 +293,9 @@ const STRINGS = {
     "cta.sub": "회원가입도, 다운로드도 필요 없습니다. 클릭 한 번으로 바로 플릭을 시작하세요.",
     "footer.tagline": "브라우저에서 100% 동작합니다. 계정도, 추적도, 광고도 없습니다.",
 
-    "app.title": "AimForge — 사격장",
+    "app.title": "AimonSite — 사격장",
+    "home.eyebrow": "훈련 사격장",
+    "home.heroTitle": "훈련을 선택하세요.",
     "home.subtitle": "훈련을 선택하고, 설정을 조정한 뒤 사격장으로 들어가세요.",
     "option.difficulty": "난이도",
     "option.duration": "시간",
@@ -306,7 +312,7 @@ const STRINGS = {
     "weapon.smg": "SMG",
     "cta.enterRange": "사격장 입장",
     "home.best": "최고 {value}",
-    "hint.start": "클릭해서 사격장 입장 · WASD로 이동 · Shift로 달리기 · Esc로 마우스 잠금 해제",
+    "hint.start": "클릭해서 사격장 입장 · Esc로 마우스 잠금 해제",
 
     "pause.title": "일시정지",
     "pause.hint": "아무 곳이나 클릭하면 재개됩니다",
@@ -367,7 +373,7 @@ const STRINGS = {
     "sensitivity.title": "감도 변환",
     "sensitivity.dpi": "마우스 DPI",
     "sensitivity.cm360": "cm/360°",
-    "sensitivity.note": "AimForge에서 실제로 사용할 마우스 감도를 설정합니다. 아래 표로 다른 게임에서 같은 감도를 맞춰보세요.",
+    "sensitivity.note": "AimonSite에서 실제로 사용할 마우스 감도를 설정합니다. 아래 표로 다른 게임에서 같은 감도를 맞춰보세요.",
     "table.game": "게임",
     "table.sensitivity": "감도",
     "sensitivity.disclaimer": "근사값입니다 — 널리 알려진 변환 상수를 기준으로 하며, 게임 내에서 약간의 차이가 있을 수 있습니다.",
@@ -377,7 +383,7 @@ const STRINGS = {
     "settings.theme": "테마",
     "theme.dark": "다크",
     "theme.light": "라이트",
-    "settings.sound": "타격음",
+    "settings.sound": "효과음",
     "settings.targetColor": "타겟 색상",
     "settings.wallColor": "벽 색상",
     "settings.floorColor": "바닥 색상",
@@ -414,6 +420,7 @@ const STRINGS = {
 };
 
 export function getLanguage() {
+  migrateKey("lang");
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === "ko" || stored === "en" ? stored : DEFAULT_LANGUAGE;

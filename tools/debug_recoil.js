@@ -14,16 +14,16 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
 
   const before = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return { yaw: d.controls.yaw, pitch: d.controls.pitch };
   });
 
   // Fire once via the drill directly (bypassing raycast concerns — we only
   // care whether the punch itself is applied to the camera).
-  await page.evaluate(() => window.__aimforgeDebug.drill.handleShot(performance.now()));
+  await page.evaluate(() => window.__aimonsiteDebug.drill.handleShot(performance.now()));
 
   const afterOneShot = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return {
       yaw: d.controls.yaw,
       pitch: d.controls.pitch,
@@ -41,9 +41,9 @@ const { chromium } = require("playwright");
 
   // Fire a second shot without moving the mouse — the player did nothing to
   // compensate, so this shot's compensation ratio should score near 0.
-  await page.evaluate(() => window.__aimforgeDebug.drill.handleShot(performance.now()));
+  await page.evaluate(() => window.__aimonsiteDebug.drill.handleShot(performance.now()));
   const afterTwoShots = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return {
       yaw: d.controls.yaw,
       pitch: d.controls.pitch,
@@ -56,13 +56,13 @@ const { chromium } = require("playwright");
   // Now manually compensate for the second punch before firing a third
   // shot, and confirm the ratio comes out close to 1 (good compensation).
   await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     const pending = d.drill.recoil.pending;
     d.controls.yaw += pending.idealYaw;
     d.controls.pitch += pending.idealPitch;
   });
-  await page.evaluate(() => window.__aimforgeDebug.drill.handleShot(performance.now()));
-  const afterCompensated = await page.evaluate(() => window.__aimforgeDebug.drill.recoil.compensationRatios.slice());
+  await page.evaluate(() => window.__aimonsiteDebug.drill.handleShot(performance.now()));
+  const afterCompensated = await page.evaluate(() => window.__aimonsiteDebug.drill.recoil.compensationRatios.slice());
   console.log(`Compensation ratios after manually compensating: ${JSON.stringify(afterCompensated)}`);
 
   await browser.close();

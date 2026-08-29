@@ -19,10 +19,20 @@ import { loadSettings } from "./settings.js";
 import { loadRangeConfig } from "./rangeConfig.js";
 import { saveSession, getSessionsByMode } from "./stats.js";
 import { generateCoachTips } from "./coach.js";
-import { setSoundEnabled, playHitSound, playMissSound, flashCrosshair } from "./ui/feedback.js";
+import {
+  setSoundEnabled,
+  playHitSound,
+  playMissSound,
+  playTargetExpireSound,
+  playCompletionSound,
+  playMenuSound,
+  initGlobalClickSounds,
+  flashCrosshair,
+} from "./ui/feedback.js";
 import { applyTranslations } from "./i18n.js";
 
 applyTranslations(document);
+initGlobalClickSounds();
 
 const quality = getQuality();
 
@@ -39,7 +49,6 @@ const renderer = createRenderer(canvas, quality);
 const camera = createCamera(rangeConfig.fov);
 const scene = new THREE.Scene();
 const sceneRefs = buildRange(scene, quality, rangeConfig);
-const { roomBounds } = sceneRefs;
 const targetManager = new TargetManager(scene, quality);
 applyEnvironment(renderer, scene, quality);
 
@@ -76,7 +85,6 @@ let lastConfig = null;
 
 const persistedSettings = loadSettings();
 const controls = new PointerLockCameraControls(camera, canvas, {
-  roomBounds,
   onLockChange: handleLockChange,
   sensitivity: persistedSettings.sensitivity,
 });
@@ -85,7 +93,7 @@ controls.connect();
 // Dev-only inspection hook, opt-in via `?debug=1` — lets test/dev tooling
 // read live camera/target/control state without exposing it by default.
 if (new URLSearchParams(window.location.search).has("debug")) {
-  window.__aimforgeDebug = {
+  window.__aimonsiteDebug = {
     camera,
     controls,
     targetManager,
@@ -137,6 +145,7 @@ function returnToMenu() {
   hidePauseScreen();
   showHome();
   if (controls.locked) document.exitPointerLock();
+  playMenuSound();
 }
 
 function showPauseScreen() {
@@ -266,6 +275,7 @@ function tick(now) {
 
   if (appState === "PLAYING" && controls.locked && drill) {
     const expired = targetManager.update(dt, now);
+    if (expired.length > 0) playTargetExpireSound();
     drill.update(dt, now, expired);
     updateHud(drill.getLiveStats(now));
 
@@ -278,6 +288,7 @@ function tick(now) {
       appState = "SUMMARY";
       hideHud();
       document.exitPointerLock();
+      playCompletionSound();
       showSummary(
         result,
         coachTips,
@@ -296,4 +307,4 @@ function tick(now) {
 }
 requestAnimationFrame(tick);
 
-console.log(`AimForge running — quality preset: "${quality.name}"`);
+console.log(`AimonSite running — quality preset: "${quality.name}"`);

@@ -19,7 +19,7 @@ async function playOneSession(page, mode) {
   await playOneSession(page, "gridshot");
   await playOneSession(page, "reaction");
 
-  const stored = await page.evaluate(() => localStorage.getItem("aimforge:sessions"));
+  const stored = await page.evaluate(() => localStorage.getItem("aimonsite:sessions"));
   const parsed = JSON.parse(stored);
   console.log(`Sessions stored: ${parsed.sessions.length}`);
   console.log(`Modes: ${parsed.sessions.map((s) => s.mode).join(", ")}`);
@@ -29,7 +29,7 @@ async function playOneSession(page, mode) {
   // not just an in-memory variable).
   await page.reload({ waitUntil: "load" });
   await page.waitForTimeout(300);
-  const storedAfterReload = await page.evaluate(() => localStorage.getItem("aimforge:sessions"));
+  const storedAfterReload = await page.evaluate(() => localStorage.getItem("aimonsite:sessions"));
   const parsedAfterReload = JSON.parse(storedAfterReload);
   console.log(`Sessions after reload: ${parsedAfterReload.sessions.length}`);
 

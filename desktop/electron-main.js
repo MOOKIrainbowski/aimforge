@@ -14,7 +14,7 @@ const REPO_ROOT = path.join(__dirname, "..");
 // file://) is Electron's documented fix.
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: "aimforge",
+    scheme: "aimonsite",
     privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true },
   },
 ]);
@@ -23,7 +23,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
-    title: "AimForge Desktop",
+    title: "AimonSite Desktop",
     backgroundColor: "#f5f5f7", // matches the app's light-theme default background
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -36,13 +36,13 @@ function createWindow() {
   // is the entire UI, so a native menu bar (File/Edit/View/...) has nothing
   // useful to show.
   win.setMenuBarVisibility(false);
-  win.loadURL("aimforge://app/desktop/renderer/index.html");
+  win.loadURL("aimonsite://app/desktop/renderer/index.html");
 }
 
 Menu.setApplicationMenu(null);
 
 app.whenReady().then(() => {
-  protocol.handle("aimforge", (request) => {
+  protocol.handle("aimonsite", (request) => {
     const relativePath = decodeURIComponent(new URL(request.url).pathname);
     let filePath = path.normalize(path.join(REPO_ROOT, relativePath));
     if (!filePath.startsWith(REPO_ROOT)) {

@@ -19,7 +19,7 @@ const { chromium } = require("playwright");
     // left/right so both overshoot and undershoot get exercised.
     const mode = i % 3 === 0 ? "hit" : i % 2 === 0 ? "missRight" : "missLeft";
     await page.evaluate((m) => {
-      const d = window.__aimforgeDebug;
+      const d = window.__aimonsiteDebug;
       const t = d.drill.currentTarget;
       const pos = t.mesh.position;
       if (m === "hit") d.camera.lookAt(pos.x, pos.y, pos.z);
@@ -32,7 +32,7 @@ const { chromium } = require("playwright");
   }
 
   const liveState = await page.evaluate(() => {
-    const d = window.__aimforgeDebug.drill;
+    const d = window.__aimonsiteDebug.drill;
     return {
       flickBias: d.flickBias,
       hitOffsetsCount: d.hitOffsets.length,
@@ -61,7 +61,7 @@ const { chromium } = require("playwright");
   clearInterval(shotInterval);
   for (let i = 0; i < 6; i++) {
     await page.evaluate(() => {
-      const d = window.__aimforgeDebug;
+      const d = window.__aimonsiteDebug;
       if (!d.drill) return;
       const t = d.drill.currentTarget;
       if (!t) return;
@@ -80,18 +80,18 @@ const { chromium } = require("playwright");
   const summaryHtml = await page.evaluate(() => document.getElementById("summary-stats").innerHTML);
   console.log(`Summary visible: ${summaryVisible}`);
   console.log(`Summary has coach panel: ${summaryHtml.includes("coach-panel")}`);
-  await page.screenshot({ path: __dirname + "/aimforge_coach_summary.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_coach_summary.png" });
 
   // 3. Open History and confirm the heatmap + insights render for Gridshot
   // (and that Tracking correctly shows the "not tracked" fallback) with no
   // console/page errors from the new canvas drawing code.
   await page.click("#summary-history");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: __dirname + "/aimforge_history_heatmap.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history_heatmap.png" });
 
   await page.click('#history-mode-group button[data-mode="tracking"]');
   await page.waitForTimeout(200);
-  await page.screenshot({ path: __dirname + "/aimforge_history_heatmap_tracking.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history_heatmap_tracking.png" });
 
   console.log(`Page errors: ${pageErrors.length}`);
   for (const e of pageErrors) console.log(e);

@@ -16,7 +16,7 @@ const { chromium } = require("playwright");
   const trackingDeadline = Date.now() + 1500;
   while (Date.now() < trackingDeadline) {
     await page.evaluate(() => {
-      const d = window.__aimforgeDebug;
+      const d = window.__aimonsiteDebug;
       const target = [...d.targetManager.active.values()][0];
       if (target) d.camera.lookAt(target.mesh.position.x, target.mesh.position.y, target.mesh.position.z);
     });
@@ -34,7 +34,7 @@ const { chromium } = require("playwright");
 
   for (let i = 0; i < 6; i++) {
     const outcome = await page.evaluate(() => {
-      const d = window.__aimforgeDebug;
+      const d = window.__aimonsiteDebug;
       const target = [...d.targetManager.active.values()][0];
       if (!target) return "no-target";
       d.camera.lookAt(target.mesh.position.x, target.mesh.position.y, target.mesh.position.z);

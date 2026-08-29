@@ -8,11 +8,11 @@ const { chromium } = require("playwright");
 
   await page.goto("http://localhost:8123/app/index.html", { waitUntil: "load" });
   await page.waitForTimeout(300);
-  await page.screenshot({ path: __dirname + "/aimforge_home_polish.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_home_polish.png" });
 
   await page.click("#home-history");
   await page.waitForTimeout(250);
-  await page.screenshot({ path: __dirname + "/aimforge_history_polish.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_history_polish.png" });
 
   const backBtnStyle = await page.evaluate(() => {
     const el = document.getElementById("history-back");

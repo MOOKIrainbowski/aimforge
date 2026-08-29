@@ -14,7 +14,7 @@ const { chromium } = require("playwright");
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: __dirname + "/aimforge_no_cover.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_no_cover.png" });
   await page.evaluate(() => document.exitPointerLock());
   await page.waitForTimeout(200);
 
@@ -41,7 +41,7 @@ const { chromium } = require("playwright");
     return getComputedStyle(el).backgroundColor;
   });
   console.log(`Theme attribute: ${themeAttr}, settings card background: ${cardBg}`);
-  await page.screenshot({ path: __dirname + "/aimforge_light_theme.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_light_theme.png" });
 
   // 4. Change target color, wall color, floor color, brightness, FOV.
   await page.fill("#settings-target-color", "#22cc88");
@@ -60,12 +60,12 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(150);
 
   const liveState = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return { fov: d.camera.fov };
   });
   console.log(`Live camera FOV after change: ${liveState.fov}`);
 
-  const stored = await page.evaluate(() => localStorage.getItem("aimforge:rangeConfig"));
+  const stored = await page.evaluate(() => localStorage.getItem("aimonsite:rangeConfig"));
   console.log(`Stored range config: ${stored}`);
 
   // 5. Go back to home, start a session, confirm the new wall/floor color
@@ -75,7 +75,7 @@ const { chromium } = require("playwright");
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: __dirname + "/aimforge_custom_range.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_custom_range.png" });
 
   console.log(`Page errors: ${pageErrors.length}`);
   for (const e of pageErrors) console.log(e);

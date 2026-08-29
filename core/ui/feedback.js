@@ -1,8 +1,9 @@
 // Shot feedback: a brief crosshair flash plus a synthesized click (no audio
-// asset files — a couple of WebAudio oscillator envelopes are enough for a
-// hit/miss tick and keep the project dependency-free). Muted independently
-// via rangeConfig.soundEnabled; the flash always plays since it costs nothing
-// and reads as instant confirmation the click registered.
+// asset files — a handful of WebAudio oscillator envelopes cover hit/miss,
+// target-expire, session-complete, menu-exit, and generic button clicks,
+// keeping the project dependency-free). Muted independently via
+// rangeConfig.soundEnabled; the crosshair flash always plays since it costs
+// nothing and reads as instant confirmation the click registered.
 let soundEnabled = true;
 let audioCtx = null;
 
@@ -20,25 +21,52 @@ function getAudioContext() {
   return audioCtx;
 }
 
+// Schedules one oscillator against `ctx`'s own timeline (rather than
+// wall-clock setTimeout) so multi-note sequences (chime()) stay tightly and
+// consistently spaced regardless of browser timer throttling.
+function scheduleTone(ctx, startTime, freq, durationMs, peakGain, freqEnd) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  const durationSec = durationMs / 1000;
+
+  if (freqEnd != null) {
+    osc.frequency.setValueAtTime(freq, startTime);
+    osc.frequency.linearRampToValueAtTime(freqEnd, startTime + durationSec);
+  } else {
+    osc.frequency.value = freq;
+  }
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
+
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + durationSec + 0.02);
+}
+
 function beep(freq, durationMs, peakGain) {
   if (!soundEnabled) return;
   const ctx = getAudioContext();
   if (!ctx) return;
+  scheduleTone(ctx, ctx.currentTime, freq, durationMs, peakGain);
+}
 
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = freq;
+function sweep(freqStart, freqEnd, durationMs, peakGain) {
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  scheduleTone(ctx, ctx.currentTime, freqStart, durationMs, peakGain, freqEnd);
+}
 
-  const now = ctx.currentTime;
-  const durationSec = durationMs / 1000;
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(peakGain, now + 0.004);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
-
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + durationSec + 0.02);
+function chime(notes, stepMs, durationMs, peakGain) {
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  notes.forEach((freq, i) => {
+    scheduleTone(ctx, ctx.currentTime + (i * stepMs) / 1000, freq, durationMs, peakGain);
+  });
 }
 
 export function playHitSound() {
@@ -47,6 +75,38 @@ export function playHitSound() {
 
 export function playMissSound() {
   beep(160, 90, 0.12);
+}
+
+// A target's exposure window ran out unhit (currently only Reaction mode —
+// Gridshot/Switching targets only ever leave play via a hit).
+export function playTargetExpireSound() {
+  sweep(500, 280, 110, 0.09);
+}
+
+// A drill finished and the summary screen is about to show.
+export function playCompletionSound() {
+  chime([660, 880, 1320], 90, 130, 0.14);
+}
+
+// Leaving a session/screen back to the home menu.
+export function playMenuSound() {
+  sweep(380, 160, 160, 0.09);
+}
+
+// Generic light tick for button presses in general — see
+// initGlobalClickSounds() below.
+export function playClickSound() {
+  beep(500, 35, 0.06);
+}
+
+// One delegated listener covers every button on the page instead of wiring
+// each ui/*.js module individually. Buttons that also trigger a more
+// specific sound (e.g. Quit to Menu also firing playMenuSound()) just layer
+// the light click under it — a common, deliberate pattern for UI feedback.
+export function initGlobalClickSounds(root = document) {
+  root.addEventListener("click", (e) => {
+    if (e.target.closest("button")) playClickSound();
+  });
 }
 
 export function flashCrosshair(el, hit) {

@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
 
   const state0 = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     const target = [...d.targetManager.active.values()][0];
     return {
       camPos: d.camera.position.toArray(),
@@ -26,7 +26,7 @@ const { chromium } = require("playwright");
   // ground-truth check, independent of our mouse-look math), then ask
   // raycastHit whether it now sees the target dead-center.
   const hitResult = await page.evaluate((targetPos) => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     d.camera.lookAt(targetPos[0], targetPos[1], targetPos[2]);
     const hit = d.targetManager.raycastHit(d.camera);
     return hit ? hit.id : null;

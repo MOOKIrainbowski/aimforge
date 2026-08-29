@@ -16,7 +16,7 @@ const { chromium } = require("playwright");
   );
   messages.push(`Home screen visible on load: ${homeVisibleInitially}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_m4_home.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_m4_home.png" });
 
   // 2. Pick Hard difficulty + 30s duration, then Start.
   await page.click('#difficulty-group button[data-difficulty="hard"]');
@@ -31,7 +31,7 @@ const { chromium } = require("playwright");
   messages.push(`Locked after clicking Start: ${lockedAfterStart}`);
   messages.push(`Home hidden after Start: ${homeHiddenAfterStart}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_m4_playing.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_m4_playing.png" });
 
   // 3. Wait past the (duration-overridden) 2s session length -> summary appears.
   await page.waitForTimeout(2300);
@@ -40,7 +40,7 @@ const { chromium } = require("playwright");
   );
   messages.push(`Summary visible after session end: ${summaryVisible}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_m4_summary.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_m4_summary.png" });
 
   // 4. Click "Back to Menu" and confirm we land back on MENU cleanly.
   await page.click("#summary-menu");
@@ -53,7 +53,7 @@ const { chromium } = require("playwright");
   messages.push(`Home visible after Back to Menu: ${homeVisibleAfterMenu}`);
   messages.push(`Still locked after Back to Menu: ${stillLockedAfterMenu}`);
 
-  await page.screenshot({ path: __dirname + "/aimforge_m4_back_to_menu.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_m4_back_to_menu.png" });
 
   console.log("---- RESULTS ----");
   for (const m of messages) console.log(m);

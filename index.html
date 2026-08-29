@@ -5,15 +5,14 @@
   <script>
     // Blocking (not type=module) and placed first so the theme paints
     // correctly on first frame — a deferred module script would flash the
-    // wrong theme for a frame. The landing page's own first-ever-visit
-    // default is dark (independent of the app's own "light" default, see
-    // core/rangeConfig.js) — but that default is never written back to
-    // storage, so it doesn't clobber the app's separate first-visit default.
+    // wrong theme for a frame. The landing page's theme is its own setting,
+    // entirely independent of the app/in-game theme (core/rangeConfig.js) —
+    // separate storage key, separate default (this page defaults dark, the
+    // app defaults light), no shared state between the two.
     (function () {
       try {
-        var raw = localStorage.getItem("aimforge:rangeConfig");
-        var theme = raw ? (JSON.parse(raw).theme === "light" ? "light" : "dark") : "dark";
-        document.documentElement.dataset.theme = theme;
+        var stored = localStorage.getItem("aimonsite:landingTheme");
+        document.documentElement.dataset.theme = stored === "light" ? "light" : "dark";
       } catch (e) {
         document.documentElement.dataset.theme = "dark";
       }
@@ -21,10 +20,10 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AimForge — Free Browser Aim Trainer</title>
+  <title>AimonSite</title>
   <meta name="description"
-    content="AimForge is a free, install-free aim trainer that runs in your browser. Gridshot, Tracking, Target Switching, and Reaction Time drills, a real sensitivity converter, and smart coach feedback — your stats never leave your device." />
-  <meta property="og:title" content="AimForge — Free Browser Aim Trainer" />
+    content="AimonSite is a free, install-free aim trainer that runs in your browser. Gridshot, Tracking, Target Switching, and Reaction Time drills, a real sensitivity converter, and smart coach feedback — your stats never leave your device." />
+  <meta property="og:title" content="AimonSite" />
   <meta property="og:description"
     content="Train FPS aim in your browser. No install, no account, no server — your stats stay on your device." />
   <meta property="og:type" content="website" />
@@ -723,10 +722,10 @@
           <path d="M16 3.5V9M16 23V28.5M3.5 16H9M23 16H28.5" stroke="#4f8ef7" stroke-width="2.4"
             stroke-linecap="round" />
         </svg>
-        AimForge
+        AimonSite
       </a>
       <div class="nav-links">
-        <a href="#why" data-i18n="nav.why">Why AimForge</a>
+        <a href="#why" data-i18n="nav.why">Why AimonSite</a>
         <a href="#modes" data-i18n="nav.drills">Drills</a>
         <a href="#how" data-i18n="nav.how">How it works</a>
       </div>
@@ -747,7 +746,7 @@
             </span>
           </button>
         </div>
-        <a class="btn btn-primary" href="app/" data-i18n="cta.launchNav">Launch AimForge</a>
+        <a class="btn btn-primary" href="app/" data-i18n="cta.launchNav">Launch AimonSite</a>
       </div>
     </nav>
   </header>
@@ -760,12 +759,12 @@
         <h1 data-i18n-html="hero.title.html">Sharpen your <span class="gradient">aim</span>,<br />right in your
           browser.</h1>
         <p class="hero-sub" data-i18n="hero.sub">
-          AimForge is a fast, distraction-free FPS aim trainer that runs entirely client-side.
+          AimonSite is a fast, distraction-free FPS aim trainer that runs entirely client-side.
           Four drill types, a real mouse-sensitivity converter, and rule-based coach feedback —
           no download, no login, and your stats never leave your device.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimForge →</a>
+          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
           <a class="btn btn-secondary btn-large" href="#why" data-i18n="hero.secondaryBtn">Why it's different</a>
         </div>
         <div class="hero-meta">
@@ -787,10 +786,10 @@
     <section id="why">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="why.eyebrow">Why AimForge</span>
+          <span class="eyebrow" data-i18n="why.eyebrow">Why AimonSite</span>
           <h2 data-i18n="why.title">Built like a tool, not a funnel</h2>
           <p data-i18n="why.sub">Most browser aim trainers push you toward an account, a leaderboard, or a paid tier
-            before you've even taken a shot. AimForge skips all of that.</p>
+            before you've even taken a shot. AimonSite skips all of that.</p>
         </div>
         <div class="feature-grid">
           <div class="feature-card reveal">
@@ -808,7 +807,7 @@
           <div class="feature-card reveal">
             <div class="feature-icon">🎯</div>
             <h3 data-i18n="feature.sens.title">Real sensitivity conversion</h3>
-            <p data-i18n="feature.sens.desc">Set your actual DPI and cm/360, and AimForge instantly matches it across
+            <p data-i18n="feature.sens.desc">Set your actual DPI and cm/360, and AimonSite instantly matches it across
               Valorant, CS2, Apex, Overwatch 2, and Fortnite.</p>
           </div>
           <div class="feature-card reveal">
@@ -890,8 +889,8 @@
           <div class="step reveal">
             <div class="step-num">2</div>
             <h3 data-i18n="step2.title">Step into the range</h3>
-            <p data-i18n="step2.desc">Click to lock your mouse, move with WASD, and shoot — raw input, matched to the
-              sensitivity you set.</p>
+            <p data-i18n="step2.desc">Click to lock your mouse and shoot — raw input, matched to the sensitivity you
+              set.</p>
           </div>
           <div class="step reveal">
             <div class="step-num">3</div>
@@ -908,14 +907,14 @@
         <div class="cta-band reveal">
           <h2 data-i18n="cta.title">Your aim isn't going to train itself.</h2>
           <p data-i18n="cta.sub">No sign-up. No download. Just click, and start flicking.</p>
-          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimForge →</a>
+          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="wrap">
-    <span class="brand">AimForge</span>
+    <span class="brand">AimonSite</span>
     <span data-i18n="footer.tagline">Runs entirely in your browser. No accounts, no tracking, no ads.</span>
   </footer>
 
@@ -924,21 +923,17 @@
 
     applyTranslations(document);
 
-    const RANGE_KEY = "aimforge:rangeConfig";
+    const LANDING_THEME_KEY = "aimonsite:landingTheme";
     function loadTheme() {
       try {
-        const raw = localStorage.getItem(RANGE_KEY);
-        return raw ? (JSON.parse(raw).theme === "light" ? "light" : "dark") : "dark";
+        return localStorage.getItem(LANDING_THEME_KEY) === "light" ? "light" : "dark";
       } catch {
         return "dark";
       }
     }
     function saveTheme(theme) {
       try {
-        const raw = localStorage.getItem(RANGE_KEY);
-        const config = raw ? JSON.parse(raw) : {};
-        config.theme = theme;
-        localStorage.setItem(RANGE_KEY, JSON.stringify(config));
+        localStorage.setItem(LANDING_THEME_KEY, theme);
       } catch {
         // localStorage unavailable — the choice just won't persist.
       }

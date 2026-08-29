@@ -14,7 +14,7 @@ const { chromium } = require("playwright");
   // dynamic-import paths actually run (they're skipped entirely on the web
   // build's default "web" preset).
   await page.addInitScript(() => {
-    window.__AIMFORGE_QUALITY__ = "desktop";
+    window.__AIMONSITE_QUALITY__ = "desktop";
   });
 
   await page.goto("http://localhost:8123/app/index.html?debug=1&duration=3000", { waitUntil: "load" });
@@ -24,12 +24,12 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(600);
 
   const state = await page.evaluate(() => {
-    const d = window.__aimforgeDebug;
+    const d = window.__aimonsiteDebug;
     return { hasTarget: !!d.drill?.currentTarget, cameraFov: d.camera.fov };
   });
   console.log("Desktop-quality live state:", JSON.stringify(state));
   console.log("Console/log message:", (await page.title()) ? "title ok" : "no title");
-  await page.screenshot({ path: __dirname + "/aimforge_desktop_quality.png" });
+  await page.screenshot({ path: __dirname + "/aimonsite_desktop_quality.png" });
 
   console.log(`Page errors: ${pageErrors.length}`);
   for (const e of pageErrors) console.log(e);
