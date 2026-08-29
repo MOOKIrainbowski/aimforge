@@ -73,7 +73,7 @@ export function loadWeaponModels(onProgress) {
 // source models' own export axis convention, not a stylistic cant, so it
 // isn't something that should shift when aiming).
 const HIP_OFFSET = new THREE.Vector3(0.38, -0.5, -0.62);
-const AIM_OFFSET = new THREE.Vector3(0.02, -0.66, -0.35);
+const AIM_OFFSET = new THREE.Vector3(0.02, -0.63, -0.35);
 const VIEW_ROTATION = new THREE.Euler(0, Math.PI / 2, 0);
 const AIM_SCALE_MULT = 1.5;
 const POSE_LERP_SEC = 0.15;
