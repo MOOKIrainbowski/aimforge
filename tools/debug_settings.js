@@ -13,6 +13,9 @@ const { chromium } = require("playwright");
   // default view (previously showed two gray cover boxes flanking center).
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
   await page.screenshot({ path: __dirname + "/aimonsite_no_cover.png" });
   await page.evaluate(() => document.exitPointerLock());
@@ -74,6 +77,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(200);
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
   await page.screenshot({ path: __dirname + "/aimonsite_custom_range.png" });
 

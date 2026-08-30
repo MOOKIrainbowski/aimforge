@@ -5,6 +5,9 @@ const STORAGE_KEY = "aimonsite:settings";
 const DEFAULT_SETTINGS = {
   sensitivity: 0.0022, // radians per pixel — matches controls.js's original built-in default
   dpi: 800,
+  // Last weapon confirmed in the picker, so the choice carries between
+  // sessions instead of resetting to the rifle every launch.
+  weaponId: "rifle",
 };
 
 export function getDefaultSettings() {

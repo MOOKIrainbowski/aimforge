@@ -41,6 +41,7 @@
     <div class="start-prompt-card">
       <h2 data-i18n="start.title">Click to Start</h2>
       <p data-i18n="start.hint">Esc releases the mouse mid-session</p>
+      <p class="start-prompt-keys"><kbd>R</kbd> <span data-i18n="start.reloadHint">reload</span> · <kbd data-i18n="start.rmb">RMB</kbd> <span data-i18n="start.adsHint">aim</span></p>
     </div>
   </div>
 
@@ -51,114 +52,174 @@
     <span id="hud-streak">Streak: 0</span>
   </div>
 
+  <!-- Ammunition state sits bottom-right, apart from the stats HUD, the way
+       an FPS separates "how am I doing" from "can I shoot right now". -->
+  <div id="hud-weapon" class="hud-weapon hidden">
+    <span id="hud-weapon-name" class="hud-weapon-name"></span>
+    <span id="hud-ammo" class="hud-ammo"><span id="hud-ammo-mag">0</span><span class="hud-ammo-sep">/</span><span
+        id="hud-ammo-cap">0</span></span>
+    <div id="hud-action" class="hud-action hidden">
+      <span id="hud-action-label" class="hud-action-label"></span>
+      <span class="hud-action-track"><span id="hud-action-fill" class="hud-action-fill"></span></span>
+    </div>
+  </div>
+
   <div id="home-screen" class="screen home-screen">
-    <header class="home-nav">
-      <div class="home-nav-inner wrap">
-        <a id="home-back" class="home-brand" href="../"
-          data-i18n-attr="aria-label:nav.backToLanding,title:nav.backToLanding">
-          <svg width="24" height="24" viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="8" fill="#171922" />
-            <circle cx="16" cy="16" r="8.5" fill="none" stroke="#4f8ef7" stroke-width="2.4" />
-            <circle cx="16" cy="16" r="2.1" fill="#4f8ef7" />
-            <path d="M16 3.5V9M16 23V28.5M3.5 16H9M23 16H28.5" stroke="#4f8ef7" stroke-width="2.4"
-              stroke-linecap="round" />
+    <aside id="app-sidebar" class="app-sidebar">
+      <a id="home-back" class="sidebar-brand" href="../"
+        data-i18n-attr="aria-label:nav.backToLanding,title:nav.backToLanding">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#171922" />
+          <circle cx="16" cy="16" r="8.5" fill="none" stroke="#4f8ef7" stroke-width="2.4" />
+          <circle cx="16" cy="16" r="2.1" fill="#4f8ef7" />
+          <path d="M16 3.5V9M16 23V28.5M3.5 16H9M23 16H28.5" stroke="#4f8ef7" stroke-width="2.4"
+            stroke-linecap="round" />
+        </svg>
+        <span>AimonSite</span>
+      </a>
+
+      <nav class="sidebar-nav">
+        <button id="home-history" class="sidebar-item" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 16.5V9M8 16.5V4M13 16.5v-5M18 16.5V7" />
           </svg>
-          AimonSite
-        </a>
-        <nav class="home-nav-links">
-          <button id="home-history" class="link-button" type="button" data-i18n="nav.history">View History</button>
-          <button id="home-crosshair" class="link-button" type="button" data-i18n="nav.crosshair">Customize
-            Crosshair</button>
-          <button id="home-sensitivity" class="link-button" type="button" data-i18n="nav.sensitivity">Sensitivity</button>
-        </nav>
-        <button id="home-settings-btn" class="btn-icon" type="button"
-          data-i18n-attr="aria-label:nav.settingsAria,title:nav.settingsAria">⚙</button>
-      </div>
-    </header>
+          <span data-i18n="nav.history">View History</span>
+        </button>
+        <button id="home-crosshair" class="sidebar-item" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="5.5" />
+            <path d="M10 1.5v3.2M10 15.3v3.2M1.5 10h3.2M15.3 10h3.2" />
+          </svg>
+          <span data-i18n="nav.crosshair">Customize Crosshair</span>
+        </button>
+        <button id="home-sensitivity" class="sidebar-item" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M2.5 6h15M2.5 14h15" />
+            <circle cx="7" cy="6" r="2.2" />
+            <circle cx="13" cy="14" r="2.2" />
+          </svg>
+          <span data-i18n="nav.sensitivity">Sensitivity</span>
+        </button>
+        <button id="home-suggestions" class="sidebar-item" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M17 12.5a2 2 0 0 1-2 2H7l-4 3v-12a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          <span data-i18n="nav.suggestions">Suggestion Box</span>
+          <span id="suggestions-badge" class="sidebar-badge hidden">0</span>
+        </button>
+        <button id="home-admin" class="sidebar-item hidden" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M11.5 3.2a3.6 3.6 0 0 0 4.6 4.6l-8 8a2.3 2.3 0 0 1-3.3-3.3z" />
+          </svg>
+          <span data-i18n="nav.admin">Admin</span>
+          <span id="admin-badge" class="sidebar-badge hidden">0</span>
+        </button>
+      </nav>
 
-    <div class="home-dashboard wrap">
-      <div class="home-hero">
-        <span class="eyebrow"><span class="dot"></span> <span data-i18n="home.eyebrow">Training Range</span></span>
-        <h1 class="home-title" data-i18n="home.heroTitle">Choose your drill.</h1>
-        <p class="home-subtitle" data-i18n="home.subtitle">Pick a drill, tune it, and step into the range.</p>
-      </div>
-
-      <div class="mode-grid home-mode-grid">
-        <button class="mode-card selected" data-mode="gridshot" type="button" aria-pressed="true">
-          <span class="mode-num">01</span>
-          <span class="mode-icon" aria-hidden="true">◎</span>
-          <span class="mode-name" data-i18n="mode.gridshot.name">Gridshot</span>
-          <span class="mode-desc" data-i18n="mode.gridshot.desc">Flick to one target at a time</span>
-          <span class="mode-best" data-best-for="gridshot"></span>
-        </button>
-        <button class="mode-card" data-mode="tracking" type="button" aria-pressed="false">
-          <span class="mode-num">02</span>
-          <span class="mode-icon" aria-hidden="true">〜</span>
-          <span class="mode-name" data-i18n="mode.tracking.name">Tracking</span>
-          <span class="mode-desc" data-i18n="mode.tracking.desc">Keep crosshair on a moving target</span>
-          <span class="mode-best" data-best-for="tracking"></span>
-        </button>
-        <button class="mode-card" data-mode="switching" type="button" aria-pressed="false">
-          <span class="mode-num">03</span>
-          <span class="mode-icon" aria-hidden="true">⤨</span>
-          <span class="mode-name" data-i18n="mode.switching.name">Target Switching</span>
-          <span class="mode-desc" data-i18n="mode.switching.desc">Clear waves of multiple targets</span>
-          <span class="mode-best" data-best-for="switching"></span>
-        </button>
-        <button class="mode-card" data-mode="reaction" type="button" aria-pressed="false">
-          <span class="mode-num">04</span>
-          <span class="mode-icon" aria-hidden="true">⚡</span>
-          <span class="mode-name" data-i18n="mode.reaction.name">Reaction Time</span>
-          <span class="mode-desc" data-i18n="mode.reaction.desc">Hit targets before they vanish</span>
-          <span class="mode-best" data-best-for="reaction"></span>
+      <div class="sidebar-footer">
+        <button id="home-settings-btn" class="sidebar-item" type="button"
+          data-i18n-attr="aria-label:nav.settingsAria">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="2.6" />
+            <path
+              d="M10 1.8v2.1M10 16.1v2.1M3.2 10H1.1M18.9 10h-2.1M5.2 5.2 3.7 3.7M16.3 16.3l-1.5-1.5M14.8 5.2l1.5-1.5M3.7 16.3l1.5-1.5" />
+          </svg>
+          <span data-i18n="settings.title">Settings</span>
         </button>
       </div>
+    </aside>
 
-      <div class="home-config">
-        <div class="option-row">
-          <span class="option-label" data-i18n="option.difficulty">Difficulty</span>
-          <div class="option-group" id="difficulty-group">
-            <button data-difficulty="easy" type="button" aria-pressed="false" data-i18n="difficulty.easy">Easy</button>
-            <button data-difficulty="normal" type="button" class="selected" aria-pressed="true"
-              data-i18n="difficulty.normal">Normal</button>
-            <button data-difficulty="hard" type="button" aria-pressed="false" data-i18n="difficulty.hard">Hard</button>
-          </div>
+    <div class="home-main">
+      <div class="home-dashboard wrap">
+        <div class="home-hero">
+          <span class="eyebrow"><span class="dot"></span> <span data-i18n="home.eyebrow">Training Range</span></span>
+          <h1 class="home-title" data-i18n="home.heroTitle">Choose your drill.</h1>
+          <p class="home-subtitle" data-i18n="home.subtitle">Pick a drill, tune it, and step into the range.</p>
         </div>
 
-        <div class="option-row">
-          <span class="option-label" data-i18n="option.duration">Duration</span>
-          <div class="option-group" id="duration-group">
-            <button data-duration="30000" type="button" aria-pressed="false" data-i18n="duration.30">30s</button>
-            <button data-duration="60000" type="button" class="selected" aria-pressed="true"
-              data-i18n="duration.60">60s</button>
-            <button data-duration="90000" type="button" aria-pressed="false" data-i18n="duration.90">90s</button>
-          </div>
-        </div>
-
-        <div class="option-row">
-          <span class="option-label"><span data-i18n="option.recoil">Recoil Control</span><br />
-            <small data-i18n="option.recoilNote">Gridshot &amp; Switching only</small></span>
-          <button type="button" class="switch" id="recoil-switch" role="switch" aria-checked="false">
-            <span class="switch-state" data-i18n="common.off">Off</span>
-            <span class="switch-track">
-              <span class="switch-thumb"></span>
-            </span>
+        <div class="mode-grid home-mode-grid">
+          <button class="mode-card selected" data-mode="gridshot" type="button" aria-pressed="true">
+            <span class="mode-num">01</span>
+            <span class="mode-icon" aria-hidden="true">◎</span>
+            <span class="mode-name" data-i18n="mode.gridshot.name">Gridshot</span>
+            <span class="mode-desc" data-i18n="mode.gridshot.desc">Flick to one target at a time</span>
+            <span class="mode-best" data-best-for="gridshot"></span>
+          </button>
+          <button class="mode-card" data-mode="tracking" type="button" aria-pressed="false">
+            <span class="mode-num">02</span>
+            <span class="mode-icon" aria-hidden="true">〜</span>
+            <span class="mode-name" data-i18n="mode.tracking.name">Tracking</span>
+            <span class="mode-desc" data-i18n="mode.tracking.desc">Keep crosshair on a moving target</span>
+            <span class="mode-best" data-best-for="tracking"></span>
+          </button>
+          <button class="mode-card" data-mode="switching" type="button" aria-pressed="false">
+            <span class="mode-num">03</span>
+            <span class="mode-icon" aria-hidden="true">⤨</span>
+            <span class="mode-name" data-i18n="mode.switching.name">Target Switching</span>
+            <span class="mode-desc" data-i18n="mode.switching.desc">Clear waves of multiple targets</span>
+            <span class="mode-best" data-best-for="switching"></span>
+          </button>
+          <button class="mode-card" data-mode="reaction" type="button" aria-pressed="false">
+            <span class="mode-num">04</span>
+            <span class="mode-icon" aria-hidden="true">⚡</span>
+            <span class="mode-name" data-i18n="mode.reaction.name">Reaction Time</span>
+            <span class="mode-desc" data-i18n="mode.reaction.desc">Hit targets before they vanish</span>
+            <span class="mode-best" data-best-for="reaction"></span>
           </button>
         </div>
 
-        <div class="option-row" id="weapon-row">
-          <span class="option-label" data-i18n="option.weapon">Weapon</span>
-          <div class="option-group" id="weapon-group">
-            <button data-weapon="rifle" type="button" class="selected" aria-pressed="true"
-              data-i18n="weapon.rifle">Rifle</button>
-            <button data-weapon="smg" type="button" aria-pressed="false" data-i18n="weapon.smg">SMG</button>
-            <button data-weapon="sniper" type="button" aria-pressed="false" data-i18n="weapon.sniper">Sniper</button>
+        <div class="home-config">
+          <div class="option-row">
+            <span class="option-label" data-i18n="option.difficulty">Difficulty</span>
+            <div class="option-group" id="difficulty-group">
+              <button data-difficulty="easy" type="button" aria-pressed="false" data-i18n="difficulty.easy">Easy</button>
+              <button data-difficulty="normal" type="button" class="selected" aria-pressed="true"
+                data-i18n="difficulty.normal">Normal</button>
+              <button data-difficulty="hard" type="button" aria-pressed="false" data-i18n="difficulty.hard">Hard</button>
+            </div>
           </div>
-        </div>
 
-        <button id="home-start" class="start-button btn-primary" type="button" data-i18n="cta.enterRange">Enter the
-          Range</button>
+          <div class="option-row">
+            <span class="option-label" data-i18n="option.duration">Duration</span>
+            <div class="option-group" id="duration-group">
+              <button data-duration="30000" type="button" aria-pressed="false" data-i18n="duration.30">30s</button>
+              <button data-duration="60000" type="button" class="selected" aria-pressed="true"
+                data-i18n="duration.60">60s</button>
+              <button data-duration="90000" type="button" aria-pressed="false" data-i18n="duration.90">90s</button>
+            </div>
+          </div>
+
+          <div class="option-row">
+            <span class="option-label"><span data-i18n="option.recoil">Recoil Control</span><br />
+              <small data-i18n="option.recoilNote">Gridshot &amp; Switching only</small></span>
+            <button type="button" class="switch" id="recoil-switch" role="switch" aria-checked="false">
+              <span class="switch-state" data-i18n="common.off">Off</span>
+              <span class="switch-track">
+                <span class="switch-thumb"></span>
+              </span>
+            </button>
+          </div>
+
+          <button id="home-start" class="start-button btn-primary" type="button" data-i18n="cta.enterRange">Enter the
+            Range</button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Weapon picker. Shown on the way into the range rather than as a home
+       screen row, so the choice is made in context, right before shooting. -->
+  <div id="weapon-screen" class="screen hidden">
+    <div class="weapon-card">
+      <div class="history-header">
+        <h2 data-i18n="weaponSelect.title">Select Weapon</h2>
+        <button id="weapon-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+      <p class="weapon-intro" data-i18n="weaponSelect.intro">Each weapon handles differently — fire mode, magazine, and
+        how long you wait between shots.</p>
+      <div id="weapon-grid" class="weapon-grid"></div>
+      <button id="weapon-confirm" class="start-button btn-primary" type="button"
+        data-i18n="weaponSelect.confirm">Enter the Range</button>
     </div>
   </div>
 
@@ -265,6 +326,7 @@
         <input type="color" id="crosshair-color" value="#f2f4f8" data-i18n-attr="aria-label:aria.crosshairColor"
           aria-label="Crosshair color" />
       </div>
+      <p class="option-note" data-i18n="crosshair.colorNote">Target colour is set separately, under Settings.</p>
 
       <div class="slider-row">
         <label for="crosshair-size" data-i18n="crosshair.size">Size</label>
@@ -385,6 +447,14 @@
           aria-label="Floor color" />
       </div>
 
+      <div class="option-row">
+        <span class="option-label" data-i18n="settings.targetColor">Target Color</span>
+        <input type="color" id="settings-target-color" value="#ff5c5c" data-i18n-attr="aria-label:aria.targetColor"
+          aria-label="Target color" />
+      </div>
+      <p class="option-note" data-i18n="settings.targetColorNote">Independent of the crosshair colour — set that under
+        Customize Crosshair.</p>
+
       <div class="slider-row">
         <label for="settings-brightness" data-i18n="settings.brightness">Brightness</label>
         <input type="range" id="settings-brightness" min="40" max="300" value="100" />
@@ -396,6 +466,84 @@
       </div>
 
       <button id="settings-reset" class="link-button" type="button" data-i18n="common.reset">Reset to Default</button>
+    </div>
+  </div>
+
+  <div id="suggestions-screen" class="screen hidden">
+    <div class="board-card">
+      <div class="history-header">
+        <h2 data-i18n="suggestions.title">Suggestion Box</h2>
+        <button id="suggestions-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+
+      <p class="board-note" data-i18n="suggestions.localNote">AimonSite has no server, so posts are stored in this
+        browser only. Nothing is uploaded or shared.</p>
+
+      <form id="suggestion-form" class="board-form">
+        <div class="option-row">
+          <span class="option-label" data-i18n="suggestions.category">Category</span>
+          <div class="option-group" id="suggestion-category-group">
+            <button data-category="suggestion" type="button" class="selected" aria-pressed="true"
+              data-i18n="suggestions.category.suggestion">Suggestion</button>
+            <button data-category="bug" type="button" aria-pressed="false"
+              data-i18n="suggestions.category.bug">Error Correction</button>
+          </div>
+        </div>
+        <input id="suggestion-title" type="text" maxlength="120" class="board-input"
+          data-i18n-attr="placeholder:suggestions.titlePlaceholder" placeholder="Title" />
+        <textarea id="suggestion-body" class="board-textarea" maxlength="1000" rows="5"
+          data-i18n-attr="placeholder:suggestions.bodyPlaceholder" placeholder="Describe it…"></textarea>
+        <div class="board-form-footer">
+          <span id="suggestion-counter" class="board-counter">0 / 1000</span>
+          <button id="suggestion-submit" class="btn-primary" type="submit" data-i18n="suggestions.submit">Post</button>
+        </div>
+        <p id="suggestion-error" class="board-error hidden"></p>
+      </form>
+
+      <div class="board-filters">
+        <div class="option-group" id="suggestion-filter-group">
+          <button data-filter="all" type="button" class="selected" aria-pressed="true"
+            data-i18n="suggestions.filter.all">All</button>
+          <button data-filter="suggestion" type="button" aria-pressed="false"
+            data-i18n="suggestions.category.suggestion">Suggestion</button>
+          <button data-filter="bug" type="button" aria-pressed="false"
+            data-i18n="suggestions.category.bug">Error Correction</button>
+          <button data-filter="mine" type="button" aria-pressed="false"
+            data-i18n="suggestions.filter.mine">My Posts</button>
+        </div>
+      </div>
+
+      <div id="suggestion-list" class="board-list"></div>
+    </div>
+  </div>
+
+  <div id="admin-screen" class="screen hidden">
+    <div class="board-card">
+      <div class="history-header">
+        <h2 data-i18n="admin.title">Admin</h2>
+        <button id="admin-back" class="secondary" type="button" data-i18n="common.back">Back</button>
+      </div>
+
+      <p class="board-warning" data-i18n="admin.warning">This is a local view role, not an authenticated account.
+        With no server there is nothing to authenticate against — treat it as a preview of the moderation UI.</p>
+
+      <div id="admin-summary" class="admin-summary"></div>
+
+      <div class="board-filters">
+        <div class="option-group" id="admin-filter-group">
+          <button data-filter="unanswered" type="button" class="selected" aria-pressed="true"
+            data-i18n="admin.filter.unanswered">Needs reply</button>
+          <button data-filter="all" type="button" aria-pressed="false" data-i18n="suggestions.filter.all">All</button>
+          <button data-filter="suggestion" type="button" aria-pressed="false"
+            data-i18n="suggestions.category.suggestion">Suggestion</button>
+          <button data-filter="bug" type="button" aria-pressed="false"
+            data-i18n="suggestions.category.bug">Error Correction</button>
+        </div>
+      </div>
+
+      <div id="admin-list" class="board-list"></div>
+
+      <button id="admin-signout" class="link-button" type="button" data-i18n="admin.signOut">Leave admin mode</button>
     </div>
   </div>
 

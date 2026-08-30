@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Drill, baseSessionResult } from "./base.js";
+import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
 import { getShotOffsetFromTargetCenter } from "../target.js";
@@ -70,29 +70,34 @@ export class ReactionDrill extends Drill {
     }
   }
 
-  handleShot(now) {
+  handleShot(now, rays = CENTER_RAY) {
     if (this.phase === "waiting") {
       this.falseStarts++;
-      return { hit: false };
+      return { hit: false, positions: [] };
     }
     if (this.hitOffsets.length < MAX_STORED_OFFSETS) {
       this.hitOffsets.push(getShotOffsetFromTargetCenter(this.camera, this.currentTarget));
     }
-    const hit = this.targetManager.raycastHit(this.camera);
-    let landed = false;
-    let hitPosition = null;
-    if (hit && hit === this.currentTarget) {
-      hitPosition = hit.mesh.position.clone();
+
+    const positions = [];
+    for (const ray of rays) {
+      const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
+      if (!hit || hit !== this.currentTarget) continue;
+      positions.push(hit.mesh.position.clone());
       hit.markHit();
       this.targetManager.remove(hit);
       this.reactionTimes.push(now - this.spawnedAt);
       this.repIndex++;
       if (this.repIndex < this.targetReps) this._scheduleNext(now);
-      landed = true;
+      break;
     }
     // A stray click that misses the armed target doesn't end the rep —
     // it stays live until hit or its exposure window times out above.
-    return { hit: landed, position: hitPosition };
+    return {
+      hit: positions.length > 0,
+      positions,
+      targetRadius: this.config.targetRadius ?? 0.35,
+    };
   }
 
   getLiveStats(now) {

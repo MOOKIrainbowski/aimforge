@@ -6,7 +6,6 @@ const modeCards = Array.from(document.querySelectorAll(".mode-card"));
 const difficultyButtons = Array.from(document.querySelectorAll("#difficulty-group button"));
 const durationButtons = Array.from(document.querySelectorAll("#duration-group button"));
 const recoilSwitch = document.getElementById("recoil-switch");
-const weaponButtons = Array.from(document.querySelectorAll("#weapon-group button"));
 const startButton = document.getElementById("home-start");
 
 // A single difficulty knob drives per-mode parameters: target size for all
@@ -22,7 +21,6 @@ let selectedMode = "gridshot";
 let selectedDifficulty = "normal";
 let selectedDurationMs = 60_000;
 let recoilEnabled = false;
-let selectedWeapon = "rifle";
 
 function setPressed(button, pressed) {
   button.classList.toggle("selected", pressed);
@@ -80,24 +78,16 @@ export function initHome(onStart) {
     setSwitch(recoilSwitch, recoilEnabled, "common.on", "common.off");
   });
 
-  for (const btn of weaponButtons) {
-    btn.addEventListener("click", () => {
-      selectedWeapon = btn.dataset.weapon;
-      for (const b of weaponButtons) setPressed(b, b === btn);
-    });
-  }
-
   startButton.addEventListener("click", () => {
     onStart({
       mode: selectedMode,
       durationMs: selectedDurationMs,
       ...DIFFICULTY_PRESETS[selectedDifficulty],
-      // weaponId gates the Recoil Control training pattern (core/weapon.js);
-      // viewmodelWeapon is purely cosmetic and applies regardless of that
-      // toggle — a player can look like they're holding a Sniper without
-      // fighting (or having) a recoil pattern for it.
-      weaponId: recoilEnabled ? selectedWeapon : "none",
-      viewmodelWeapon: selectedWeapon,
+      // Which weapon is carried is no longer decided here — the picker on
+      // the way into the range owns that. This only reports whether the
+      // Recoil Control training pattern should be armed for it; main.js
+      // combines the two once the weapon is chosen.
+      recoilEnabled,
     });
   });
 

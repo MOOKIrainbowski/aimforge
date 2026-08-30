@@ -641,61 +641,20 @@ button {
 
 /* Home dashboard — full-width, scrollable, landing-page visual language,
    unlike every other screen's small centered modal card. */
+/* Two columns: the sidebar rail and the scrolling drill dashboard. The
+   screen itself no longer scrolls — .home-main does — so the rail stays put
+   while the dashboard moves under it. */
 #home-screen {
-  display: block;
+  display: flex;
   align-items: stretch;
   justify-content: flex-start;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--bg-page);
 }
 
 .wrap {
   width: min(1080px, 92vw);
   margin: 0 auto;
-}
-
-.home-nav {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--bg-page);
-  border-bottom: 1px solid var(--border);
-}
-
-.home-nav-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 0;
-}
-
-.home-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-  text-decoration: none;
-  flex-shrink: 0;
-  transition: opacity 150ms ease;
-}
-
-.home-brand:hover {
-  opacity: 0.8;
-}
-
-.home-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.home-nav-links .link-button {
-  margin-top: 0;
 }
 
 .eyebrow {
@@ -779,8 +738,36 @@ button {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .home-nav-links {
+  .app-sidebar {
+    position: static;
+    width: auto;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .sidebar-brand span,
+  .sidebar-item span:not(.sidebar-badge) {
     display: none;
+  }
+
+  .sidebar-footer {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  #home-screen {
+    flex-direction: column;
   }
 }
 
@@ -1167,4 +1154,599 @@ button {
   color: var(--text-secondary);
   font-size: 13px;
   margin-top: -6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar
+
+   Replaces the old top nav row. The home screen is now a two-column layout:
+   a fixed-width rail of destinations on the left, the drill dashboard on the
+   right. On narrow viewports the media query above flattens the rail into a
+   horizontal icon strip rather than hiding the links entirely, which is what
+   the old nav did.
+   ------------------------------------------------------------------------ */
+.app-sidebar {
+  flex: 0 0 232px;
+  width: 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 14px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 18px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: opacity 150ms ease;
+}
+
+.sidebar-brand:hover {
+  opacity: 0.8;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.sidebar-item:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.sidebar-item svg {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.home-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.home-main .wrap {
+  width: min(1080px, 92%);
+}
+
+/* ---------------------------------------------------------------------------
+   Weapon select
+   ------------------------------------------------------------------------ */
+.weapon-card {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 20px;
+  padding: 28px 32px;
+  width: min(980px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-card);
+  font: 400 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: card-in 220ms ease;
+}
+
+.weapon-intro {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.weapon-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.weapon-option:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+.weapon-option.selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.weapon-option-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.weapon-option-tagline {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+  min-height: 36px;
+}
+
+.weapon-option-stats {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.weapon-option-stats dt {
+  color: var(--text-muted);
+}
+
+.weapon-option-stats dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Ammo / action HUD
+   ------------------------------------------------------------------------ */
+.hud-weapon {
+  position: fixed;
+  right: 28px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--bg-hud);
+  color: var(--text-primary);
+  pointer-events: none;
+}
+
+.hud-weapon-name {
+  font: 600 11px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.hud-ammo {
+  font: 700 26px/1.1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-ammo-sep {
+  margin: 0 3px;
+  color: var(--text-muted);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+#hud-ammo-cap {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.hud-ammo-empty {
+  color: #ff6b6b;
+}
+
+.hud-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.hud-action-label {
+  font: 600 10px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.hud-action-track {
+  display: block;
+  width: 84px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.hud-action-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.start-prompt-keys {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.start-prompt-keys kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-input);
+  font: 600 11px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Suggestion box / admin board
+   ------------------------------------------------------------------------ */
+.board-card {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 20px;
+  padding: 28px 32px;
+  width: min(760px, 94vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-card);
+  font: 400 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: card-in 220ms ease;
+}
+
+.board-note,
+.board-warning {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+
+.board-note {
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+}
+
+.board-warning {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning);
+}
+
+.board-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.board-input,
+.board-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: 400 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  resize: vertical;
+}
+
+.board-input:focus,
+.board-textarea:focus {
+  outline: none;
+  border-color: var(--accent-border);
+}
+
+.board-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.board-counter {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-error {
+  font-size: 13px;
+  color: #ff6b6b;
+}
+
+.board-filters {
+  margin: 16px 0 12px;
+}
+
+.board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.board-empty {
+  padding: 28px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.board-post {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.board-post.unread {
+  border-color: var(--accent-border);
+}
+
+.board-post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font: 400 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.board-post-header:hover {
+  background: var(--bg-button-secondary);
+}
+
+.board-post-title {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-post-meta,
+.board-post-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.board-tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.board-tag-suggestion {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.board-tag-bug {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.board-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.board-status-planned {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.board-status-resolved {
+  color: var(--positive);
+  border-color: var(--positive);
+}
+
+.board-status-declined {
+  color: var(--text-muted);
+}
+
+.board-unread-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.board-post-body {
+  padding: 0 14px 14px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.board-comment {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0 14px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.board-comment-admin {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.board-comment-who {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.board-comment-when {
+  font-size: 11px;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+.board-comment-body {
+  grid-column: 1 / -1;
+  font-size: 13.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.board-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.board-delete {
+  margin-top: 0;
+  color: #ff6b6b;
+}
+
+.board-delete-armed {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.admin-summary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.admin-summary-cell strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-summary-cell span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.admin-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 14px 12px;
+}
+
+.option-note {
+  margin: -8px 0 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* .btn-primary intentionally carries only colour and feedback — every place
+   that uses it pairs it with a sizing class (.start-button, .summary-actions
+   button). The board's inline actions have no such partner, so they get
+   their sizing here rather than by loading .start-button's full-width look. */
+.board-form-footer .btn-primary,
+.board-form-footer .secondary {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif;
 }

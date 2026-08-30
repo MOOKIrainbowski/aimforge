@@ -9,6 +9,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="tracking"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
 
   // Repeatedly re-lookAt the (moving) target for ~1.5s so time-on-target
@@ -30,6 +33,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="switching"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
 
   for (let i = 0; i < 6; i++) {

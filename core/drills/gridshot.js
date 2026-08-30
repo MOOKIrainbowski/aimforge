@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Drill, baseSessionResult } from "./base.js";
+import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
 import { RecoilTracker } from "../weapon.js";
@@ -25,6 +25,10 @@ export class GridshotDrill extends Drill {
     super(config, deps);
     this.hits = 0;
     this.shotsTotal = 0;
+    // Shots that connected, as distinct from targets destroyed: a shotgun
+    // blast is one shot however many pellets land, so accuracy stays a
+    // percentage of trigger pulls and can never exceed 100%.
+    this.shotsHit = 0;
     this.currentStreak = 0;
     this.bestStreak = 0;
     this.timeToKillList = [];
@@ -88,7 +92,7 @@ export class GridshotDrill extends Drill {
     }
   }
 
-  handleShot(now) {
+  handleShot(now, rays = CENTER_RAY) {
     if (this.recoil.enabled) this.recoil.recordShot(this.controls);
 
     this.shotsTotal++;
@@ -97,15 +101,17 @@ export class GridshotDrill extends Drill {
       this.firstShotPending = false;
     }
 
+    // Recorded from the crosshair, not from whichever pellet landed — the
+    // heatmap is about where the player aimed, not where the cone scattered.
     if (this.hitOffsets.length < MAX_STORED_OFFSETS) {
       this.hitOffsets.push(getShotOffsetFromTargetCenter(this.camera, this.currentTarget));
     }
 
-    const hit = this.targetManager.raycastHit(this.camera);
-    let landed = false;
-    let hitPosition = null;
-    if (hit && hit === this.currentTarget) {
-      hitPosition = hit.mesh.position.clone();
+    const positions = [];
+    for (const ray of rays) {
+      const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
+      if (!hit || hit !== this.currentTarget) continue;
+      positions.push(hit.mesh.position.clone());
       hit.markHit();
       this.targetManager.remove(hit);
       this.hits++;
@@ -113,20 +119,29 @@ export class GridshotDrill extends Drill {
       this.currentStreak++;
       this.bestStreak = Math.max(this.bestStreak, this.currentStreak);
       this._spawnTarget(now);
-      landed = true;
-    } else {
-      this.currentStreak = 0;
+      // Only one target is ever alive here, and it has just been replaced —
+      // letting the rest of a shotgun's pellets through would let one blast
+      // clear two consecutive targets.
+      break;
     }
 
+    if (positions.length > 0) this.shotsHit++;
+    else this.currentStreak = 0;
+
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
-    return { hit: landed, position: hitPosition, streak: this.currentStreak };
+    return {
+      hit: positions.length > 0,
+      positions,
+      streak: this.currentStreak,
+      targetRadius: this.config.targetRadius ?? 0.35,
+    };
   }
 
   getLiveStats(now) {
     const elapsed = now - this.startTime;
     return {
       score: this.hits,
-      accuracy: this.shotsTotal > 0 ? (this.hits / this.shotsTotal) * 100 : 0,
+      accuracy: this.shotsTotal > 0 ? (this.shotsHit / this.shotsTotal) * 100 : 0,
       timeRemainingMs: Math.max(0, this.config.durationMs - elapsed),
       streak: this.currentStreak,
     };
@@ -145,9 +160,9 @@ export class GridshotDrill extends Drill {
     const result = baseSessionResult("gridshot", this.startTime, now);
     result.durationPlanned = this.config.durationMs;
     result.hits = this.hits;
-    result.misses = this.shotsTotal - this.hits;
+    result.misses = this.shotsTotal - this.shotsHit;
     result.shotsTotal = this.shotsTotal;
-    result.accuracy = this.shotsTotal > 0 ? (this.hits / this.shotsTotal) * 100 : 0;
+    result.accuracy = this.shotsTotal > 0 ? (this.shotsHit / this.shotsTotal) * 100 : 0;
     result.score = this.hits;
     result.extra = {
       avgTimeToKillMs: mean(this.timeToKillList),

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Drill, baseSessionResult } from "./base.js";
+import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
 import { RecoilTracker } from "../weapon.js";
@@ -15,6 +15,8 @@ export class SwitchingDrill extends Drill {
     super(config, deps);
     this.hits = 0;
     this.shotsTotal = 0;
+    // See gridshot: targets destroyed vs. trigger pulls that connected.
+    this.shotsHit = 0;
     this.currentStreak = 0;
     this.bestStreak = 0;
     this.wavesCompleted = 0;
@@ -59,42 +61,55 @@ export class SwitchingDrill extends Drill {
     this.lastHitTime = now;
   }
 
-  handleShot(now) {
+  handleShot(now, rays = CENTER_RAY) {
     if (this.recoil.enabled) this.recoil.recordShot(this.controls);
 
     this.shotsTotal++;
-    const hit = this.targetManager.raycastHit(this.camera);
-    let landed = false;
-    let hitPosition = null;
-    if (hit && this.currentWaveIds.has(hit.id)) {
-      hitPosition = hit.mesh.position.clone();
+    const positions = [];
+    for (const ray of rays) {
+      const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
+      if (!hit || !this.currentWaveIds.has(hit.id)) continue;
+
+      positions.push(hit.mesh.position.clone());
       hit.markHit();
       this.targetManager.remove(hit);
       this.currentWaveIds.delete(hit.id);
       this.hits++;
-      this.switchTimes.push(now - this.lastHitTime);
-      this.lastHitTime = now;
+      // Only the first target a blast clears times a real re-acquisition;
+      // the rest died to the same trigger pull and would otherwise log ~0ms
+      // switches and flatter the average.
+      if (positions.length === 1) {
+        this.switchTimes.push(now - this.lastHitTime);
+        this.lastHitTime = now;
+      }
       this.currentStreak++;
       this.bestStreak = Math.max(this.bestStreak, this.currentStreak);
-      landed = true;
 
       if (this.currentWaveIds.size === 0) {
         this.wavesCompleted++;
         this._spawnWave(now);
+        // Stop here so leftover pellets can't reach into the fresh wave.
+        break;
       }
-    } else {
-      this.currentStreak = 0;
     }
 
+    if (positions.length > 0) this.shotsHit++;
+    else this.currentStreak = 0;
+
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
-    return { hit: landed, position: hitPosition, streak: this.currentStreak };
+    return {
+      hit: positions.length > 0,
+      positions,
+      streak: this.currentStreak,
+      targetRadius: this.config.targetRadius ?? 0.35,
+    };
   }
 
   getLiveStats(now) {
     const elapsed = now - this.startTime;
     return {
       score: this.hits,
-      accuracy: this.shotsTotal > 0 ? (this.hits / this.shotsTotal) * 100 : 0,
+      accuracy: this.shotsTotal > 0 ? (this.shotsHit / this.shotsTotal) * 100 : 0,
       timeRemainingMs: Math.max(0, this.config.durationMs - elapsed),
       streak: this.currentStreak,
     };
@@ -113,9 +128,9 @@ export class SwitchingDrill extends Drill {
     const result = baseSessionResult("switching", this.startTime, now);
     result.durationPlanned = this.config.durationMs;
     result.hits = this.hits;
-    result.misses = this.shotsTotal - this.hits;
+    result.misses = this.shotsTotal - this.shotsHit;
     result.shotsTotal = this.shotsTotal;
-    result.accuracy = this.shotsTotal > 0 ? (this.hits / this.shotsTotal) * 100 : 0;
+    result.accuracy = this.shotsTotal > 0 ? (this.shotsHit / this.shotsTotal) * 100 : 0;
     result.score = this.hits;
     result.extra = {
       avgSwitchTimeMs: mean(this.switchTimes),

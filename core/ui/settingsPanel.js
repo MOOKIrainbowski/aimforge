@@ -6,6 +6,7 @@ const themeSwitch = document.getElementById("theme-switch");
 const soundSwitch = document.getElementById("sound-switch");
 const wallColorInput = document.getElementById("settings-wall-color");
 const floorColorInput = document.getElementById("settings-floor-color");
+const targetColorInput = document.getElementById("settings-target-color");
 const brightnessInput = document.getElementById("settings-brightness");
 const fovInput = document.getElementById("settings-fov");
 const resetButton = document.getElementById("settings-reset");
@@ -25,6 +26,7 @@ function syncControls() {
   setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
   wallColorInput.value = config.wallColor;
   floorColorInput.value = config.floorColor;
+  targetColorInput.value = config.targetColor;
   brightnessInput.value = String(Math.round(config.brightness * 100));
   fovInput.value = String(config.fov);
 }
@@ -54,6 +56,10 @@ export function initSettingsPanel(onChangeCallback) {
   });
   floorColorInput.addEventListener("input", () => {
     config.floorColor = floorColorInput.value;
+    persistAndApply();
+  });
+  targetColorInput.addEventListener("input", () => {
+    config.targetColor = targetColorInput.value;
     persistAndApply();
   });
   brightnessInput.addEventListener("input", () => {

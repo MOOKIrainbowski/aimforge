@@ -11,6 +11,9 @@ const { chromium } = require("playwright");
   await page.click('#recoil-toggle-group button[data-recoil="on"]');
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
 
   const before = await page.evaluate(() => {

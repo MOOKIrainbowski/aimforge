@@ -11,6 +11,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="reaction"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
 
   // Click center repeatedly for up to 20s — targets spawn within the
@@ -43,6 +46,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
 
   const gridPoints = [];

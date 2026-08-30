@@ -22,6 +22,9 @@ const { chromium } = require("playwright");
   await page.click('#difficulty-group button[data-difficulty="hard"]');
   await page.click('#duration-group button[data-duration="30000"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(400);
 
   const lockedAfterStart = await page.evaluate(() => document.pointerLockElement !== null);

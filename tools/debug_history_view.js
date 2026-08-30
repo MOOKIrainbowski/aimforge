@@ -3,6 +3,9 @@ const { chromium } = require("playwright");
 async function playAndReturn(page, mode) {
   await page.click(`.mode-card[data-mode="${mode}"]`);
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(2400);
   await page.click("#summary-menu");
   await page.waitForTimeout(200);

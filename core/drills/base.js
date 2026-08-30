@@ -1,3 +1,8 @@
+// The default single ray straight down the crosshair, shared by every drill
+// so the common case allocates nothing. Multi-pellet weapons pass their own
+// cone in instead (see core/weaponRuntime.js's buildShotRays).
+export const CENTER_RAY = Object.freeze([Object.freeze({ x: 0, y: 0 })]);
+
 // Shared lifecycle every drill mode implements. main.js's game loop drives
 // these calls; TargetManager.update() is called centrally by main.js (not
 // by the drill itself), and any targets that expired that frame are handed
@@ -18,13 +23,17 @@ export class Drill {
 
   update(_dt, _now, _expiredTargets) {}
 
-  // Return { hit: boolean, position?: THREE.Vector3, streak?: number } to
-  // trigger crosshair/audio/particle feedback in main.js — `position` (the
-  // hit target's world position, captured before it's removed) and `streak`
-  // are only meaningful when hit is true. Leave unimplemented (undefined)
-  // for modes with no discrete "shot" concept (Tracking is scored
-  // continuously; clicking does nothing there).
-  handleShot(_now) {}
+  // `rays` is the set of screen-space (NDC) offsets this trigger pull fires
+  // along — one for most weapons, a cone for shotguns.
+  //
+  // Return { hit: boolean, positions: THREE.Vector3[], streak?: number,
+  // targetRadius?: number } to trigger crosshair/audio/particle feedback in
+  // main.js. `positions` holds one entry per target destroyed by this shot
+  // (captured before removal), so a single blast that clears three targets
+  // produces three bursts. Leave unimplemented (undefined) for modes with no
+  // discrete "shot" concept (Tracking is scored continuously; clicking does
+  // nothing there).
+  handleShot(_now, _rays) {}
 
   getLiveStats(_now) {
     return { score: 0, accuracy: 0, timeRemainingMs: 0, streak: 0 };

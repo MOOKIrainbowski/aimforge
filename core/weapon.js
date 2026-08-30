@@ -1,43 +1,13 @@
 import * as THREE from "three";
+import { WEAPONS } from "./weapons.js";
 
-// Each pattern is a sequence of per-shot (dx, dy) view-punch offsets in
-// radians, applied directly to the pointer-lock controller's yaw/pitch —
-// the same units as mouse-look sensitivity, so a punch feels like a real
-// camera kick rather than a scripted animation. Once a burst runs past the
-// pattern's length, the last step repeats (mimics recoil "settling").
-const WEAPON_PRESETS = {
-  rifle: {
-    name: "Rifle",
-    pattern: [
-      { dx: 0.0, dy: 0.01 },
-      { dx: 0.001, dy: 0.012 },
-      { dx: -0.002, dy: 0.013 },
-      { dx: 0.003, dy: 0.014 },
-      { dx: -0.004, dy: 0.015 },
-      { dx: 0.005, dy: 0.013 },
-      { dx: -0.006, dy: 0.012 },
-      { dx: 0.006, dy: 0.011 },
-      { dx: -0.005, dy: 0.01 },
-      { dx: 0.004, dy: 0.009 },
-    ],
-  },
-  smg: {
-    name: "SMG",
-    pattern: [
-      { dx: 0.002, dy: 0.008 },
-      { dx: -0.003, dy: 0.009 },
-      { dx: 0.004, dy: 0.01 },
-      { dx: -0.005, dy: 0.009 },
-      { dx: 0.006, dy: 0.008 },
-      { dx: -0.004, dy: 0.007 },
-      { dx: 0.003, dy: 0.006 },
-      { dx: -0.002, dy: 0.006 },
-    ],
-  },
-};
-
+// Recoil patterns now live with the rest of each weapon's data in
+// weapons.js; this module keeps only the training mechanic built on top of
+// them. A weaponId of "none" (Recoil Control switched off on the home
+// screen) resolves to no preset, which disables the tracker entirely.
 export function getWeaponPreset(id) {
-  return WEAPON_PRESETS[id] ?? null;
+  const weapon = WEAPONS[id];
+  return weapon && weapon.recoilPattern?.length ? { name: weapon.id, pattern: weapon.recoilPattern } : null;
 }
 
 // Tracks recoil state for a single drill session: applies each shot's punch

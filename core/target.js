@@ -105,6 +105,9 @@ export class TargetManager {
     this.quality = quality;
     this.active = new Map(); // id -> Target
     this.raycaster = new THREE.Raycaster();
+    // Reused per raycast so a shotgun's dozen pellets don't allocate a
+    // dozen throwaway objects on every trigger pull.
+    this._ndc = new THREE.Vector2();
     // Kept in sync with `active` (added in spawn(), removed in remove()) so
     // raycastHit() — called every frame in Tracking mode — never rebuilds an
     // array from the map on the hot path.
@@ -116,6 +119,12 @@ export class TargetManager {
     this.active.set(target.id, target);
     this.meshes.push(target.mesh);
     this.scene.add(target.mesh);
+    // Raycasting transforms the ray into each mesh's own space using its
+    // matrixWorld, which is otherwise only refreshed by the renderer on the
+    // next frame. Without this, a target raycast in the same frame it
+    // spawned is tested against an identity matrix — it is effectively at
+    // the origin, so the shot always misses.
+    target.mesh.updateMatrixWorld();
     return target;
   }
 
@@ -146,17 +155,21 @@ export class TargetManager {
     return expired;
   }
 
-  // Raycasts from screen center (matches the fixed DOM crosshair) against
-  // all currently alive target meshes. Used both for click-to-hit and,
-  // in Tracking mode, per-frame continuous on-target checks.
+  // Raycasts against all currently alive target meshes. Defaults to screen
+  // centre (matching the fixed DOM crosshair) — used for click-to-hit and,
+  // in Tracking mode, per-frame continuous on-target checks. `ndcX`/`ndcY`
+  // offset the ray for shotgun pellets, which fire in a cone around the
+  // crosshair rather than straight down it.
   //
   // camera.matrixWorld is normally only refreshed inside renderer.render(),
   // but shots fire from the mousedown handler, independent of the render
   // loop — without this, every raycast would check against the previous
   // frame's camera orientation instead of the one the mouse just moved to.
-  raycastHit(camera) {
+  raycastHit(camera, ndcX = 0, ndcY = 0) {
     camera.updateMatrixWorld();
-    this.raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    this._ndc.x = ndcX;
+    this._ndc.y = ndcY;
+    this.raycaster.setFromCamera(this._ndc, camera);
     const hits = this.raycaster.intersectObjects(this.meshes, false);
     if (hits.length === 0) return null;
     const hitMesh = hits[0].object;

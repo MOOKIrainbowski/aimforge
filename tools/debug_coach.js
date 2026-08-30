@@ -12,6 +12,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
 
   for (let i = 0; i < 21; i++) {
@@ -55,6 +58,9 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
+  // "Enter the Range" now opens the weapon picker first; confirming it is
+  // what actually enters the range.
+  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
 
   const shotInterval = setInterval(() => {}, 999999); // keep node alive marker (unused)
