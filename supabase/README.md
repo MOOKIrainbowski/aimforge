@@ -1,5 +1,8 @@
 # Backend setup
 
+> 한국어 상세 안내: [README.ko.md](./README.ko.md) — 화면 단위로 더 자세히,
+> 자주 겪는 오류와 해결까지 포함한 판입니다.
+
 AimonSite works with no backend at all: the suggestion box falls back to this
 browser's localStorage and no sign-in button is shown. Everything below is
 what turns that into a shared board with real accounts.
