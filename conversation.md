@@ -95,23 +95,81 @@ pointer-locked session through main.js's own firing pipeline — all passing.
 
 ---
 
+## Session — 2026-09-05
+
+Three stages, each verified and deployed before the next began.
+
+### Stage 1 — finished and shipped the work already in the tree
+
+A large uncommitted change was sitting in the working tree: per-weapon
+firing accuracy (a hip/ADS base error blended by aim progress, plus bloom
+that accumulates under sustained fire and recovers at each weapon's own
+rate), gunshots re-synthesized as six layers through a per-weapon
+saturator and a shared reverb in the new `core/audio/`, a weapon picker
+reduced to a rendered picture of the gun and its name, and a Magazine
+Limit setting that is off by default.
+
+`tools/build_desktop_shell.js` was part of it and did not run: every rule
+was written against `\n`, and git checks the shells out with CRLF here, so
+the head rule matched nothing and the script threw. It now normalises on
+read and restores the source file's own ending on write.
+
+The Korean weapon-select intro still described the stat table that had
+been removed; rewritten to match the English copy.
+
+### Stage 2 — the two dev tools that had quietly stopped working
+
+`debug_settings.js` drove `#home-settings` and a `#theme-group` button;
+both changed with the sidebar. `debug_crosshair_editor.js` drove
+`#crosshair-dot-group`. Both had been failing on their first click ever
+since, so neither had checked anything in a while. Repaired and passing.
+
+### Stage 3 — humanoid targets
+
+`Human Targets` is a new Settings switch, off by default. On, every drill
+spawns a figure built from primitives with three hit zones — head, torso
+(arms included) and legs — using a real body's proportions, so the head
+stays the small deliberate target it should be. Raycasts recurse into the
+zone meshes and record which one was struck.
+
+Headshots get their own sound and a red hitmarker, and are counted in the
+Gridshot and Switching summaries. Reaction calls them out on the shot but
+does not tally them: that mode scores how fast you reacted, and a headshot
+count would invite trading away the thing being measured.
+
+One non-obvious fix: the zones emit a fraction of their own colour. The
+range is lit from above, which a sphere catches across its whole curve but
+a figure's flat vertical faces do not — without it a humanoid rendered as
+a dark silhouette in exactly the colour chosen for visibility.
+
+Spheres stay the default. They are the same size from every angle, which
+is what makes them a fair measuring stick for pure aim.
+
+### Verification
+
+`tools/debug_human_targets.js` is new and covers the setting, the figure's
+construction, which zone each shot reports, headshot accounting, that
+spheres are unchanged, and that a figure is added and removed as one
+object. `debug_weapons.js`, `debug_all_modes.js`, `debug_settings.js` and
+`debug_crosshair_editor.js` all pass with zero page errors.
+
+---
+
 ## Still open
 
-**From the original list**
+**Blocked on a decision, not on work**
 
-- Login / sign-up (Google) — deferred by the user; wanted for PvP.
-- Human models split into head / torso+arms / legs, as PvP preparation.
+- Login / sign-up (Google). Needs a host and an auth provider chosen
+  first. Wanted for PvP.
+- The suggestion box needs a backend to be more than a local notepad —
+  same decision, same blocker. Until then the admin page is a view role,
+  not an authenticated one.
 
-**Follow-ups this session created**
+**Open work**
 
-- The suggestion box needs a backend to be more than a local notepad. That
-  is the blocking decision before the admin page means anything.
-- Two dev tools reference IDs that no longer exist and were already broken
-  before this session: `tools/debug_settings.js` (`#home-settings`, now
-  `#home-settings-btn`) and `tools/debug_crosshair_editor.js`
-  (`#crosshair-dot-group`, now `#dot-switch`).
-- `app/index.html` and `desktop/renderer/index.html` are near-duplicate
-  shells; the desktop copy is currently regenerated from the web one by
-  hand. Worth making that a build step before it drifts again.
 - Per-weapon recoil patterns are first drafts — worth tuning against real
-  play, especially the sniper's single heavy punch.
+  play, especially the sniper's single heavy punch. The same is now true
+  of the firing-accuracy numbers.
+- Humanoid targets are static figures. PvP will want them moving and
+  animated, and the zones sized against a real player model rather than
+  against the sphere they replaced.
