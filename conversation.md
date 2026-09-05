@@ -155,21 +155,80 @@ object. `debug_weapons.js`, `debug_all_modes.js`, `debug_settings.js` and
 
 ---
 
+## Session — 2026-09-05, second half
+
+The two blocked items were unblocked by a decision: **Supabase**, and
+accounts that carry suggestions and a PvP identity while drill stats stay
+local. Three more stages, each verified and deployed before the next.
+
+### Stage 4 — recoil and accuracy, measured
+
+`tools/tune_weapons.js` is new and prints what the numbers actually do —
+first-shot deviation in degrees and centimetres at 8m, bloom really
+accumulated per shot, the recoil pattern summed over a full magazine —
+then asserts the intentions behind them. It found three things.
+
+The automatics' patterns were shorter than their magazines, so the rifle
+fired 10 authored shots and 20 identical ones straight up. All three now
+run the full magazine in a three-act shape: vertical climb, a walk to one
+side, then a swing back with the vertical spent.
+
+`maxBloomDeg` is never what a shot carries — one interval of recovery
+comes off before the next round leaves, so the rifle's real ceiling is
+1.67°, not 2.1. Tune against the felt number; the tool prints it.
+
+The SMG was the *worst* hip-fire automatic, backwards for the weapon you
+shoot while moving. It is now the most forgiving from the hip, barely
+improved by aiming, and pays for its volume in bloom instead.
+
+`tools/debug_recoil.js` had been failing on its first click since the
+sidebar rework — a third instance of the same rot. Rewritten with real
+assertions about the mechanic rather than prints.
+
+### Stage 5 — a backend seam under the suggestion box
+
+Split in three: `backend.js` holds the contract and picks the
+implementation, `localBackend.js` is the existing localStorage behaviour
+lifted out unchanged, `store.js` keeps the rules so both implementations
+enforce the same ones. Every read and write is a promise now; both screens
+guard renders with a token and disable submits in flight.
+`tools/debug_suggestions.js` drives the real screens against a slow
+in-memory "remote" backend, which caught the one thing the refactor
+missed: a backend swap left the previous board on screen.
+
+### Stage 6 — Google sign-in and the shared board
+
+The Supabase client is written out (~200 lines: authorize, token, logout,
+PostgREST) rather than vendoring ~120KB of SDK for four endpoints. PKCE,
+so no token ever appears in a URL. Authorisation lives in
+`supabase/schema.sql` — a static client can lie about anything it is
+trusted to decide, so authorship, `by_admin` and deletion are settled by
+row-level security against `auth.uid()`, and a column grant is what stops
+an account promoting itself.
+
+With `core/backend/config.js` empty, as it ships, none of this exists: no
+sign-in button, no network calls, the local board as before.
+`tools/debug_auth.js` covers the whole flow against a mocked Supabase that
+refuses things the way the real policies do.
+
+---
+
 ## Still open
 
-**Blocked on a decision, not on work**
+**Stage 7 — needs the project only you can create**
 
-- Login / sign-up (Google). Needs a host and an auth provider chosen
-  first. Wanted for PvP.
-- The suggestion box needs a backend to be more than a local notepad —
-  same decision, same blocker. Until then the admin page is a view role,
-  not an authenticated one.
+Follow `supabase/README.md`: create the project, run `schema.sql`, enable
+Google, then paste the URL and anon key into `core/backend/config.js`.
+Once those two lines are filled in, what remains is: verify a real sign-in
+end to end, confirm the RLS check the mock cannot answer (the README ends
+with it), promote your own account to admin, and decide whether local
+posts made before sign-in should be offered for migration to the shared
+board.
 
 **Open work**
 
-- Per-weapon recoil patterns are first drafts — worth tuning against real
-  play, especially the sniper's single heavy punch. The same is now true
-  of the firing-accuracy numbers.
 - Humanoid targets are static figures. PvP will want them moving and
   animated, and the zones sized against a real player model rather than
   against the sphere they replaced.
+- The recoil patterns now hold up arithmetically. Whether they *feel*
+  right is still a question only play answers.
