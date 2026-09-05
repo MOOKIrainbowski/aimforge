@@ -195,6 +195,15 @@ body {
   animation: hitmarker-pop-anim 260ms ease-out;
 }
 
+/* A headshot keeps the same marker and timing but goes red and slightly
+   heavier: the shot reads as different at a glance without a second shape to
+   learn or a longer animation to sit through. */
+#hitmarker.hitmarker-headshot::before,
+#hitmarker.hitmarker-headshot::after {
+  background: #ff4d4d;
+  height: 4px;
+}
+
 /* Right-mouse ADS: a hard-edged circular mask (the box-shadow spread trick,
    no image asset) simulating a scope lens. #crosshair sits after this in the
    DOM so it naturally paints on top and stays visible through the lens. */

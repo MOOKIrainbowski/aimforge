@@ -27,6 +27,7 @@ import {
   setSoundEnabled,
   playShotSound,
   playKillSound,
+  playHeadshotSound,
   playMissSound,
   playTargetExpireSound,
   playCompletionSound,
@@ -232,6 +233,7 @@ async function enterRange(weaponId) {
     // crosshair colour here, which is what made the two impossible to set
     // apart — see core/rangeConfig.js.
     targetColor: rangeConfig.targetColor,
+    targetShape: rangeConfig.humanTargets ? "human" : "sphere",
     // weaponId gates the Recoil Control training pattern (core/weapon.js);
     // the carried weapon applies regardless of that toggle, so a player can
     // shoot a sniper without also fighting its recoil pattern.
@@ -482,8 +484,9 @@ function tryFire(now) {
   else ejectCasing(scene, camera, viewmodel.getEjectionWorld(_eject));
 
   if (result.hit) {
-    playKillSound(result.streak ?? 0);
-    showHitMarker(hitmarker);
+    if (result.headshot) playHeadshotSound(result.streak ?? 0);
+    else playKillSound(result.streak ?? 0);
+    showHitMarker(hitmarker, { headshot: Boolean(result.headshot) });
     for (const position of result.positions) {
       spawnKillBurst(scene, position, result.streak ?? 0, rangeConfig.targetColor, result.targetRadius);
     }

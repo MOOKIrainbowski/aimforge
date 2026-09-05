@@ -3,6 +3,7 @@ import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
 import { RecoilTracker } from "../weapon.js";
+import { TargetPart } from "../target.js";
 
 const MIN_TARGET_SEPARATION = 1.4;
 const MAX_PLACEMENT_ATTEMPTS = 20;
@@ -14,6 +15,8 @@ export class SwitchingDrill extends Drill {
   constructor(config, deps) {
     super(config, deps);
     this.hits = 0;
+    // See gridshot: null rather than 0 when the session ran against spheres.
+    this.headshots = 0;
     this.shotsTotal = 0;
     // See gridshot: targets destroyed vs. trigger pulls that connected.
     this.shotsHit = 0;
@@ -54,6 +57,7 @@ export class SwitchingDrill extends Drill {
         radius,
         ttl: Infinity,
         color: this.config.targetColor,
+        shape: this.config.targetShape,
         now,
       });
       this.currentWaveIds.add(target.id);
@@ -66,11 +70,16 @@ export class SwitchingDrill extends Drill {
 
     this.shotsTotal++;
     const positions = [];
+    let headshot = false;
     for (const ray of rays) {
       const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
       if (!hit || !this.currentWaveIds.has(hit.id)) continue;
 
       positions.push(hit.mesh.position.clone());
+      if (hit.lastHitPart === TargetPart.HEAD) {
+        headshot = true;
+        this.headshots++;
+      }
       hit.markHit();
       this.targetManager.remove(hit);
       this.currentWaveIds.delete(hit.id);
@@ -99,6 +108,7 @@ export class SwitchingDrill extends Drill {
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
     return {
       hit: positions.length > 0,
+      headshot,
       positions,
       streak: this.currentStreak,
       targetRadius: this.config.targetRadius ?? 0.35,
@@ -136,6 +146,7 @@ export class SwitchingDrill extends Drill {
       avgSwitchTimeMs: mean(this.switchTimes),
       wavesCompleted: this.wavesCompleted,
       bestStreak: this.bestStreak,
+      headshots: this.config.targetShape === "human" ? this.headshots : null,
       avgRecoilCompensation: this.recoil.getAverageCompensationPercent(),
       switchTimes: this.switchTimes,
     };

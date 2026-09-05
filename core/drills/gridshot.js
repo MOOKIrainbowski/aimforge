@@ -3,7 +3,7 @@ import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
 import { RecoilTracker } from "../weapon.js";
-import { getAngularOffsetDeg, getShotOffsetFromTargetCenter } from "../target.js";
+import { getAngularOffsetDeg, getShotOffsetFromTargetCenter, TargetPart } from "../target.js";
 
 const MIN_RESPAWN_DISPLACEMENT = 1.2;
 
@@ -24,6 +24,11 @@ export class GridshotDrill extends Drill {
   constructor(config, deps) {
     super(config, deps);
     this.hits = 0;
+    // Kills that landed on a humanoid target's head. Reported as null rather
+    // than 0 when the session ran against spheres, which have no zones: a
+    // flat "Headshots: 0" would read as a failure rather than as a stat that
+    // does not apply.
+    this.headshots = 0;
     this.shotsTotal = 0;
     // Shots that connected, as distinct from targets destroyed: a shotgun
     // blast is one shot however many pellets land, so accuracy stays a
@@ -75,6 +80,7 @@ export class GridshotDrill extends Drill {
       radius: this.config.targetRadius ?? 0.35,
       ttl: Infinity,
       color: this.config.targetColor,
+      shape: this.config.targetShape,
       now,
     });
     this.currentSpawnTime = now;
@@ -108,10 +114,15 @@ export class GridshotDrill extends Drill {
     }
 
     const positions = [];
+    let headshot = false;
     for (const ray of rays) {
       const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
       if (!hit || hit !== this.currentTarget) continue;
       positions.push(hit.mesh.position.clone());
+      if (hit.lastHitPart === TargetPart.HEAD) {
+        headshot = true;
+        this.headshots++;
+      }
       hit.markHit();
       this.targetManager.remove(hit);
       this.hits++;
@@ -131,6 +142,7 @@ export class GridshotDrill extends Drill {
     if (this.recoil.enabled) this.recoil.applyPunch(this.controls);
     return {
       hit: positions.length > 0,
+      headshot,
       positions,
       streak: this.currentStreak,
       targetRadius: this.config.targetRadius ?? 0.35,
@@ -167,6 +179,7 @@ export class GridshotDrill extends Drill {
     result.extra = {
       avgTimeToKillMs: mean(this.timeToKillList),
       bestStreak: this.bestStreak,
+      headshots: this.config.targetShape === "human" ? this.headshots : null,
       timeToKillList: this.timeToKillList,
       avgRecoilCompensation: this.recoil.getAverageCompensationPercent(),
       flickBias: this.flickBias,

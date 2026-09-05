@@ -137,6 +137,7 @@ const STRINGS = {
     "summary.reaction.fastestSlowest": "Fastest / slowest: {fastest} / {slowest} ms",
     "summary.reaction.falseStarts": "False starts: {value}",
     "summary.recoil": "Recoil compensation: {value}%",
+    "summary.headshots": "Headshots: {value} of {hits}",
     "summary.coachHeading": "Coach Feedback",
 
     // HUD
@@ -191,6 +192,8 @@ const STRINGS = {
     "settings.sound": "Sound",
     "settings.magazineLimit": "Magazine Limit",
     "settings.magazineLimitNote": "Off: fire without ever reloading. On: every weapon runs its real magazine, reload and dry-fire. Rate of fire, bolt cycles and accuracy are unaffected either way.",
+    "settings.humanTargets": "Human Targets",
+    "settings.humanTargetsNote": "Off: spheres, the same size from every angle. On: humanoid figures with head, torso and leg zones — headshots are called out as you land them and counted in the summary.",
     "settings.wallColor": "Wall Color",
     "settings.floorColor": "Floor Color",
     "settings.brightness": "Brightness",
@@ -416,6 +419,7 @@ const STRINGS = {
     "summary.reaction.fastestSlowest": "최고 / 최저: {fastest} / {slowest}ms",
     "summary.reaction.falseStarts": "성급한 클릭: {value}",
     "summary.recoil": "리코일 보정률: {value}%",
+    "summary.headshots": "헤드샷: {hits}타 중 {value}타",
     "summary.coachHeading": "코치 피드백",
 
     "hud.score": "점수: {value}",
@@ -464,6 +468,8 @@ const STRINGS = {
     "theme.light": "라이트",
     "settings.sound": "효과음",
     "settings.magazineLimit": "탄창 제한",
+    "settings.humanTargets": "사람 형태 표적",
+    "settings.humanTargetsNote": "끔: 어느 각도에서도 크기가 같은 구체입니다. 켬: 머리·몸·다리 부위가 나뉘어진 인체형 표적이 등장하고, 헤드샷은 즉석에서 표시되며 결과 화면에 집계됩니다.",
     "settings.magazineLimitNote": "끔: 재장전 없이 무제한으로 발사합니다. 켬: 모든 무기가 실제 탄창과 재장전, 불발을 그대로 따릅니다. 연사속도와 볼트 재장전, 명중률은 어느 쪽이든 동일합니다.",
     "settings.wallColor": "벽 색상",
     "settings.floorColor": "바닥 색상",

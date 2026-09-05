@@ -5,6 +5,7 @@ const screen = document.getElementById("settings-screen");
 const themeSwitch = document.getElementById("theme-switch");
 const soundSwitch = document.getElementById("sound-switch");
 const magazineSwitch = document.getElementById("magazine-switch");
+const humanTargetsSwitch = document.getElementById("human-targets-switch");
 const wallColorInput = document.getElementById("settings-wall-color");
 const floorColorInput = document.getElementById("settings-floor-color");
 const targetColorInput = document.getElementById("settings-target-color");
@@ -26,6 +27,7 @@ function syncControls() {
   setSwitch(themeSwitch, config.theme === "light", "theme.light", "theme.dark");
   setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
   setSwitch(magazineSwitch, config.magazineLimit, "common.on", "common.off");
+  setSwitch(humanTargetsSwitch, config.humanTargets, "common.on", "common.off");
   wallColorInput.value = config.wallColor;
   floorColorInput.value = config.floorColor;
   targetColorInput.value = config.targetColor;
@@ -58,6 +60,14 @@ export function initSettingsPanel(onChangeCallback) {
   magazineSwitch.addEventListener("click", () => {
     config.magazineLimit = !config.magazineLimit;
     setSwitch(magazineSwitch, config.magazineLimit, "common.on", "common.off");
+  setSwitch(humanTargetsSwitch, config.humanTargets, "common.on", "common.off");
+    persistAndApply();
+  });
+  // Also from the next session only: a drill spawns its targets at start and
+  // a live one would end up with both shapes on the range at once.
+  humanTargetsSwitch.addEventListener("click", () => {
+    config.humanTargets = !config.humanTargets;
+    setSwitch(humanTargetsSwitch, config.humanTargets, "common.on", "common.off");
     persistAndApply();
   });
   wallColorInput.addEventListener("input", () => {

@@ -19,10 +19,16 @@ const STORAGE_KEY = "aimonsite:rangeConfig";
 // behaviour. Note it removes only the ammunition bookkeeping — rate of fire,
 // the bolt/pump cycle and firing accuracy are unaffected, since those are
 // what distinguish the weapons from each other.
+// `humanTargets` off is the default: a sphere is the same size from every
+// angle, which is what makes it a fair measuring stick for pure aim. Switched
+// on, every drill spawns a humanoid figure with head, torso and leg zones
+// instead, and headshots are called out and counted — the shape PvP will need,
+// available now for anyone who wants to practise against it.
 const DEFAULT_CONFIG = {
   theme: "light", // "dark" | "light"
   soundEnabled: true,
   magazineLimit: false,
+  humanTargets: false,
   wallColor: "#ffffff",
   floorColor: "#ffffff",
   targetColor: "#ff5c5c",

@@ -76,6 +76,22 @@ export function playKillSound(streak = 0) {
   });
 }
 
+// A headshot replaces the rotating kill sound rather than layering over it:
+// two sounds at once would just read as a louder kill. This one is a single
+// fixed voice on purpose — it has to be recognisable the first time, which
+// is the opposite of the variation the ordinary kill sounds want.
+export function playHeadshotSound(streak = 0) {
+  ui((ctx, now) => {
+    const p = (1 + Math.min(streak, 12) * 0.018) * vary(0.015);
+    // A bright metallic ring over a hard tick: the tick places it as an
+    // impact, the ring is what carries over a burst of fire.
+    scheduleNoise(ctx, now, 26, 0.13, { type: "bandpass", freq: 3200 * p, q: 2.2 });
+    scheduleTone(ctx, now, 1480 * p, 70, 0.16, { type: "square" });
+    scheduleTone(ctx, now + 0.035, 2220 * p, 200, 0.1, { type: "triangle" });
+    scheduleTone(ctx, now + 0.035, 2960 * p, 160, 0.045, { type: "sine" });
+  });
+}
+
 export function playMissSound() {
   // A dull thud into the wall rather than a tone, so a miss doesn't compete
   // with the kill sounds for attention. Sent lightly into the room so it
@@ -167,8 +183,9 @@ export function flashCrosshair(el, hit) {
 // A more pronounced "confirmed kill" marker layered on top of the subtle
 // flashCrosshair() glow — the classic FPS X hit-marker, not tied to sound
 // (the caller decides whether to also play a hit sound).
-export function showHitMarker(el) {
+export function showHitMarker(el, { headshot = false } = {}) {
   el.classList.remove("hitmarker-pop");
   void el.offsetWidth;
+  el.classList.toggle("hitmarker-headshot", headshot);
   el.classList.add("hitmarker-pop");
 }

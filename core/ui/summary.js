@@ -5,6 +5,12 @@ const statsEl = document.getElementById("summary-stats");
 const retryBtn = document.getElementById("summary-retry");
 const menuBtn = document.getElementById("summary-menu");
 
+// Headshots only exist when the session ran against humanoid targets, so a
+// null count means the stat did not apply rather than that none were landed.
+function headshotRow(extra, hits) {
+  return extra.headshots == null ? [] : [t("summary.headshots", { value: extra.headshots, hits })];
+}
+
 // Recoil compensation is optional (only present when a Recoil Control
 // weapon was selected) — appended to whichever mode ran with it enabled.
 function recoilRow(extra) {
@@ -15,19 +21,21 @@ function recoilRow(extra) {
 
 // Per-mode extra rows, since each drill's `extra` shape is different.
 const EXTRA_ROWS = {
-  gridshot: (extra) => [
+  gridshot: (extra, result) => [
     t("summary.gridshot.ttk", { value: extra.avgTimeToKillMs.toFixed(0) }),
     t("summary.gridshot.bestStreak", { value: extra.bestStreak }),
+    ...headshotRow(extra, result.hits),
     ...recoilRow(extra),
   ],
   tracking: (extra) => [
     t("summary.tracking.onTarget", { value: (extra.onTargetTimeMs / 1000).toFixed(1) }),
     t("summary.tracking.bestStreak", { value: (extra.bestStreakMs / 1000).toFixed(1) }),
   ],
-  switching: (extra) => [
+  switching: (extra, result) => [
     t("summary.switching.avgSwitch", { value: extra.avgSwitchTimeMs.toFixed(0) }),
     t("summary.switching.waves", { value: extra.wavesCompleted }),
     t("summary.gridshot.bestStreak", { value: extra.bestStreak }),
+    ...headshotRow(extra, result.hits),
     ...recoilRow(extra),
   ],
   reaction: (extra) => [
@@ -38,7 +46,7 @@ const EXTRA_ROWS = {
 };
 
 export function showSummary(result, coachTips, onRetry, onBackToMenu) {
-  const extraRows = (EXTRA_ROWS[result.mode] ?? (() => []))(result.extra);
+  const extraRows = (EXTRA_ROWS[result.mode] ?? (() => []))(result.extra, result);
   const tipsHtml = (coachTips ?? [])
     .map((tipObj) => `<p class="coach-tip coach-tip-${tipObj.level}">${t(tipObj.key, tipObj.params)}</p>`)
     .join("");

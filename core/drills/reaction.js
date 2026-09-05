@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { Drill, baseSessionResult, CENTER_RAY } from "./base.js";
 import { getSpawnVolume } from "../scene.js";
 import { randRange, mean } from "../utils.js";
-import { getShotOffsetFromTargetCenter } from "../target.js";
+import { getShotOffsetFromTargetCenter, TargetPart } from "../target.js";
 
 const MAX_STORED_OFFSETS = 200;
 
@@ -52,6 +52,7 @@ export class ReactionDrill extends Drill {
       radius: this.config.targetRadius ?? 0.35,
       ttl: EXPOSURE_MS,
       color: this.config.targetColor,
+      shape: this.config.targetShape,
       now,
     });
     this.spawnedAt = now;
@@ -80,10 +81,16 @@ export class ReactionDrill extends Drill {
     }
 
     const positions = [];
+    let headshot = false;
     for (const ray of rays) {
       const hit = this.targetManager.raycastHit(this.camera, ray.x, ray.y);
       if (!hit || hit !== this.currentTarget) continue;
       positions.push(hit.mesh.position.clone());
+      // Called out on the shot like anywhere else, but deliberately not
+      // counted in the summary: this mode scores how fast you reacted, and a
+      // headshot tally would invite aiming for one at the cost of the very
+      // thing being measured.
+      headshot = hit.lastHitPart === TargetPart.HEAD;
       hit.markHit();
       this.targetManager.remove(hit);
       this.reactionTimes.push(now - this.spawnedAt);
@@ -95,6 +102,7 @@ export class ReactionDrill extends Drill {
     // it stays live until hit or its exposure window times out above.
     return {
       hit: positions.length > 0,
+      headshot,
       positions,
       targetRadius: this.config.targetRadius ?? 0.35,
     };

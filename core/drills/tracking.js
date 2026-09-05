@@ -38,6 +38,7 @@ export class TrackingDrill extends Drill {
       radius,
       ttl: Infinity,
       color: this.config.targetColor,
+      shape: this.config.targetShape,
       movementFn: makeStrafeMovement(amplitude, speed),
       now,
     });
