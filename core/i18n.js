@@ -275,6 +275,14 @@ const STRINGS = {
     "suggestions.status.declined": "Declined",
     "suggestions.error.empty": "A title and a description are both required.",
     "suggestions.error.storage": "Couldn't save \u2014 browser storage is unavailable.",
+    "suggestions.error.signin": "Sign in to post — suggestions on the shared board are posted under your account.",
+    "suggestions.error.forbidden": "That isn't something this account is allowed to do.",
+    "suggestions.error.backend": "Couldn't reach the server. Your suggestion wasn't saved.",
+    "account.signIn": "Sign in with Google",
+    "account.signOut": "Sign out",
+    "account.needed": "Sign in to post on the shared board.",
+    "account.localBoard": "Posts here are kept in this browser only.",
+    "account.sharedBoard": "Posting as {name}.",
 
     // Admin
     "admin.title": "Admin",
@@ -551,6 +559,14 @@ const STRINGS = {
     "suggestions.status.declined": "\ubc18\uc601 \uc548 \ud568",
     "suggestions.error.empty": "\uc81c\ubaa9\uacfc \ub0b4\uc6a9\uc744 \ubaa8\ub450 \uc785\ub825\ud574\uc8fc\uc138\uc694.",
     "suggestions.error.storage": "\uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4 \u2014 \ube0c\ub77c\uc6b0\uc800 \uc800\uc7a5\uc18c\ub97c \uc4f8 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+    "suggestions.error.signin": "글을 쓰려면 로그인하세요 — 공용 게시판의 글은 계정 이름으로 등록됩니다.",
+    "suggestions.error.forbidden": "이 계정에게 허용되지 않은 작업입니다.",
+    "suggestions.error.backend": "서버에 연결하지 못했습니다. 작성한 내용은 저장되지 않았습니다.",
+    "account.signIn": "Google로 로그인",
+    "account.signOut": "로그아웃",
+    "account.needed": "공용 게시판에 글을 쓰려면 로그인하세요.",
+    "account.localBoard": "여기에 쓴 글은 이 브라우저에만 저장됩니다.",
+    "account.sharedBoard": "{name} 계정으로 작성 중입니다.",
 
     // Admin
     "admin.title": "\uad00\ub9ac\uc790",

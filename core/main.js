@@ -19,6 +19,8 @@ import { initWeaponSelect, showWeaponSelect, hideWeaponSelect } from "./ui/weapo
 import { initSuggestions, showSuggestions, hideSuggestions, refreshSuggestionBadge } from "./ui/suggestions.js";
 import { initAdmin, showAdmin, hideAdmin, refreshAdminBadge } from "./ui/admin.js";
 import { setAdmin, isAdmin } from "./suggestions/store.js";
+import { initAuth } from "./auth.js";
+import { initAccount } from "./ui/account.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { loadRangeConfig } from "./rangeConfig.js";
 import { saveSession, getSessionsByMode } from "./stats.js";
@@ -361,6 +363,15 @@ document.getElementById("home-settings-btn").addEventListener("click", () => ope
 document.getElementById("settings-back").addEventListener("click", () => closeScreen(hideSettingsPanel));
 
 initSuggestions();
+initAccount();
+// Started, not awaited: a redirect back from Google has to be exchanged
+// before the board can load, but nothing on the home screen should wait on a
+// network round trip to appear. Every account-dependent view re-renders when
+// it resolves (see core/auth.js).
+initAuth().then(() => {
+  refreshSuggestionBadge();
+  refreshAdminBadge();
+});
 document.getElementById("home-suggestions").addEventListener("click", () => openScreen("SUGGESTIONS", showSuggestions));
 document.getElementById("suggestions-back").addEventListener("click", () => {
   refreshSuggestionBadge();

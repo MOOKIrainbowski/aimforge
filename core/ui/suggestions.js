@@ -8,6 +8,7 @@ import {
   getIdentity,
   subscribe,
   onBackendChange,
+  isRemote,
 } from "../suggestions/store.js";
 import { t, getLanguage } from "../i18n.js";
 
@@ -29,6 +30,7 @@ const counter = document.getElementById("suggestion-counter");
 const errorEl = document.getElementById("suggestion-error");
 const filterGroup = document.getElementById("suggestion-filter-group");
 const listEl = document.getElementById("suggestion-list");
+const scopeEl = document.getElementById("suggestion-scope");
 const badge = document.getElementById("suggestions-badge");
 
 let selectedCategory = "suggestion";
@@ -189,9 +191,27 @@ function buildPost(post, me) {
 // one — the only ordering hazard the async backends introduce.
 let renderToken = 0;
 
+// What each failure from the store means to the player. `signin` and
+// `forbidden` only occur against a remote backend; `storage` is the local
+// one's way of saying the browser refused to keep anything.
+const ERROR_KEYS = {
+  empty: "suggestions.error.empty",
+  category: "suggestions.error.empty",
+  signin: "suggestions.error.signin",
+  forbidden: "suggestions.error.forbidden",
+  backend: "suggestions.error.backend",
+  storage: "suggestions.error.storage",
+};
+
 async function render() {
   const token = ++renderToken;
-  const me = getIdentity().id;
+  const identity = getIdentity();
+  const me = identity.id;
+  // Which board is on screen. The shared one and the local one are the same
+  // list of posts to look at and completely different things to write to.
+  scopeEl.textContent = isRemote()
+    ? t("account.sharedBoard", { name: identity.name })
+    : t("suggestions.localNote");
   const filter =
     selectedFilter === "mine"
       ? { mine: true }
@@ -250,11 +270,7 @@ export function initSuggestions() {
     });
     if (submitButton) submitButton.disabled = false;
     if (!result.ok) {
-      showError(
-        result.error === "empty" || result.error === "category"
-          ? "suggestions.error.empty"
-          : "suggestions.error.storage"
-      );
+      showError(ERROR_KEYS[result.error] ?? "suggestions.error.storage");
       return;
     }
     titleInput.value = "";

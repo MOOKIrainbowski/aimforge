@@ -1260,6 +1260,39 @@ button {
   border-top: 1px solid var(--border);
 }
 
+/* The account row sits above Settings and is the only part of the sidebar
+   that can be absent entirely: with no backend configured there is nothing
+   to sign in to. */
+.sidebar-account {
+  margin-bottom: 4px;
+}
+
+.sidebar-account-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.sidebar-account-name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Says which board you are looking at — this browser's, or the shared one.
+   Worth a line of its own: the two look identical and behave completely
+   differently. */
+.board-scope {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .home-main {
   flex: 1 1 auto;
   min-width: 0;

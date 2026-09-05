@@ -121,6 +121,24 @@
       </nav>
 
       <div class="sidebar-footer">
+        <!-- The account row is hidden entirely unless a backend is configured
+             (core/backend/config.js): with none there is nothing to sign in
+             to, and an inert button would be worse than no button. -->
+        <div id="account-row" class="sidebar-account hidden">
+          <button id="account-signin" class="sidebar-item" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 10.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" />
+              <path d="M3.6 17.2a6.4 6.4 0 0 1 12.8 0" />
+            </svg>
+            <span data-i18n="account.signIn">Sign in with Google</span>
+          </button>
+          <div id="account-signed-in" class="sidebar-account-in hidden">
+            <span id="account-name" class="sidebar-account-name"></span>
+            <button id="account-signout" class="link-button" type="button" data-i18n="account.signOut">Sign
+              out</button>
+          </div>
+        </div>
+
         <button id="home-settings-btn" class="sidebar-item" type="button"
           data-i18n-attr="aria-label:nav.settingsAria">
           <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -507,8 +525,10 @@
         <button id="suggestions-back" class="secondary" type="button" data-i18n="common.back">Back</button>
       </div>
 
-      <p class="board-note" data-i18n="suggestions.localNote">AimonSite has no server, so posts are stored in this
-        browser only. Nothing is uploaded or shared.</p>
+      <!-- Filled in by core/ui/suggestions.js: which board this is depends on
+           whether anyone is signed in, and the two look identical. -->
+      <p id="suggestion-scope" class="board-note" data-i18n="suggestions.localNote">AimonSite has no server, so posts
+        are stored in this browser only. Nothing is uploaded or shared.</p>
 
       <form id="suggestion-form" class="board-form">
         <div class="option-row">
