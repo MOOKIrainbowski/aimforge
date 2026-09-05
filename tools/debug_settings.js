@@ -27,24 +27,27 @@ const { chromium } = require("playwright");
   await page.waitForTimeout(300);
 
   // 2. Open Settings, confirm it's visible.
-  await page.click("#home-settings");
+  await page.click("#home-settings-btn");
   await page.waitForTimeout(200);
   const settingsVisible = await page.evaluate(
     () => !document.getElementById("settings-screen").classList.contains("hidden")
   );
   console.log(`Settings screen visible: ${settingsVisible}`);
 
-  // 3. Switch to Light theme and confirm the data-theme attribute + a
-  // computed background color actually change.
-  await page.click('#theme-group button[data-theme="light"]');
+  // 3. Flip the theme and confirm both the data-theme attribute and a
+  // computed background colour actually follow. Theme is a two-state switch
+  // rather than a pair of buttons, so this reports the change rather than
+  // asserting one particular theme.
+  const themeBefore = await page.evaluate(() => document.documentElement.dataset.theme);
+  await page.click("#theme-switch");
   await page.waitForTimeout(150);
   const themeAttr = await page.evaluate(() => document.documentElement.dataset.theme);
   const cardBg = await page.evaluate(() => {
     const el = document.querySelector(".settings-card");
     return getComputedStyle(el).backgroundColor;
   });
-  console.log(`Theme attribute: ${themeAttr}, settings card background: ${cardBg}`);
-  await page.screenshot({ path: __dirname + "/aimonsite_light_theme.png" });
+  console.log(`Theme attribute: ${themeBefore} -> ${themeAttr}, settings card background: ${cardBg}`);
+  await page.screenshot({ path: __dirname + "/aimonsite_theme_toggled.png" });
 
   // 4. Change target color, wall color, floor color, brightness, FOV.
   await page.fill("#settings-target-color", "#22cc88");

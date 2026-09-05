@@ -20,7 +20,7 @@ const { chromium } = require("playwright");
   // Change shape, color, and turn on center dot.
   await page.click('#crosshair-shape-group button[data-shape="circle"]');
   await page.fill("#crosshair-color", "#ff3355");
-  await page.click('#crosshair-dot-group button[data-dot="on"]');
+  await page.click("#dot-switch");
   await page.waitForTimeout(150);
 
   const previewSvg = await page.evaluate(() => document.getElementById("crosshair-preview").innerHTML);
