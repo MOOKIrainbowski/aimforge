@@ -52,12 +52,21 @@ const DEG = Math.PI / 180;
 //
 // Miss that and a weapon's bloom silently does nothing at all — it recovers
 // between shots as fast as firing adds it, and the numbers look reasonable
-// while having no effect whatsoever. The values below are derived from two
-// intentions instead of guessed: reach `maxBloomDeg` after roughly ten
-// rounds held down, and recover fully in a little under half a second. That
-// is why `bloomDeg` is much larger than the per-shot growth it produces —
-// most of it is spent cancelling the recovery that happens in the same
-// interval. tools/debug_weapons.js asserts the accumulation actually occurs.
+// while having no effect whatsoever. That is why `bloomDeg` is much larger
+// than the per-shot growth it produces: most of it is spent cancelling the
+// recovery that happens in the same interval.
+//
+// The same arithmetic means `maxBloomDeg` is never what a shot carries.
+// The cap is what the runtime stores; by the time the next round leaves,
+// one interval of recovery has already come off it, so the worst error a
+// player can actually feel is
+//
+//     maxBloomDeg  -  recoverPerSec * (60 / rpm)
+//
+// which for the rifle is 1.67 degrees, not 2.1. Tune against that number.
+// `node tools/tune_weapons.js` prints it per weapon, along with how many
+// rounds it takes to get there, and asserts the whole set of intentions
+// below still holds.
 //
 // Bolt and pump weapons are the deliberate exception: their action forces a
 // gap far longer than the recovery time, so bloom always clears between
@@ -67,6 +76,15 @@ const DEG = Math.PI / 180;
 // near) in ADS on the precision weapons. A trainer measuring aim must not
 // inject randomness into a well-aimed shot; the error here is a cost of
 // firing badly, not noise on firing well.
+//
+// The ordering of these numbers is the weapons' identities, and is asserted
+// rather than left to drift. From the hip the revolver is the most exact
+// thing in the range and the SMG the most forgiving automatic — it is the
+// weapon you shoot while moving, and aiming it barely helps (0.34 hip
+// against 0.28 aimed), because what an SMG really pays for volume is bloom:
+// the highest cap in the range, reached in a couple of seconds of holding
+// the trigger. Scoped, the order inverts — the long weapons are exact and
+// the SMG is the loosest thing you can aim.
 //
 // SOUND (`sound`) — the layers of one gunshot, synthesized in
 // core/audio/gunshot.js. Sizes are per weapon so a breacher booms, an SMG
@@ -106,19 +124,26 @@ export const WEAPONS = {
     accuracy: { hipDeg: 0.5, adsDeg: 0.06, bloomDeg: 0.65, maxBloomDeg: 2.1, recoverPerSec: 4.6 },
     // Per-shot (dx, dy) view punches in radians, applied straight to the
     // look controller's yaw/pitch, so a punch feels like a real camera kick
-    // rather than a scripted animation. Past the pattern's length the last
-    // step repeats, which mimics recoil "settling".
+    // rather than a scripted animation.
+    //
+    // An automatic's pattern runs the full magazine — see the note above on
+    // why a short one is worse than it looks. The shape is deliberate and is
+    // the same three-act shape real patterns have: a hard vertical climb for
+    // the first few rounds, a walk to one side as the muzzle starts to
+    // wander, then a swing back across with the vertical mostly spent. That
+    // is what makes a pattern learnable rather than merely punishing: it
+    // asks for two axes of compensation, in an order you can rehearse.
     recoilPattern: [
-      { dx: 0.0, dy: 0.01 },
-      { dx: 0.001, dy: 0.012 },
-      { dx: -0.002, dy: 0.013 },
-      { dx: 0.003, dy: 0.014 },
-      { dx: -0.004, dy: 0.015 },
-      { dx: 0.005, dy: 0.013 },
-      { dx: -0.006, dy: 0.012 },
-      { dx: 0.006, dy: 0.011 },
-      { dx: -0.005, dy: 0.01 },
-      { dx: 0.004, dy: 0.009 },
+      { dx: 0.001, dy: 0.0136 }, { dx: 0.0021, dy: 0.0131 }, { dx: 0.0007, dy: 0.0127 },
+      { dx: -0.001, dy: 0.0122 }, { dx: 0.0035, dy: 0.0108 }, { dx: 0.0035, dy: 0.0102 },
+      { dx: 0.0035, dy: 0.0096 }, { dx: 0.0035, dy: 0.0089 }, { dx: 0.0035, dy: 0.0083 },
+      { dx: 0.0035, dy: 0.0077 }, { dx: -0.0073, dy: 0.007 }, { dx: -0.0073, dy: 0.0067 },
+      { dx: -0.0073, dy: 0.0064 }, { dx: -0.0073, dy: 0.0061 }, { dx: -0.0073, dy: 0.0058 },
+      { dx: -0.0073, dy: 0.0055 }, { dx: -0.0073, dy: 0.0051 }, { dx: -0.0073, dy: 0.0048 },
+      { dx: -0.0073, dy: 0.0045 }, { dx: 0.0066, dy: 0.0042 }, { dx: 0.0066, dy: 0.004 },
+      { dx: 0.0066, dy: 0.0038 }, { dx: 0.0066, dy: 0.0037 }, { dx: 0.0066, dy: 0.0035 },
+      { dx: 0.0066, dy: 0.0033 }, { dx: 0.0066, dy: 0.0031 }, { dx: -0.0035, dy: 0.0028 },
+      { dx: 0.0028, dy: 0.0028 }, { dx: -0.0035, dy: 0.0028 }, { dx: 0.0028, dy: 0.0028 },
     ],
     kick: { back: 0.055, rise: 0.016, pitch: 0.16, roll: 0.05, settleMs: 165 },
     sound: {
@@ -148,16 +173,17 @@ export const WEAPONS = {
     reloadMs: 1950,
     cycleMs: 0,
     adsFov: 32,
-    accuracy: { hipDeg: 0.6, adsDeg: 0.09, bloomDeg: 0.63, maxBloomDeg: 2.4, recoverPerSec: 5.3 },
+    accuracy: { hipDeg: 0.44, adsDeg: 0.09, bloomDeg: 0.63, maxBloomDeg: 2.4, recoverPerSec: 5.3 },
     recoilPattern: [
-      { dx: 0.001, dy: 0.009 },
-      { dx: -0.002, dy: 0.011 },
-      { dx: 0.003, dy: 0.013 },
-      { dx: -0.004, dy: 0.014 },
-      { dx: 0.005, dy: 0.014 },
-      { dx: -0.006, dy: 0.012 },
-      { dx: 0.005, dy: 0.011 },
-      { dx: -0.004, dy: 0.01 },
+      { dx: -0.0009, dy: 0.0108 }, { dx: 0.0017, dy: 0.0104 }, { dx: 0.0024, dy: 0.0099 },
+      { dx: 0.001, dy: 0.0094 }, { dx: -0.0066, dy: 0.0087 }, { dx: -0.0066, dy: 0.0083 },
+      { dx: -0.0066, dy: 0.0079 }, { dx: -0.0066, dy: 0.0075 }, { dx: -0.0066, dy: 0.0071 },
+      { dx: -0.0066, dy: 0.0066 }, { dx: 0.007, dy: 0.0059 }, { dx: 0.007, dy: 0.0057 },
+      { dx: 0.007, dy: 0.0054 }, { dx: 0.007, dy: 0.0052 }, { dx: 0.007, dy: 0.0049 },
+      { dx: 0.007, dy: 0.0047 }, { dx: 0.007, dy: 0.0044 }, { dx: 0.007, dy: 0.0042 },
+      { dx: -0.0052, dy: 0.0035 }, { dx: -0.0052, dy: 0.0035 }, { dx: -0.0052, dy: 0.0035 },
+      { dx: -0.0052, dy: 0.0035 }, { dx: -0.0052, dy: 0.0035 }, { dx: -0.0052, dy: 0.0035 },
+      { dx: -0.0052, dy: 0.0035 },
     ],
     kick: { back: 0.05, rise: 0.014, pitch: 0.145, roll: 0.06, settleMs: 150 },
     sound: {
@@ -187,16 +213,19 @@ export const WEAPONS = {
     reloadMs: 1750,
     cycleMs: 0,
     adsFov: 40,
-    accuracy: { hipDeg: 0.85, adsDeg: 0.34, bloomDeg: 0.76, maxBloomDeg: 3.3, recoverPerSec: 8.2 },
+    accuracy: { hipDeg: 0.34, adsDeg: 0.28, bloomDeg: 0.76, maxBloomDeg: 3.3, recoverPerSec: 8.2 },
     recoilPattern: [
-      { dx: 0.002, dy: 0.008 },
-      { dx: -0.003, dy: 0.009 },
-      { dx: 0.004, dy: 0.01 },
-      { dx: -0.005, dy: 0.009 },
-      { dx: 0.006, dy: 0.008 },
-      { dx: -0.004, dy: 0.007 },
-      { dx: 0.003, dy: 0.006 },
-      { dx: -0.002, dy: 0.006 },
+      { dx: 0.0014, dy: 0.0084 }, { dx: 0.0024, dy: 0.008 }, { dx: -0.0017, dy: 0.0077 },
+      { dx: -0.0028, dy: 0.0073 }, { dx: 0.0021, dy: 0.007 }, { dx: 0.0052, dy: 0.0063 },
+      { dx: 0.0052, dy: 0.0061 }, { dx: 0.0052, dy: 0.0058 }, { dx: 0.0052, dy: 0.0056 },
+      { dx: 0.0052, dy: 0.0054 }, { dx: 0.0052, dy: 0.0052 }, { dx: 0.0052, dy: 0.005 },
+      { dx: 0.0052, dy: 0.0048 }, { dx: 0.0052, dy: 0.0045 }, { dx: -0.007, dy: 0.0042 },
+      { dx: -0.007, dy: 0.0041 }, { dx: -0.007, dy: 0.004 }, { dx: -0.007, dy: 0.0038 },
+      { dx: -0.007, dy: 0.0037 }, { dx: -0.007, dy: 0.0036 }, { dx: -0.007, dy: 0.0035 },
+      { dx: -0.007, dy: 0.0034 }, { dx: -0.007, dy: 0.0033 }, { dx: -0.007, dy: 0.0031 },
+      { dx: 0.0052, dy: 0.0028 }, { dx: 0.0052, dy: 0.0028 }, { dx: 0.0052, dy: 0.0028 },
+      { dx: 0.0052, dy: 0.0028 }, { dx: 0.0052, dy: 0.0028 }, { dx: 0.0052, dy: 0.0028 },
+      { dx: 0.0052, dy: 0.0028 }, { dx: 0.0052, dy: 0.0028 },
     ],
     kick: { back: 0.036, rise: 0.01, pitch: 0.11, roll: 0.07, settleMs: 115 },
     // Short and dry on purpose: at 950rpm a long tail on every shot stacks
@@ -363,7 +392,7 @@ export const WEAPONS = {
     adsFov: 38,
     // The most accurate weapon in the range, hip or scoped — that is what it
     // trades its six rounds and its rate of fire for.
-    accuracy: { hipDeg: 0.35, adsDeg: 0.0, bloomDeg: 1.3, maxBloomDeg: 1.6, recoverPerSec: 3.2 },
+    accuracy: { hipDeg: 0.28, adsDeg: 0.0, bloomDeg: 1.3, maxBloomDeg: 1.3, recoverPerSec: 3.2 },
     recoilPattern: [{ dx: 0.001, dy: 0.03 }],
     kick: { back: 0.085, rise: 0.024, pitch: 0.29, roll: 0.02, settleMs: 250 },
     // The heavy bang: the lowest punch of any sidearm, the most saturation,
