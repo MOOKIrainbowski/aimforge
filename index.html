@@ -22,49 +22,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AimonSite</title>
   <meta name="description"
-    content="AimonSite is a free, install-free aim trainer that runs in your browser. Gridshot, Tracking, Target Switching, and Reaction Time drills, a real sensitivity converter, and smart coach feedback — your stats never leave your device." />
+    content="A free browser aim trainer with real weapon behaviour: eight weapons that each shoot, kick and sound different, humanoid targets with head, torso and leg zones, four drills, and coach feedback. No install, no account, and your stats stay on your device." />
   <meta property="og:title" content="AimonSite" />
   <meta property="og:description"
-    content="Train FPS aim in your browser. No install, no account, no server — your stats stay on your device." />
+    content="Eight weapons with real firing behaviour, humanoid hit zones, four drills, and coach feedback — in your browser. Your stats never leave your device." />
   <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#111318" />
+  <!-- One per scheme, so the browser chrome matches the page instead of
+       forcing the dark colour onto a light-theme visitor. -->
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c0d11" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <style>
+    /* ---------------------------------------------------------------------
+       The page is built to read like the thing it is selling: an instrument.
+       Measurements are set in mono and treated as data rather than
+       decoration, panels carry a hairline at the top edge the way a readout
+       does, and every motion on the page is a snap rather than a drift —
+       the same easing the range's own flicks have.
+       --------------------------------------------------------------------- */
     :root {
-      --bg-page: #0c0d11;
-      --bg-card: #15171e;
-      --bg-card-hover: #191c24;
-      --bg-input: rgba(255, 255, 255, 0.04);
+      --bg-page: #0a0b0f;
+      --bg-panel: #14161d;
+      --bg-panel-2: #191c25;
+      --bg-inset: rgba(255, 255, 255, 0.04);
       --text-primary: #f2f4f8;
       --text-secondary: #9aa4b8;
-      --text-muted: #5c6270;
+      --text-muted: #626a7d;
       --accent: #4f8ef7;
       --accent-2: #7c5cf7;
-      --accent-soft: rgba(79, 142, 247, 0.12);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-strong: rgba(255, 255, 255, 0.14);
-      --positive: #4ade80;
+      --accent-soft: rgba(79, 142, 247, 0.14);
+      --hit: #ff5c5c;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --grid-line: rgba(255, 255, 255, 0.035);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     }
 
     :root[data-theme="light"] {
-      --bg-page: #f5f5f7;
-      --bg-card: #ffffff;
-      --bg-card-hover: #f7f8fa;
-      --bg-input: rgba(0, 0, 0, 0.03);
-      --text-primary: #1d1d1f;
-      --text-secondary: #6e6e73;
-      --text-muted: #86868b;
-      --accent: #2a78d6;
-      --accent-2: #6d3fd6;
-      --accent-soft: rgba(42, 120, 214, 0.1);
-      --border: rgba(0, 0, 0, 0.08);
-      --border-strong: rgba(0, 0, 0, 0.14);
-      --positive: #1e9e56;
+      --bg-page: #f4f5f8;
+      --bg-panel: #ffffff;
+      --bg-panel-2: #fbfbfd;
+      --bg-inset: rgba(0, 0, 0, 0.035);
+      --text-primary: #14161c;
+      --text-secondary: #5d6472;
+      --text-muted: #8a90a0;
+      --accent: #2a6fd6;
+      --accent-2: #6b3fd6;
+      --accent-soft: rgba(42, 111, 214, 0.1);
+      --hit: #d7443f;
+      --border: rgba(10, 12, 20, 0.1);
+      --border-strong: rgba(10, 12, 20, 0.2);
+      --grid-line: rgba(10, 12, 20, 0.045);
+      --shadow: 0 20px 50px rgba(20, 24, 40, 0.1);
     }
 
     * {
-      margin: 0;
-      padding: 0;
       box-sizing: border-box;
     }
 
@@ -73,151 +86,79 @@
     }
 
     body {
+      margin: 0;
       background: var(--bg-page);
       color: var(--text-primary);
-      font: 400 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
-      transition: background 200ms ease, color 200ms ease;
+    }
+
+    /* The range floor: a faint perspective grid behind everything, fading out
+       before it reaches the content so it never competes with text. */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(70% 50% at 50% 0%, var(--accent-soft), transparent 70%),
+        repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 88px),
+        repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 88px);
+      mask-image: linear-gradient(180deg, #000 0%, transparent 78%);
+    }
+
+    .wrap {
+      width: min(1140px, 100% - 44px);
+      margin: 0 auto;
     }
 
     a {
       color: inherit;
-    }
-
-    .bg-glow {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      background:
-        radial-gradient(680px circle at 15% -10%, rgba(79, 142, 247, 0.16), transparent 60%),
-        radial-gradient(600px circle at 85% 10%, rgba(124, 92, 247, 0.14), transparent 60%),
-        linear-gradient(var(--bg-page), var(--bg-page));
-      pointer-events: none;
-    }
-
-    .wrap {
-      width: min(1080px, 92vw);
-      margin: 0 auto;
-    }
-
-    /* Nav */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      backdrop-filter: blur(14px);
-      background: rgba(12, 13, 17, 0.7);
-      border-bottom: 1px solid var(--border);
-    }
-
-    :root[data-theme="light"] header {
-      background: rgba(255, 255, 255, 0.72);
-    }
-
-    nav.wrap {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 0;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 17px;
-      letter-spacing: -0.01em;
       text-decoration: none;
     }
 
-    .brand svg {
-      display: block;
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: -0.022em;
+      line-height: 1.1;
     }
 
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      font-size: 14px;
-      color: var(--text-secondary);
+    p {
+      margin: 0;
     }
 
-    .nav-links a {
-      text-decoration: none;
-      transition: color 150ms ease;
-    }
+    /* --- shared bits ---------------------------------------------------- */
 
-    .nav-links a:hover {
-      color: var(--text-primary);
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .nav-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /* Theme / language toggle switches */
-    .switch {
+    .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      font: 700 11px system-ui, -apple-system, "Segoe UI", sans-serif;
-      letter-spacing: 0.02em;
-      color: var(--text-secondary);
-      transition: color 150ms ease;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
-    .switch:hover {
-      color: var(--text-primary);
-    }
-
-    .switch-state {
-      min-width: 20px;
-      text-align: center;
-    }
-
-    .switch-track {
-      position: relative;
-      width: 34px;
-      height: 20px;
-      flex-shrink: 0;
-      border-radius: 999px;
-      background: var(--bg-input);
-      border: 1.5px solid var(--border-strong);
-      transition: background 150ms ease, border-color 150ms ease;
-    }
-
-    .switch-thumb {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 13px;
-      height: 13px;
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--text-secondary);
-      transition: transform 150ms ease, background 150ms ease;
-    }
-
-    .switch.on .switch-track {
-      background: var(--accent-soft);
-      border-color: var(--accent);
-    }
-
-    .switch.on .switch-thumb {
-      transform: translateX(14px);
       background: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .gradient {
+      background: linear-gradient(100deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
     .btn {
@@ -225,458 +166,832 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 11px 22px;
+      padding: 11px 20px;
+      border: 1px solid transparent;
       border-radius: 10px;
-      font-weight: 600;
       font-size: 14px;
-      text-decoration: none;
+      font-weight: 650;
       cursor: pointer;
-      border: none;
-      transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+      transition: transform 140ms cubic-bezier(.2, .8, .3, 1), box-shadow 140ms ease, background 140ms ease;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background: linear-gradient(100deg, var(--accent), var(--accent-2));
       color: #fff;
-      box-shadow: 0 8px 24px rgba(79, 142, 247, 0.35);
+      box-shadow: 0 8px 24px rgba(79, 142, 247, 0.28);
     }
 
     .btn-primary:hover {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(79, 142, 247, 0.36);
     }
 
-    .btn-secondary {
-      background: var(--bg-card);
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border-strong);
       color: var(--text-primary);
-      border: 1.5px solid var(--border-strong);
     }
 
-    .btn-secondary:hover {
-      border-color: var(--accent);
+    .btn-ghost:hover {
+      background: var(--bg-inset);
+      transform: translateY(-2px);
     }
 
-    .btn-large {
-      padding: 15px 30px;
+    .btn-lg {
+      padding: 14px 26px;
       font-size: 15px;
       border-radius: 12px;
     }
 
-    /* Hero */
-    .hero {
-      padding: 88px 0 64px;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 48px;
-      align-items: center;
+    section {
+      padding: 104px 0;
     }
 
-    .eyebrow {
+    .section-head {
+      max-width: 720px;
+      margin-bottom: 46px;
+    }
+
+    .section-head h2 {
+      margin: 14px 0 14px;
+      font-size: clamp(28px, 4vw, 42px);
+    }
+
+    .section-head p {
+      color: var(--text-secondary);
+      font-size: 17px;
+    }
+
+    /* Panels borrow the readout hairline: a bright top edge that fades out
+       across the width, which is what makes a flat card look lit. */
+    .panel {
+      position: relative;
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--bg-panel);
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-strong) 22%, transparent 72%);
+    }
+
+    .panel h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .panel p {
+      color: var(--text-secondary);
+      font-size: 14.5px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-inset);
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* --- header --------------------------------------------------------- */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid transparent;
+      background: color-mix(in srgb, var(--bg-page) 78%, transparent);
+      backdrop-filter: blur(14px);
+      transition: border-color 200ms ease;
+    }
+
+    header.stuck {
+      border-bottom-color: var(--border);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      height: 66px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 26px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .nav-links a {
+      position: relative;
+      padding: 4px 0;
+      transition: color 140ms ease;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 100%;
+      bottom: 0;
+      height: 1.5px;
+      background: var(--accent);
+      transition: right 200ms cubic-bezier(.2, .8, .3, 1);
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-links a:hover::after {
+      right: 0;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .switch {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: var(--accent-soft);
-      border: 1px solid rgba(79, 142, 247, 0.3);
-      padding: 6px 12px;
+      gap: 7px;
+      padding: 5px 9px;
+      border: 1px solid var(--border);
       border-radius: 999px;
-      margin-bottom: 20px;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
     }
 
-    .eyebrow .dot {
-      width: 6px;
-      height: 6px;
+    .switch:hover {
+      border-color: var(--border-strong);
+    }
+
+    .switch-track {
+      position: relative;
+      width: 26px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+    }
+
+    .switch-thumb {
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      background: var(--positive);
-      box-shadow: 0 0 8px var(--positive);
+      background: var(--text-muted);
+      transition: transform 180ms cubic-bezier(.2, .8, .3, 1), background 180ms ease;
     }
 
-    h1 {
-      font-size: clamp(34px, 4.6vw, 54px);
-      line-height: 1.08;
-      letter-spacing: -0.03em;
-      font-weight: 800;
+    .switch.on .switch-thumb {
+      transform: translateX(12px);
+      background: var(--accent);
     }
 
-    h1 .gradient {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+    /* --- hero ----------------------------------------------------------- */
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 56px;
+      align-items: center;
+      padding: 76px 0 88px;
+    }
+
+    .hero h1 {
+      margin: 18px 0 20px;
+      font-size: clamp(38px, 5.6vw, 62px);
+      letter-spacing: -0.035em;
     }
 
     .hero-sub {
-      margin-top: 20px;
-      font-size: 17px;
-      line-height: 1.6;
+      max-width: 34em;
       color: var(--text-secondary);
-      max-width: 46ch;
+      font-size: 17.5px;
     }
 
     .hero-actions {
-      margin-top: 32px;
       display: flex;
-      gap: 14px;
       flex-wrap: wrap;
+      gap: 12px;
+      margin: 30px 0 26px;
     }
 
     .hero-meta {
-      margin-top: 24px;
       display: flex;
-      gap: 20px;
-      font-size: 13px;
-      color: var(--text-muted);
       flex-wrap: wrap;
+      gap: 10px 26px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
-    .hero-meta span {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Hero visual: animated range preview, pure CSS/SVG. Deliberately kept
-       on its own fixed dark styling regardless of page theme — it reads as
-       a stylized screenshot of the range, not page chrome. */
-    .hero-visual {
+    /* The hero panel is a stylised range that runs the loop the product is:
+       a target appears, the reticle snaps to it, the shot lands. It is CSS
+       keyframes rather than a video or a canvas — nothing to download, and
+       it costs nothing on a phone. */
+    .scene {
       position: relative;
-      aspect-ratio: 1 / 1;
-      border-radius: 24px;
-      background: radial-gradient(circle at 50% 40%, #1a1d26, #0e0f14 75%);
+      aspect-ratio: 4 / 3;
       border: 1px solid var(--border);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel)),
+        var(--bg-panel);
+      box-shadow: var(--shadow);
       overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     }
 
-    .hero-visual::before {
+    /* A vignette and a horizon: without them the panel is a flat rectangle,
+       and in light theme it disappears into the page entirely. */
+    .scene::after {
       content: "";
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 32px 32px;
-      mask-image: radial-gradient(circle at 50% 45%, black 40%, transparent 78%);
+      pointer-events: none;
+      background: radial-gradient(120% 90% at 50% 42%, transparent 45%, rgba(0, 0, 0, 0.22));
     }
 
-    .range-target {
+    :root[data-theme="light"] .scene::after {
+      background: radial-gradient(120% 90% at 50% 42%, transparent 52%, rgba(20, 24, 40, 0.09));
+    }
+
+    .scene-horizon {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 58%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+    }
+
+    .scene-floor {
+      position: absolute;
+      inset: 58% 0 0;
+      background:
+        repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 26px);
+      transform: perspective(320px) rotateX(58deg);
+      transform-origin: top center;
+      opacity: 0.9;
+    }
+
+    .figure {
       position: absolute;
       width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #7dd3fc, #38bdf8 60%, #0ea5e9);
-      box-shadow: 0 0 24px rgba(56, 189, 248, 0.55);
-      animation: target-hop 3.6s ease-in-out infinite;
+      opacity: 0;
+      filter: drop-shadow(0 6px 14px rgba(255, 92, 92, 0.25));
+      animation: figure-cycle 6s cubic-bezier(.2, .8, .3, 1) infinite;
     }
 
-    @keyframes target-hop {
+    .figure i {
+      display: block;
+      margin: 0 auto;
+      background: var(--hit);
+      border-radius: 3px;
+    }
 
-      0%,
-      18% {
-        top: 30%;
-        left: 28%;
+    .figure .head {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+    }
+
+    .figure .torso {
+      width: 40px;
+      height: 27px;
+      margin-top: 4px;
+      opacity: 0.86;
+    }
+
+    .figure .legs {
+      width: 26px;
+      height: 29px;
+      margin-top: 4px;
+      opacity: 0.66;
+    }
+
+    .figure.a {
+      left: 22%;
+      top: 26%;
+      animation-delay: 0s;
+    }
+
+    .figure.b {
+      left: 58%;
+      top: 18%;
+      animation-delay: 2s;
+    }
+
+    .figure.c {
+      left: 40%;
+      top: 42%;
+      animation-delay: 4s;
+    }
+
+    @keyframes figure-cycle {
+      0% {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      3%,
+      30% {
         opacity: 1;
+        transform: scale(1);
       }
 
-      20% {
+      34% {
         opacity: 0;
-      }
-
-      22% {
-        opacity: 0;
-      }
-
-      24%,
-      42% {
-        top: 58%;
-        left: 62%;
-        opacity: 1;
-      }
-
-      44% {
-        opacity: 0;
-      }
-
-      46% {
-        opacity: 0;
-      }
-
-      48%,
-      66% {
-        top: 24%;
-        left: 68%;
-        opacity: 1;
-      }
-
-      68% {
-        opacity: 0;
-      }
-
-      70% {
-        opacity: 0;
-      }
-
-      72%,
-      98% {
-        top: 62%;
-        left: 24%;
-        opacity: 1;
+        transform: scale(1.3);
       }
 
       100% {
         opacity: 0;
+        transform: scale(1.3);
       }
     }
 
-    .range-crosshair {
+    /* The reticle snaps between the three positions with a hard ease, which
+       is what a flick feels like — not a glide. */
+    .reticle {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 26px;
-      height: 26px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
+      width: 34px;
+      height: 34px;
+      margin: -6px 0 0 0;
+      animation: reticle-flick 6s cubic-bezier(.16, 1, .3, 1) infinite;
     }
 
-    .range-crosshair::before,
-    .range-crosshair::after {
+    .reticle span {
+      position: absolute;
+      background: var(--text-primary);
+    }
+
+    .reticle::after {
       content: "";
       position: absolute;
-      background: #f2f4f8;
-      border-radius: 2px;
-    }
-
-    .range-crosshair::before {
       top: 50%;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      transform: translateY(-50%);
-    }
-
-    .range-crosshair::after {
       left: 50%;
-      top: 0;
-      height: 100%;
-      width: 2px;
-      transform: translateX(-50%);
+      width: 3px;
+      height: 3px;
+      margin: -1.5px 0 0 -1.5px;
+      border-radius: 50%;
+      background: var(--accent);
     }
 
-    .hero-visual-caption {
+    .reticle span:nth-child(1),
+    .reticle span:nth-child(2) {
+      left: 50%;
+      width: 2px;
+      height: 10px;
+      margin-left: -1px;
+    }
+
+    .reticle span:nth-child(1) {
+      top: 0;
+    }
+
+    .reticle span:nth-child(2) {
+      bottom: 0;
+    }
+
+    .reticle span:nth-child(3),
+    .reticle span:nth-child(4) {
+      top: 50%;
+      height: 2px;
+      width: 10px;
+      margin-top: -1px;
+    }
+
+    .reticle span:nth-child(3) {
+      left: 0;
+    }
+
+    .reticle span:nth-child(4) {
+      right: 0;
+    }
+
+    @keyframes reticle-flick {
+
+      0%,
+      22% {
+        left: 22%;
+        top: 30%;
+      }
+
+      30%,
+      55% {
+        left: 58%;
+        top: 22%;
+      }
+
+      63%,
+      88% {
+        left: 40%;
+        top: 46%;
+      }
+
+      100% {
+        left: 22%;
+        top: 30%;
+      }
+    }
+
+    /* The hitmarker — the same mark as the favicon — flashes on each arrival. */
+    .marker {
       position: absolute;
-      bottom: 16px;
+      width: 26px;
+      height: 26px;
+      margin: -2px 0 0 4px;
+      opacity: 0;
+      animation: marker-pop 6s linear infinite;
+    }
+
+    .marker span {
+      position: absolute;
+      width: 9px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .marker span:nth-child(1) {
+      top: 3px;
+      left: 1px;
+      transform: rotate(45deg);
+    }
+
+    .marker span:nth-child(2) {
+      top: 3px;
+      right: 1px;
+      transform: rotate(-45deg);
+    }
+
+    .marker span:nth-child(3) {
+      bottom: 3px;
+      left: 1px;
+      transform: rotate(-45deg);
+    }
+
+    .marker span:nth-child(4) {
+      bottom: 3px;
+      right: 1px;
+      transform: rotate(45deg);
+    }
+
+    @keyframes marker-pop {
+
+      0%,
+      19% {
+        opacity: 0;
+        transform: scale(0.6);
+        left: 22%;
+        top: 30%;
+      }
+
+      21% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+      27% {
+        opacity: 0;
+        transform: scale(1.3);
+        left: 22%;
+        top: 30%;
+      }
+
+      28%,
+      52% {
+        opacity: 0;
+        left: 58%;
+        top: 22%;
+        transform: scale(0.6);
+      }
+
+      54% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+      60% {
+        opacity: 0;
+        transform: scale(1.3);
+        left: 58%;
+        top: 22%;
+      }
+
+      61%,
+      85% {
+        opacity: 0;
+        left: 40%;
+        top: 46%;
+        transform: scale(0.6);
+      }
+
+      87% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+      93%,
+      100% {
+        opacity: 0;
+        transform: scale(1.3);
+        left: 40%;
+        top: 46%;
+      }
+    }
+
+    .scene-hud {
+      position: absolute;
       left: 16px;
       right: 16px;
+      bottom: 14px;
       display: flex;
       justify-content: space-between;
+      font-family: var(--mono);
       font-size: 11px;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.04em;
     }
 
-    /* Sections */
-    section {
-      padding: 72px 0;
-    }
-
-    .section-head {
-      max-width: 620px;
-      margin-bottom: 44px;
-    }
-
-    .section-head .eyebrow {
-      margin-bottom: 14px;
-    }
-
-    .section-head h2 {
-      font-size: clamp(26px, 3.2vw, 36px);
-      letter-spacing: -0.02em;
-      font-weight: 700;
-    }
-
-    .section-head p {
-      margin-top: 12px;
+    .scene-hud b {
       color: var(--text-secondary);
-      font-size: 15px;
-    }
-
-    .reveal {
-      opacity: 0;
-      transform: translateY(18px);
-      transition: opacity 600ms ease, transform 600ms ease;
-    }
-
-    .reveal.in {
-      opacity: 1;
-      transform: none;
-    }
-
-    /* Differentiators grid */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .feature-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
-    }
-
-    .feature-card:hover {
-      border-color: var(--accent-border, rgba(79, 142, 247, 0.5));
-      transform: translateY(-3px);
-      background: var(--bg-card-hover);
-    }
-
-    .feature-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: 19px;
-      margin-bottom: 16px;
-    }
-
-    .feature-card h3 {
-      font-size: 15px;
       font-weight: 600;
-      margin-bottom: 8px;
     }
 
-    .feature-card p {
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      line-height: 1.55;
-    }
+    /* --- measurement strip ---------------------------------------------- */
 
-    /* Modes */
-    .mode-strip {
+    .strip {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .mode-tile {
-      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px 20px;
-      position: relative;
+      border-radius: 14px;
+      background: var(--bg-panel);
       overflow: hidden;
     }
 
-    .mode-tile .num {
-      position: absolute;
-      top: 14px;
-      right: 16px;
-      font-size: 34px;
-      font-weight: 800;
-      color: var(--border);
-      line-height: 1;
+    .strip div {
+      padding: 22px 20px;
+      border-left: 1px solid var(--border);
     }
 
-    .mode-tile .glyph {
-      font-size: 22px;
-      color: var(--accent);
-      margin-bottom: 14px;
+    .strip div:first-child {
+      border-left: none;
+    }
+
+    .strip b {
       display: block;
-    }
-
-    .mode-tile h3 {
-      font-size: 15px;
+      font-family: var(--mono);
+      font-size: 30px;
       font-weight: 600;
-      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
     }
 
-    .mode-tile p {
+    .strip span {
       font-size: 13px;
       color: var(--text-secondary);
-      line-height: 1.5;
     }
 
-    /* How it works */
+    /* --- grids ---------------------------------------------------------- */
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .drill {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 200px;
+      transition: transform 200ms cubic-bezier(.2, .8, .3, 1), border-color 200ms ease;
+    }
+
+    .drill:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-strong);
+    }
+
+    .drill .num {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+    }
+
+    .drill .glyph {
+      font-size: 26px;
+      line-height: 1;
+      margin-top: auto;
+      opacity: 0.5;
+    }
+
+    /* Weapon list: the eight, as a readout rather than eight cards. */
+    .weapons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg-panel);
+    }
+
+    .weapon {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      transition: background 160ms ease;
+    }
+
+    .weapon:hover {
+      background: var(--bg-panel-2);
+    }
+
+    .weapon strong {
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .weapon span {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* Hit-zone diagram for the humanoid targets. */
+    .zones {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 30px 20px;
+    }
+
+    .zone-figure {
+      position: relative;
+      width: 86px;
+    }
+
+    .zone-figure i {
+      display: block;
+      margin: 0 auto;
+      background: var(--hit);
+      border-radius: 4px;
+    }
+
+    .zone-figure .head {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      opacity: 0.95;
+    }
+
+    .zone-figure .torso {
+      width: 66px;
+      height: 46px;
+      margin-top: 6px;
+      opacity: 0.8;
+    }
+
+    .zone-figure .legs {
+      width: 44px;
+      height: 52px;
+      margin-top: 6px;
+      opacity: 0.62;
+    }
+
+    .zone-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .zone-list b {
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    /* --- steps ---------------------------------------------------------- */
+
     .steps {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+      gap: 18px;
       counter-reset: step;
     }
 
     .step {
       position: relative;
-      padding-left: 4px;
+      padding-top: 34px;
     }
 
     .step .step-num {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      position: absolute;
+      top: 26px;
+      left: 26px;
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
       background: var(--accent-soft);
       color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-family: var(--mono);
+      font-size: 12px;
       font-weight: 700;
-      font-size: 14px;
-      margin-bottom: 14px;
     }
 
-    .step h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
+    /* --- closing -------------------------------------------------------- */
 
-    .step p {
-      font-size: 13.5px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* CTA band */
-    .cta-band {
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(79, 142, 247, 0.14), rgba(124, 92, 247, 0.14));
-      border: 1px solid rgba(79, 142, 247, 0.25);
-      padding: 56px 48px;
+    .cta {
+      position: relative;
+      padding: 60px 34px;
       text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background:
+        radial-gradient(80% 120% at 50% 0%, var(--accent-soft), transparent 62%),
+        var(--bg-panel);
+      overflow: hidden;
     }
 
-    .cta-band h2 {
-      font-size: clamp(24px, 3vw, 32px);
-      letter-spacing: -0.02em;
+    .cta h2 {
+      font-size: clamp(26px, 3.6vw, 38px);
       margin-bottom: 12px;
     }
 
-    .cta-band p {
+    .cta p {
       color: var(--text-secondary);
-      margin-bottom: 28px;
+      margin-bottom: 26px;
     }
 
-    /* Footer */
     footer {
+      padding: 40px 0 60px;
       border-top: 1px solid var(--border);
-      padding: 32px 0 48px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: var(--text-muted);
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 8px 26px;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--text-muted);
     }
 
     footer .brand {
@@ -684,39 +999,143 @@
       color: var(--text-secondary);
     }
 
-    @media (max-width: 860px) {
+    /* --- scroll reveal --------------------------------------------------
+       Everything enters the same way: up and in, on the same snap easing as
+       the reticle, staggered by position so a row arrives as a sequence
+       rather than a block. --i is set inline per child. */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition:
+        opacity 620ms cubic-bezier(.2, .8, .3, 1),
+        transform 620ms cubic-bezier(.2, .8, .3, 1);
+      transition-delay: calc(var(--i, 0) * 70ms);
+    }
 
-      .hero,
-      .feature-grid,
-      .mode-strip,
+    .reveal.in {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      html {
+        scroll-behavior: auto;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .figure,
+      .reticle,
+      .marker {
+        animation: none;
+      }
+
+      .figure {
+        opacity: 1;
+      }
+
+      .reticle {
+        left: 40%;
+        top: 34%;
+      }
+    }
+
+    /* --- responsive ------------------------------------------------------ */
+
+    @media (max-width: 1000px) {
+
+      .grid-3,
+      .grid-4,
       .steps {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 860px) {
+      section {
+        padding: 74px 0;
       }
 
       .hero {
-        padding-top: 56px;
+        grid-template-columns: 1fr;
+        padding: 46px 0 60px;
       }
 
-      .hero-visual {
-        max-width: 420px;
-        margin: 0 auto;
+      .scene {
+        max-width: 460px;
       }
 
       .nav-links {
         display: none;
+      }
+
+      .strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .strip div:nth-child(3) {
+        border-left: none;
+      }
+
+      .strip div:nth-child(n + 3) {
+        border-top: 1px solid var(--border);
+      }
+
+      .zones {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 620px) {
+
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* On a phone the row is the mark, two switches and the call to action,
+       which does not fit with a wordmark as well. The mark carries the brand
+       at this width — the page title is right above it. */
+    @media (max-width: 520px) {
+      .brand-name {
+        display: none;
+      }
+
+      nav {
+        gap: 10px;
+      }
+
+      .nav-right {
+        gap: 8px;
+      }
+
+      .switch {
+        padding: 5px 7px;
+      }
+
+      .btn {
+        padding: 10px 14px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="bg-glow"></div>
+  <div class="backdrop"></div>
 
-  <header>
+  <header id="site-header">
     <nav class="wrap">
       <a class="brand" href="#top">
-        <svg width="24" height="24" viewBox="0 0 32 32">
-<g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none">
             <path d="M5.5 5.5 10.8 10.8" />
             <path d="M26.5 5.5 21.2 10.8" />
             <path d="M5.5 26.5 10.8 21.2" />
@@ -724,31 +1143,26 @@
           </g>
           <circle cx="16" cy="16" r="4.1" fill="#4f8ef7" />
         </svg>
-        AimonSite
+        <span class="brand-name">AimonSite</span>
       </a>
       <div class="nav-links">
-        <a href="#why" data-i18n="nav.why">Why AimonSite</a>
-        <a href="#modes" data-i18n="nav.drills">Drills</a>
-        <a href="#how" data-i18n="nav.how">How it works</a>
+        <a href="#drills" data-i18n="nav.drills">Drills</a>
+        <a href="#weapons" data-i18n="nav.weapons">Weapons</a>
+        <a href="#targets" data-i18n="nav.targets">Targets</a>
+        <a href="#measure" data-i18n="nav.measure">Measurement</a>
       </div>
       <div class="nav-right">
-        <div class="nav-controls">
-          <button type="button" class="switch" id="lang-switch" role="switch" aria-checked="false"
-            aria-label="Switch language">
-            <span class="switch-state" id="lang-switch-state">EN</span>
-            <span class="switch-track">
-              <span class="switch-thumb"></span>
-            </span>
-          </button>
-          <button type="button" class="switch" id="theme-switch" role="switch" aria-checked="false"
-            aria-label="Switch theme">
-            <span class="switch-state" id="theme-switch-state">🌙</span>
-            <span class="switch-track">
-              <span class="switch-thumb"></span>
-            </span>
-          </button>
-        </div>
-        <a class="btn btn-primary" href="app/" data-i18n="cta.launchNav">Launch AimonSite</a>
+        <button type="button" class="switch" id="lang-switch" role="switch" aria-checked="false"
+          aria-label="Switch language">
+          <span class="switch-state" id="lang-switch-state">EN</span>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </button>
+        <button type="button" class="switch" id="theme-switch" role="switch" aria-checked="false"
+          aria-label="Switch theme">
+          <span class="switch-state" id="theme-switch-state">🌙</span>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </button>
+        <a class="btn btn-primary" href="app/" data-i18n="cta.launchNav">Launch</a>
       </div>
     </nav>
   </header>
@@ -756,121 +1170,238 @@
   <main id="top">
     <div class="wrap hero">
       <div>
-        <span class="eyebrow"><span class="dot"></span> <span data-i18n="hero.eyebrow">Free · No install · No
-            account</span></span>
-        <h1 data-i18n-html="hero.title.html">Sharpen your <span class="gradient">aim</span>,<br />right in your
-          browser.</h1>
+        <span class="eyebrow"><span class="dot"></span> <span data-i18n="hero.eyebrow">Free · Runs in your browser ·
+            No install</span></span>
+        <h1 data-i18n-html="hero.title.html">Real weapons.<br /><span class="gradient">Measured</span> aim.</h1>
         <p class="hero-sub" data-i18n="hero.sub">
-          AimonSite is a fast, distraction-free FPS aim trainer that runs entirely client-side.
-          Four drill types, a real mouse-sensitivity converter, and rule-based coach feedback —
-          no download, no login, and your stats never leave your device.
+          Eight weapons that each shoot, kick and sound different. Humanoid targets with head, torso and leg zones.
+          Four drills that score what you actually did, and coach feedback that compares you against your own trend —
+          all in a browser tab, with your stats kept on your machine.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
-          <a class="btn btn-secondary btn-large" href="#why" data-i18n="hero.secondaryBtn">Why it's different</a>
+          <a class="btn btn-primary btn-lg" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
+          <a class="btn btn-ghost btn-lg" href="#weapons" data-i18n="hero.secondaryBtn">See what's inside</a>
         </div>
         <div class="hero-meta">
-          <span data-i18n="hero.meta1">🖱️ Raw mouse input, sensitivity-matched to your main game</span>
-          <span data-i18n="hero.meta2">💾 Stats stored locally</span>
+          <span data-i18n="hero.meta1">Raw mouse input</span>
+          <span data-i18n="hero.meta2">Sensitivity matched to your game</span>
+          <span data-i18n="hero.meta3">Stats stay on your device</span>
         </div>
       </div>
 
-      <div class="hero-visual" aria-hidden="true">
-        <div class="range-target"></div>
-        <div class="range-crosshair"></div>
-        <div class="hero-visual-caption">
-          <span data-i18n="hero.captionMode">GRIDSHOT</span>
-          <span data-i18n="hero.captionPreview">LIVE PREVIEW</span>
+      <div class="scene" aria-hidden="true">
+        <div class="scene-horizon"></div>
+        <div class="scene-floor"></div>
+
+        <div class="figure a">
+          <i class="head"></i>
+          <i class="torso"></i>
+          <i class="legs"></i>
+        </div>
+        <div class="figure b">
+          <i class="head"></i>
+          <i class="torso"></i>
+          <i class="legs"></i>
+        </div>
+        <div class="figure c">
+          <i class="head"></i>
+          <i class="torso"></i>
+          <i class="legs"></i>
+        </div>
+
+        <div class="reticle">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="marker">
+          <span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="scene-hud">
+          <span data-i18n="hero.captionMode">GRIDSHOT · RIFLE</span>
+          <span><b data-i18n="hero.captionStat">HEADSHOT</b></span>
         </div>
       </div>
     </div>
 
-    <section id="why">
+    <div class="wrap">
+      <div class="strip reveal">
+        <div><b>8</b><span data-i18n="strip.weapons">weapons, each with its own behaviour</span></div>
+        <div><b>4</b><span data-i18n="strip.drills">drills, from flicking to reaction</span></div>
+        <div><b>3</b><span data-i18n="strip.zones">hit zones on a humanoid target</span></div>
+        <div><b>0</b><span data-i18n="strip.installs">installs, accounts or downloads</span></div>
+      </div>
+    </div>
+
+    <section id="drills">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="why.eyebrow">Why AimonSite</span>
-          <h2 data-i18n="why.title">Built like a tool, not a funnel</h2>
-          <p data-i18n="why.sub">Most browser aim trainers push you toward an account, a leaderboard, or a paid tier
-            before you've even taken a shot. AimonSite skips all of that.</p>
+          <span class="eyebrow" data-i18n="drills.eyebrow">Drills</span>
+          <h2 data-i18n="drills.title">Four drills, one range</h2>
+          <p data-i18n="drills.sub">Each one trains a distinct skill and is scored on its own terms — not on a single
+            number that flatters everything.</p>
         </div>
-        <div class="feature-grid">
-          <div class="feature-card reveal">
-            <div class="feature-icon">⚡</div>
-            <h3 data-i18n="feature.instant.title">Instant, zero-install play</h3>
-            <p data-i18n="feature.instant.desc">WebGL in your browser — click Launch and you're on the range in
-              seconds. No client, no updates, no wasted disk space.</p>
-          </div>
-          <div class="feature-card reveal">
-            <div class="feature-icon">🔒</div>
-            <h3 data-i18n="feature.privacy.title">Your data stays yours</h3>
-            <p data-i18n="feature.privacy.desc">Every session, every stat, every crosshair preset is saved to your
-              device's local storage — never uploaded to a server you don't control.</p>
-          </div>
-          <div class="feature-card reveal">
-            <div class="feature-icon">🎯</div>
-            <h3 data-i18n="feature.sens.title">Real sensitivity conversion</h3>
-            <p data-i18n="feature.sens.desc">Set your actual DPI and cm/360, and AimonSite instantly matches it across
-              Valorant, CS2, Apex, Overwatch 2, and Fortnite.</p>
-          </div>
-          <div class="feature-card reveal">
-            <div class="feature-icon">🧠</div>
-            <h3 data-i18n="feature.coach.title">Coach feedback that isn't generic</h3>
-            <p data-i18n="feature.coach.desc">After every session, rule-based tips compare you against your own
-              trend — overshoot bias, tracking consistency, reaction spread — not a canned tip list.</p>
-          </div>
-          <div class="feature-card reveal">
-            <div class="feature-icon">🔫</div>
-            <h3 data-i18n="feature.recoil.title">Recoil control training</h3>
-            <p data-i18n="feature.recoil.desc">Every weapon carries its own per-shot recoil pattern to cancel, scored on how well you
-              compensate — not just whether you hit.</p>
-          </div>
-          <div class="feature-card reveal">
-            <div class="feature-icon">🖥️</div>
-            <h3 data-i18n="feature.desktop.title">A free desktop app, too</h3>
-            <p data-i18n="feature.desktop.desc">The exact same trainer as a lightweight desktop build with
-              higher-fidelity shadows, bloom, and reflections for offline practice.</p>
-          </div>
+        <div class="grid-4">
+          <article class="panel drill reveal" style="--i:0">
+            <span class="num">01</span>
+            <h3 data-i18n="mode.gridshot.name">Gridshot</h3>
+            <p data-i18n="mode.gridshot.landingDesc">One target at a time. Tracks time-to-kill and whether your flicks
+              overshoot or fall short.</p>
+            <span class="glyph">◎</span>
+          </article>
+          <article class="panel drill reveal" style="--i:1">
+            <span class="num">02</span>
+            <h3 data-i18n="mode.tracking.name">Tracking</h3>
+            <p data-i18n="mode.tracking.landingDesc">Hold your crosshair on a strafing target. Scored continuously, by
+              time on target.</p>
+            <span class="glyph">〜</span>
+          </article>
+          <article class="panel drill reveal" style="--i:2">
+            <span class="num">03</span>
+            <h3 data-i18n="mode.switching.name">Target Switching</h3>
+            <p data-i18n="mode.switching.landingDesc">Clear waves of simultaneous targets, training how fast you
+              re-acquire between them.</p>
+            <span class="glyph">⤨</span>
+          </article>
+          <article class="panel drill reveal" style="--i:3">
+            <span class="num">04</span>
+            <h3 data-i18n="mode.reaction.name">Reaction Time</h3>
+            <p data-i18n="mode.reaction.landingDesc">Targets flash and vanish. Measures raw reaction speed, and counts
+              the shots you fired too early.</p>
+            <span class="glyph">⚡</span>
+          </article>
         </div>
       </div>
     </section>
 
-    <section id="modes">
+    <section id="weapons">
       <div class="wrap">
         <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="modes.eyebrow">Drills</span>
-          <h2 data-i18n="modes.title">Four drills, one range</h2>
-          <p data-i18n="modes.sub">Each mode trains a distinct aiming skill, with difficulty presets that scale
-            target size, speed, and wave size together.</p>
+          <span class="eyebrow" data-i18n="weapons.eyebrow">Weapons</span>
+          <h2 data-i18n="weapons.title">Eight weapons that disagree with each other</h2>
+          <p data-i18n="weapons.sub">Not skins on the same gun. A sniper makes you work the bolt between shots, a
+            shotgun throws nine pellets, and an SMG is the one you can actually shoot from the hip.</p>
         </div>
-        <div class="mode-strip">
-          <div class="mode-tile reveal">
-            <span class="num">01</span>
-            <span class="glyph">◎</span>
-            <h3 data-i18n="mode.gridshot.name">Gridshot</h3>
-            <p data-i18n="mode.gridshot.landingDesc">Flick to one target at a time. Tracks flick overshoot/undershoot
-              bias and time-to-kill.</p>
-          </div>
-          <div class="mode-tile reveal">
-            <span class="num">02</span>
-            <span class="glyph">〜</span>
-            <h3 data-i18n="mode.tracking.name">Tracking</h3>
-            <p data-i18n="mode.tracking.landingDesc">Hold your crosshair on a strafing target. Scored by continuous
-              time-on-target.</p>
-          </div>
-          <div class="mode-tile reveal">
-            <span class="num">03</span>
-            <span class="glyph">⤨</span>
-            <h3 data-i18n="mode.switching.name">Target Switching</h3>
-            <p data-i18n="mode.switching.landingDesc">Clear waves of simultaneous targets, training fast
-              re-acquisition between them.</p>
-          </div>
-          <div class="mode-tile reveal">
-            <span class="num">04</span>
-            <span class="glyph">⚡</span>
-            <h3 data-i18n="mode.reaction.name">Reaction Time</h3>
-            <p data-i18n="mode.reaction.landingDesc">Targets flash briefly and vanish. Measures raw reaction speed
-              and false starts.</p>
-          </div>
+
+        <div class="weapons reveal">
+          <div class="weapon"><strong data-i18n="weapon.rifle">Rifle</strong><span
+              data-i18n="weapons.mode.auto">Automatic</span></div>
+          <div class="weapon"><strong data-i18n="weapon.carbine">Carbine</strong><span
+              data-i18n="weapons.mode.auto">Automatic</span></div>
+          <div class="weapon"><strong data-i18n="weapon.smg">SMG</strong><span
+              data-i18n="weapons.mode.auto">Automatic</span></div>
+          <div class="weapon"><strong data-i18n="weapon.pistol">Pistol</strong><span
+              data-i18n="weapons.mode.semi">Semi-auto</span></div>
+          <div class="weapon"><strong data-i18n="weapon.revolver">Revolver</strong><span
+              data-i18n="weapons.mode.semi">Semi-auto</span></div>
+          <div class="weapon"><strong data-i18n="weapon.sniper">Sniper</strong><span
+              data-i18n="weapons.mode.bolt">Bolt action</span></div>
+          <div class="weapon"><strong data-i18n="weapon.shotgun">Shotgun</strong><span
+              data-i18n="weapons.mode.pump">Pump · 9 pellets</span></div>
+          <div class="weapon"><strong data-i18n="weapon.breacher">Breacher</strong><span
+              data-i18n="weapons.mode.pump2">Pump · 12 pellets</span></div>
+        </div>
+
+        <div class="grid-3" style="margin-top:18px">
+          <article class="panel reveal" style="--i:0">
+            <span class="tag" data-i18n="weapons.accuracy.tag">Firing error</span>
+            <h3 style="margin-top:12px" data-i18n="weapons.accuracy.title">Hip fire costs you</h3>
+            <p data-i18n="weapons.accuracy.desc">Every weapon has its own error from the hip and when aimed, blended
+              by how far into the sights you are. The sniper misses by half a metre unscoped and is exact through the
+              scope; the SMG barely cares either way.</p>
+          </article>
+          <article class="panel reveal" style="--i:1">
+            <span class="tag" data-i18n="weapons.bloom.tag">Bloom</span>
+            <h3 style="margin-top:12px" data-i18n="weapons.bloom.title">Holding the trigger has a price</h3>
+            <p data-i18n="weapons.bloom.desc">Sustained fire walks the shot off the crosshair and recovers when you
+              let go. The first shot after any pause is always clean, so tapping stays a pure test of aim.</p>
+          </article>
+          <article class="panel reveal" style="--i:2">
+            <span class="tag" data-i18n="weapons.recoil.tag">Recoil</span>
+            <h3 style="margin-top:12px" data-i18n="weapons.recoil.title">A pattern worth learning</h3>
+            <p data-i18n="weapons.recoil.desc">Each automatic has a pattern that runs its whole magazine — climb, walk
+              to one side, swing back. Recoil Control mode scores how well you cancel it, not just whether you hit.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="targets">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow" data-i18n="targets.eyebrow">Targets</span>
+          <h2 data-i18n="targets.title">Spheres to measure with, figures to practise on</h2>
+          <p data-i18n="targets.sub">A sphere is the same size from every angle, which makes it an honest yardstick.
+            Switch to humanoid targets when you want zones — and headshots that get called out as you land them.</p>
+        </div>
+
+        <div class="grid-2">
+          <article class="panel reveal" style="--i:0">
+            <div class="zones">
+              <div class="zone-figure" aria-hidden="true">
+                <i class="head"></i>
+                <i class="torso"></i>
+                <i class="legs"></i>
+              </div>
+              <div class="zone-list">
+                <span><b data-i18n="targets.zone.head">Head</b><span data-i18n="targets.zone.headDesc">its own sound
+                    and marker, counted in the summary</span></span>
+                <span><b data-i18n="targets.zone.torso">Torso</b><span data-i18n="targets.zone.torsoDesc">arms
+                    included — centre mass, where a drill spawns it</span></span>
+                <span><b data-i18n="targets.zone.legs">Legs</b><span data-i18n="targets.zone.legsDesc">the shot that
+                    connected but should not have</span></span>
+              </div>
+            </div>
+          </article>
+          <article class="panel reveal" style="--i:1">
+            <span class="tag" data-i18n="targets.feel.tag">Feel</span>
+            <h3 style="margin-top:12px" data-i18n="targets.feel.title">Everything you hear is generated</h3>
+            <p data-i18n="targets.feel.desc">No audio files. Each weapon's report is synthesized from its own layers —
+              the blast's leading edge, the crack, the gas, the low punch you feel, the tail leaving the room, and the
+              action working a beat later. Brass ejects, arcs and settles on the floor. Nothing to download.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="measure">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow" data-i18n="measure.eyebrow">Measurement</span>
+          <h2 data-i18n="measure.title">The part that makes it training</h2>
+          <p data-i18n="measure.sub">Shooting is the easy half. What matters is what the session tells you afterwards.
+          </p>
+        </div>
+        <div class="grid-3">
+          <article class="panel reveal" style="--i:0">
+            <h3 data-i18n="measure.coach.title">Coach feedback, not a tip list</h3>
+            <p data-i18n="measure.coach.desc">Rule-based tips compare a session against your own trend: flick bias,
+              tracking consistency, reaction spread, how much of the recoil you actually cancelled.</p>
+          </article>
+          <article class="panel reveal" style="--i:1">
+            <h3 data-i18n="measure.history.title">History and hit maps</h3>
+            <p data-i18n="measure.history.desc">Every session is kept and charted, with a heatmap of where your shots
+              land relative to target centre — the fastest way to see a consistent bias.</p>
+          </article>
+          <article class="panel reveal" style="--i:2">
+            <h3 data-i18n="measure.sens.title">Real sensitivity conversion</h3>
+            <p data-i18n="measure.sens.desc">Enter your DPI and cm/360 and AimonSite matches it across Valorant, CS2,
+              Apex, Overwatch 2 and Fortnite, so practice transfers to the game you actually play.</p>
+          </article>
+          <article class="panel reveal" style="--i:3">
+            <h3 data-i18n="measure.crosshair.title">Your crosshair, exactly</h3>
+            <p data-i18n="measure.crosshair.desc">Shape, size, thickness, gap, outline, centre dot and colour — set
+              once and used everywhere, with target colour kept separate so contrast is yours to choose.</p>
+          </article>
+          <article class="panel reveal" style="--i:4">
+            <h3 data-i18n="measure.range.title">A range you can tune</h3>
+            <p data-i18n="measure.range.desc">Wall and floor colour, brightness, field of view, and whether magazines
+              and reloads exist at all. Off by default: an aim trainer should not interrupt you to reload.</p>
+          </article>
+          <article class="panel reveal" style="--i:5">
+            <h3 data-i18n="measure.desktop.title">A desktop build too</h3>
+            <p data-i18n="measure.desktop.desc">The same trainer as a lightweight desktop app, with higher-fidelity
+              shadows, bloom and reflections for practice offline.</p>
+          </article>
         </div>
       </div>
     </section>
@@ -879,37 +1410,57 @@
       <div class="wrap">
         <div class="section-head reveal">
           <span class="eyebrow" data-i18n="how.eyebrow">How it works</span>
-          <h2 data-i18n="how.title">From click to coach feedback in seconds</h2>
+          <h2 data-i18n="how.title">From click to coach feedback in about a minute</h2>
         </div>
         <div class="steps">
-          <div class="step reveal">
+          <article class="panel step reveal" style="--i:0">
             <div class="step-num">1</div>
-            <h3 data-i18n="step1.title">Pick a drill &amp; tune it</h3>
-            <p data-i18n="step1.desc">Choose a mode, difficulty, and session length, then pick your weapon on the way in — each
-              one shoots, reloads and cycles differently.</p>
-          </div>
-          <div class="step reveal">
+            <h3 data-i18n="step1.title">Pick a drill, then a weapon</h3>
+            <p data-i18n="step1.desc">Choose the mode, difficulty and length, then pick what you are carrying on the
+              way in — each one shoots, reloads and cycles differently.</p>
+          </article>
+          <article class="panel step reveal" style="--i:1">
             <div class="step-num">2</div>
             <h3 data-i18n="step2.title">Step into the range</h3>
-            <p data-i18n="step2.desc">Click to lock your mouse and shoot — raw input, matched to the sensitivity you
-              set.</p>
-          </div>
-          <div class="step reveal">
+            <p data-i18n="step2.desc">Click to lock your mouse and shoot. Raw input, sampled at full rate and applied
+              once per frame, so a fast turn stays smooth.</p>
+          </article>
+          <article class="panel step reveal" style="--i:2">
             <div class="step-num">3</div>
-            <h3 data-i18n="step3.title">Review &amp; improve</h3>
-            <p data-i18n="step3.desc">See your score, accuracy, and coach tips instantly, then track trends and
-              hit-position heatmaps over time.</p>
-          </div>
+            <h3 data-i18n="step3.title">Read what happened</h3>
+            <p data-i18n="step3.desc">Score, accuracy, headshots, time-to-kill and coach tips straight after, then
+              your trend over every session you have run.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="yours">
+      <div class="wrap">
+        <div class="grid-2">
+          <article class="panel reveal" style="--i:0">
+            <span class="tag" data-i18n="yours.local.tag">Private by default</span>
+            <h3 style="margin-top:12px" data-i18n="yours.local.title">Your stats stay on your machine</h3>
+            <p data-i18n="yours.local.desc">Every session, setting and crosshair preset lives in your browser's own
+              storage. There is no account to make and nothing to upload — and signing in does not change that.</p>
+          </article>
+          <article class="panel reveal" style="--i:1">
+            <span class="tag" data-i18n="yours.account.tag">Optional</span>
+            <h3 style="margin-top:12px" data-i18n="yours.account.title">Sign in only if you want to be heard</h3>
+            <p data-i18n="yours.account.desc">There is a suggestion box for ideas and bug reports. Signing in with
+              Google puts your name on what you post and lets replies reach you anywhere. Your drill stats are not
+              part of the deal.</p>
+          </article>
         </div>
       </div>
     </section>
 
     <section>
       <div class="wrap">
-        <div class="cta-band reveal">
+        <div class="cta reveal">
           <h2 data-i18n="cta.title">Your aim isn't going to train itself.</h2>
-          <p data-i18n="cta.sub">No sign-up. No download. Just click, and start flicking.</p>
-          <a class="btn btn-primary btn-large" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
+          <p data-i18n="cta.sub">No sign-up, no download. Click, pick a weapon, and start flicking.</p>
+          <a class="btn btn-primary btn-lg" href="app/" data-i18n="cta.launch">Launch AimonSite →</a>
         </div>
       </div>
     </section>
@@ -917,8 +1468,9 @@
 
   <footer class="wrap">
     <span class="brand">AimonSite</span>
-    <span data-i18n="footer.tagline">Runs entirely in your browser. No accounts, no tracking, no ads.</span>
-    <span data-i18n="footer.credit">Weapon models by Quaternius (CC0); revolver, breacher and casing by Zsky and Poly by Google (CC-BY)</span>
+    <span data-i18n="footer.tagline">Runs entirely in your browser. No tracking, no ads.</span>
+    <span data-i18n="footer.credit">Weapon models by Quaternius (CC0); revolver, breacher and casing by Zsky and Poly
+      by Google (CC-BY)</span>
   </footer>
 
   <script type="module">
@@ -974,19 +1526,28 @@
       applyTranslations(document);
     });
 
-    const revealEls = document.querySelectorAll(".reveal");
+    // Scroll reveal. Elements are released once and then forgotten — a
+    // section that fades back out on the way up is a distraction, not an
+    // effect.
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in");
-            io.unobserve(entry.target);
-          }
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     );
-    revealEls.forEach((el) => io.observe(el));
+    for (const el of document.querySelectorAll(".reveal")) io.observe(el);
+
+    // The header only grows a border once the page has actually moved, so it
+    // is a divider when it is needed and invisible when it is not.
+    const header = document.getElementById("site-header");
+    const sentinel = document.createElement("div");
+    sentinel.style.cssText = "position:absolute;top:0;height:1px;width:1px";
+    document.body.prepend(sentinel);
+    new IntersectionObserver(([entry]) => header.classList.toggle("stuck", !entry.isIntersecting)).observe(sentinel);
   </script>
 </body>
 
