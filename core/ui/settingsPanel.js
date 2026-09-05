@@ -102,6 +102,12 @@ export function initSettingsPanel(onChangeCallback) {
 }
 
 export function showSettingsPanel() {
+  // Re-read rather than trusting the copy this module loaded with: two of
+  // these switches are also on the home screen now, so the stored config can
+  // have moved since. Without this the panel shows a stale state and then
+  // writes it back on the next toggle, quietly undoing the other screen.
+  config = loadRangeConfig();
+  syncControls();
   screen.classList.remove("hidden");
 }
 

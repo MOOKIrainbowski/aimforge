@@ -302,6 +302,9 @@ async function open(page, url = BASE) {
   console.log("\n7. Signing out");
   await page.click("#admin-back");
   await page.waitForTimeout(200);
+  // Sign out lives inside the account menu now, not as a link in the sidebar.
+  await page.click("#account-menu-button");
+  await page.waitForTimeout(200);
   await page.click("#account-signout");
   await page.waitForTimeout(500);
   check("the server session is revoked", db.loggedOut);

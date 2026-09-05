@@ -40,6 +40,9 @@
   </div>
   <div id="crosshair" class="hidden"></div>
   <div id="hitmarker"></div>
+  <!-- Transient confirmations (signed in, signed out). Lives outside every
+       screen so it survives the screen switching underneath it. -->
+  <div id="toast-host" class="toast-host" role="status" aria-live="polite"></div>
   <div id="start-prompt" class="start-prompt hidden">
     <div class="start-prompt-card">
       <h2 data-i18n="start.title">Click to Start</h2>
@@ -122,24 +125,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <!-- The account row is hidden entirely unless a backend is configured
-             (core/backend/config.js): with none there is nothing to sign in
-             to, and an inert button would be worse than no button. -->
-        <div id="account-row" class="sidebar-account hidden">
-          <button id="account-signin" class="sidebar-item" type="button">
-            <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M10 10.6a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" />
-              <path d="M3.6 17.2a6.4 6.4 0 0 1 12.8 0" />
-            </svg>
-            <span data-i18n="account.signIn">Sign in with Google</span>
-          </button>
-          <div id="account-signed-in" class="sidebar-account-in hidden">
-            <span id="account-name" class="sidebar-account-name"></span>
-            <button id="account-signout" class="link-button" type="button" data-i18n="account.signOut">Sign
-              out</button>
-          </div>
-        </div>
-
         <button id="home-settings-btn" class="sidebar-item" type="button"
           data-i18n-attr="aria-label:nav.settingsAria">
           <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -153,6 +138,48 @@
     </aside>
 
     <div class="home-main">
+      <!-- The account lives at the top of the page rather than wedged into
+           the sidebar footer next to Settings. Signed in, it is where a
+           profile is expected to be; signed out, the one call to action here
+           does not compete with the drill you came to run. The whole bar is
+           absent when no backend is configured (core/backend/config.js). -->
+      <div class="home-topbar wrap">
+        <div id="account-row" class="account hidden">
+          <button id="account-signin" class="account-signin" type="button">
+            <svg viewBox="0 0 18 18" aria-hidden="true" class="google-mark">
+              <path fill="#4285F4"
+                d="M17.6 9.2c0-.6-.1-1.3-.2-1.9H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5Z" />
+              <path fill="#34A853"
+                d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18Z" />
+              <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3Z" />
+              <path fill="#EA4335"
+                d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6Z" />
+            </svg>
+            <span data-i18n="account.signIn">Sign in with Google</span>
+          </button>
+
+          <div id="account-signed-in" class="account-chip-wrap hidden">
+            <button id="account-menu-button" class="account-chip" type="button" aria-haspopup="menu"
+              aria-expanded="false">
+              <span id="account-avatar" class="account-avatar" aria-hidden="true"></span>
+              <span id="account-name" class="account-name"></span>
+              <svg class="account-caret" viewBox="0 0 12 12" aria-hidden="true">
+                <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <div id="account-menu" class="account-menu hidden" role="menu">
+              <div class="account-menu-head">
+                <span id="account-menu-name" class="account-menu-name"></span>
+                <span id="account-menu-email" class="account-menu-email"></span>
+              </div>
+              <button id="account-signout" class="account-menu-item" type="button" role="menuitem"
+                data-i18n="account.signOut">Sign out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="home-dashboard wrap">
         <div class="home-hero">
           <span class="eyebrow"><span class="dot"></span> <span data-i18n="home.eyebrow">Training Range</span></span>
@@ -192,6 +219,19 @@
         </div>
 
         <div class="home-config">
+          <!-- The weapon used to be invisible until after you committed to a
+               session. It decides how everything in the range behaves, so it
+               belongs on the screen where the session is set up. -->
+          <button id="home-loadout" class="loadout" type="button">
+            <span class="loadout-figure"><img id="loadout-image" class="loadout-image" alt="" aria-hidden="true" /></span>
+            <span class="loadout-text">
+              <span class="loadout-label" data-i18n="home.loadout">Loadout</span>
+              <span id="loadout-name" class="loadout-name"></span>
+            </span>
+            <span class="loadout-meta" id="loadout-meta"></span>
+            <span class="loadout-change" data-i18n="home.changeWeapon">Change</span>
+          </button>
+
           <div class="option-row">
             <span class="option-label" data-i18n="option.difficulty">Difficulty</span>
             <div class="option-group" id="difficulty-group">
@@ -216,6 +256,31 @@
             <span class="option-label"><span data-i18n="option.recoil">Recoil Control</span><br />
               <small data-i18n="option.recoilNote">Gridshot &amp; Switching only</small></span>
             <button type="button" class="switch" id="recoil-switch" role="switch" aria-checked="false">
+              <span class="switch-state" data-i18n="common.off">Off</span>
+              <span class="switch-track">
+                <span class="switch-thumb"></span>
+              </span>
+            </button>
+          </div>
+
+          <!-- Mirrors of two Settings switches that change what a session
+               actually is. They were discoverable only by opening Settings,
+               which is the wrong place to find out that headshots exist. -->
+          <div class="option-row">
+            <span class="option-label"><span data-i18n="settings.humanTargets">Human Targets</span><br />
+              <small data-i18n="home.humanTargetsNote">Head, torso and leg zones</small></span>
+            <button type="button" class="switch" id="home-human-switch" role="switch" aria-checked="false">
+              <span class="switch-state" data-i18n="common.off">Off</span>
+              <span class="switch-track">
+                <span class="switch-thumb"></span>
+              </span>
+            </button>
+          </div>
+
+          <div class="option-row">
+            <span class="option-label"><span data-i18n="settings.magazineLimit">Magazine Limit</span><br />
+              <small data-i18n="home.magazineLimitNote">Reloads, dry fire and a real magazine</small></span>
+            <button type="button" class="switch" id="home-magazine-switch" role="switch" aria-checked="false">
               <span class="switch-state" data-i18n="common.off">Off</span>
               <span class="switch-track">
                 <span class="switch-thumb"></span>

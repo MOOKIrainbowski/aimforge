@@ -219,6 +219,17 @@ function beginSession(config) {
   showWeaponSelect();
 }
 
+// The same picker, opened from the home screen's loadout row to change what
+// is equipped without starting anything. Confirming here saves the choice and
+// comes back, rather than dropping you into the range — the row said
+// "Change", so it has to mean only that.
+function openLoadout() {
+  pendingConfig = null;
+  appState = "WEAPON";
+  hideHome();
+  showWeaponSelect();
+}
+
 // Weapon chosen -> the range itself. Entering a drill doesn't grab pointer
 // lock instantly: the range shows with the start-prompt overlay, and the
 // player locks in explicitly by clicking (see the canvas `click` listener
@@ -298,10 +309,24 @@ document.getElementById("pause-quit").addEventListener("click", () => {
   returnToMenu();
 });
 
-initHome(beginSession);
+initHome(beginSession, { onChangeWeapon: openLoadout });
 initHistory();
 initWeaponSelect({
-  onConfirm: (weaponId) => enterRange(weaponId),
+  onConfirm: (weaponId) => {
+    // No pending config means the picker was opened to change the loadout,
+    // not to start a session.
+    if (!pendingConfig) {
+      selectedWeaponId = weaponId;
+      weapon = getWeapon(weaponId);
+      saveSettings({ ...loadSettings(), weaponId });
+      viewmodel.setWeapon(weaponId);
+      hideWeaponSelect();
+      appState = "MENU";
+      showHome();
+      return;
+    }
+    enterRange(weaponId);
+  },
   onCancel: () => {
     hideWeaponSelect();
     pendingConfig = null;
