@@ -9,6 +9,7 @@ import {
   isAdmin,
   getUnansweredCount,
   subscribe,
+  onBackendChange,
 } from "../suggestions/store.js";
 import { t, getLanguage } from "../i18n.js";
 
@@ -44,9 +45,10 @@ function setPressed(button, pressed) {
   button.setAttribute("aria-pressed", String(pressed));
 }
 
-function visiblePosts() {
+async function visiblePosts() {
   if (selectedFilter === "unanswered") {
-    return listPosts({}).filter((post) => !post.comments.some((c) => c.byAdmin));
+    const posts = await listPosts({});
+    return posts.filter((post) => !post.comments.some((c) => c.byAdmin));
   }
   if (selectedFilter === "all") return listPosts({});
   return listPosts({ category: selectedFilter });
@@ -119,8 +121,8 @@ function buildPost(post) {
     button.type = "button";
     button.textContent = t(`suggestions.status.${value}`);
     setPressed(button, post.status === value);
-    button.addEventListener("click", () => {
-      setStatus(post.id, value);
+    button.addEventListener("click", async () => {
+      await setStatus(post.id, value);
       render();
     });
     statusGroup.append(button);
@@ -149,8 +151,11 @@ function buildPost(post) {
   replyButton.type = "button";
   replyButton.className = "btn-primary";
   replyButton.textContent = t("admin.reply");
-  replyButton.addEventListener("click", () => {
-    if (addComment(post.id, replyInput.value, { asAdmin: true }).ok) {
+  replyButton.addEventListener("click", async () => {
+    replyButton.disabled = true;
+    const result = await addComment(post.id, replyInput.value, { asAdmin: true });
+    replyButton.disabled = false;
+    if (result.ok) {
       replyInput.value = "";
       render();
     }
@@ -164,14 +169,14 @@ function buildPost(post) {
   // pointer-locked page is a bad idea, and this makes the destructive step
   // deliberate without blocking anything.
   let armed = false;
-  deleteButton.addEventListener("click", () => {
+  deleteButton.addEventListener("click", async () => {
     if (!armed) {
       armed = true;
       deleteButton.textContent = t("admin.deleteConfirm");
       deleteButton.classList.add("board-delete-armed");
       return;
     }
-    deletePost(post.id);
+    await deletePost(post.id);
     expandedId = null;
     render();
   });
@@ -183,13 +188,19 @@ function buildPost(post) {
   return article;
 }
 
-function render() {
-  const posts = visiblePosts();
-  const all = listPosts({});
+// See the same guard in suggestions.js: a filter changed mid-load must not
+// be overwritten by the answer to the previous one.
+let renderToken = 0;
+
+async function render() {
+  const token = ++renderToken;
+  const [posts, all, unanswered] = await Promise.all([visiblePosts(), listPosts({}), getUnansweredCount()]);
+  if (token !== renderToken) return;
+
   summaryEl.replaceChildren();
   for (const [label, value] of [
     [t("admin.summary.total"), all.length],
-    [t("admin.summary.needsReply"), getUnansweredCount()],
+    [t("admin.summary.needsReply"), unanswered],
     [t("admin.summary.bugs"), all.filter((p) => p.category === "bug").length],
   ]) {
     const cell = document.createElement("div");
@@ -214,9 +225,9 @@ function render() {
 }
 
 // Sidebar badge for the admin: how many posts are still waiting on a reply.
-export function refreshAdminBadge() {
+export async function refreshAdminBadge() {
   sidebarEntry.classList.toggle("hidden", !isAdmin());
-  const count = getUnansweredCount();
+  const count = await getUnansweredCount();
   badge.textContent = String(count);
   badge.classList.toggle("hidden", !isAdmin() || count === 0);
 }
@@ -239,6 +250,12 @@ export function initAdmin({ onSignOut: signOutCallback }) {
   });
 
   subscribe(refreshAdminBadge);
+  // See suggestions.js: a backend swap is a different board, not new rows on
+  // the same one.
+  onBackendChange(() => {
+    if (!screen.classList.contains("hidden")) render();
+    refreshAdminBadge();
+  });
   refreshAdminBadge();
 }
 

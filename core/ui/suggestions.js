@@ -7,6 +7,7 @@ import {
   getUnreadReplies,
   getIdentity,
   subscribe,
+  onBackendChange,
 } from "../suggestions/store.js";
 import { t, getLanguage } from "../i18n.js";
 
@@ -106,6 +107,9 @@ function buildPost(post, me) {
 
   header.addEventListener("click", () => {
     expandedId = expandedId === post.id ? null : post.id;
+    // Rendered straight away rather than after the read is stored: opening a
+    // thread must not wait on a round trip, and the dot it clears is a local
+    // reading of data the next render reloads anyway.
     if (expandedId === post.id) markPostRead(post.id);
     render();
   });
@@ -163,8 +167,11 @@ function buildPost(post, me) {
   replyButton.type = "button";
   replyButton.className = "secondary";
   replyButton.textContent = t("suggestions.reply");
-  replyButton.addEventListener("click", () => {
-    if (addComment(post.id, replyInput.value).ok) {
+  replyButton.addEventListener("click", async () => {
+    replyButton.disabled = true;
+    const result = await addComment(post.id, replyInput.value);
+    replyButton.disabled = false;
+    if (result.ok) {
       replyInput.value = "";
       render();
     }
@@ -177,7 +184,13 @@ function buildPost(post, me) {
   return article;
 }
 
-function render() {
+// Each render is tagged so a slow load that resolves after the player has
+// already changed the filter cannot overwrite the newer view with the older
+// one — the only ordering hazard the async backends introduce.
+let renderToken = 0;
+
+async function render() {
+  const token = ++renderToken;
   const me = getIdentity().id;
   const filter =
     selectedFilter === "mine"
@@ -185,7 +198,8 @@ function render() {
       : selectedFilter === "all"
         ? {}
         : { category: selectedFilter };
-  const posts = listPosts(filter);
+  const posts = await listPosts(filter);
+  if (token !== renderToken) return;
 
   listEl.replaceChildren();
   if (posts.length === 0) {
@@ -200,8 +214,8 @@ function render() {
 
 // The sidebar dot: how many of this browser's own posts have an admin reply
 // it hasn't seen yet.
-export function refreshSuggestionBadge() {
-  const count = getUnreadReplies().length;
+export async function refreshSuggestionBadge() {
+  const count = (await getUnreadReplies()).length;
   badge.textContent = String(count);
   badge.classList.toggle("hidden", count === 0);
 }
@@ -224,16 +238,23 @@ export function initSuggestions() {
 
   bodyInput.addEventListener("input", updateCounter);
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearError();
-    const result = createPost({
+    const submitButton = form.querySelector("button[type=submit]");
+    if (submitButton) submitButton.disabled = true;
+    const result = await createPost({
       category: selectedCategory,
       title: titleInput.value,
       body: bodyInput.value,
     });
+    if (submitButton) submitButton.disabled = false;
     if (!result.ok) {
-      showError(result.error === "storage" ? "suggestions.error.storage" : "suggestions.error.empty");
+      showError(
+        result.error === "empty" || result.error === "category"
+          ? "suggestions.error.empty"
+          : "suggestions.error.storage"
+      );
       return;
     }
     titleInput.value = "";
@@ -243,6 +264,12 @@ export function initSuggestions() {
   });
 
   subscribe(refreshSuggestionBadge);
+  // Signing in or out replaces the board wholesale, so an open screen has to
+  // reload rather than keep showing the other backend's posts.
+  onBackendChange(() => {
+    if (!screen.classList.contains("hidden")) render();
+    refreshSuggestionBadge();
+  });
   updateCounter();
   refreshSuggestionBadge();
 }

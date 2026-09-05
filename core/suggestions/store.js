@@ -1,24 +1,19 @@
 import { migrateKey } from "../storage.js";
+import { getBackend, onBackendChange, isRemote } from "./backend.js";
 
-// Storage and rules for the suggestion box and the admin view built on top
-// of it.
+// The suggestion box's rules, and the identity a post is written under.
+// Where posts are actually kept is backend.js's business — this file decides
+// what a valid post is, who is writing it, and what the rest of the app is
+// allowed to ask for.
 //
-// SCOPE, STATED PLAINLY: AimonSite ships as static files with no server and
-// no accounts (that is the product's whole pitch — "your stats never leave
-// your device"). So this store is localStorage-backed, which means posts,
-// replies and notifications are real and persistent, but they are real *on
-// this browser*: a suggestion written here is not delivered anywhere, and
-// the admin view below is a UI role, not an authenticated one. Anyone who
-// opens devtools can flip the flag.
-//
-// The data shape and every call below is deliberately async and
-// backend-shaped so this becomes a genuine multi-user feature the day there
-// is somewhere to talk to: swap the read/write pair in `backend` for fetch()
-// calls against a real API and nothing above this file has to change. See
-// `RemoteBackend` at the bottom for the contract that adapter must meet.
-const STORAGE_KEY = "aimonsite:suggestions";
+// Everything that touches storage is async. That is not speculative: the
+// local backend resolves immediately, but a remote one cannot, and having
+// the callers already written for a promise is what lets the two swap under
+// them without a second rewrite of the screens.
 const IDENTITY_KEY = "aimonsite:identity";
 const ADMIN_KEY = "aimonsite:adminMode";
+
+export { isRemote, onBackendChange } from "./backend.js";
 
 export const MAX_BODY_LENGTH = 1000;
 export const MAX_TITLE_LENGTH = 120;
@@ -40,8 +35,6 @@ function writeJson(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch {
-    // localStorage unavailable (private browsing, quota) — the caller gets
-    // `false` and surfaces it rather than silently losing the post.
     return false;
   }
 }
@@ -50,27 +43,48 @@ function newId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// A per-browser pseudonymous id so "my posts", the unread-reply badge and
-// authorship all work without an account. No email, no tracking, never
-// leaves the device.
+// The signed-in account, when there is one. Set by core/auth.js; null means
+// this browser is posting as itself.
+let account = null;
+
+export function setAccount(next) {
+  account = next;
+  notify();
+}
+
+export function getAccount() {
+  return account;
+}
+
+// Who a post is written as. An account wins when there is one; otherwise a
+// per-browser pseudonymous id, so "my posts", the unread-reply badge and
+// authorship all work without one. That local id is no email and no
+// tracking, and never leaves the device.
 export function getIdentity() {
+  if (account) return { id: account.id, name: account.name, account: true };
+
   migrateKey("identity");
   let identity = readJson(IDENTITY_KEY, null);
   if (!identity || !identity.id) {
     identity = { id: newId(), name: "" };
     writeJson(IDENTITY_KEY, identity);
   }
-  return identity;
+  return { ...identity, account: false };
 }
 
 export function setDisplayName(name) {
-  const identity = getIdentity();
+  const identity = readJson(IDENTITY_KEY, null) ?? { id: newId(), name: "" };
   identity.name = String(name ?? "").slice(0, 40);
   writeJson(IDENTITY_KEY, identity);
   return identity;
 }
 
+// Local admin view toggle, entered via `?admin=1`. It carries no authority:
+// with a remote backend the server decides what an admin may do, and this
+// only decides whether the moderation screen is on screen. See
+// core/suggestions/backend.js.
 export function isAdmin() {
+  if (account) return Boolean(account.admin);
   try {
     return localStorage.getItem(ADMIN_KEY) === "1";
   } catch {
@@ -99,117 +113,88 @@ function notify() {
   for (const cb of listeners) cb();
 }
 
-function readAll() {
-  migrateKey("suggestions");
-  const store = readJson(STORAGE_KEY, null);
-  if (!store || !Array.isArray(store.posts)) return { version: 1, posts: [] };
-  return store;
-}
-
-function writeAll(store) {
-  const ok = writeJson(STORAGE_KEY, store);
-  if (ok) notify();
-  return ok;
-}
+// A backend swap is as much a change to what is on screen as a new post is.
+onBackendChange(notify);
 
 function clampBody(text) {
   return String(text ?? "").trim().slice(0, MAX_BODY_LENGTH);
 }
 
-export function listPosts({ category = "all", status = "all", mine = false } = {}) {
-  const me = getIdentity().id;
-  return readAll()
-    .posts.filter((post) => {
-      if (category !== "all" && post.category !== category) return false;
-      if (status !== "all" && post.status !== status) return false;
-      if (mine && post.authorId !== me) return false;
-      return true;
-    })
-    .sort((a, b) => b.createdAt - a.createdAt);
+// Both backends are handed content that is already valid, so neither has to
+// re-implement these rules and they cannot drift apart.
+export async function listPosts(filter = {}) {
+  try {
+    return await getBackend().listPosts(filter, getIdentity());
+  } catch (err) {
+    console.warn("AimonSite: could not load suggestions", err);
+    return [];
+  }
 }
 
-export function getPost(id) {
-  return readAll().posts.find((post) => post.id === id) ?? null;
+export async function getPost(id) {
+  const posts = await listPosts({});
+  return posts.find((post) => post.id === id) ?? null;
 }
 
-export function createPost({ category, title, body }) {
+export async function createPost({ category, title, body }) {
   const trimmedTitle = String(title ?? "").trim().slice(0, MAX_TITLE_LENGTH);
   const trimmedBody = clampBody(body);
   if (!trimmedTitle || !trimmedBody) return { ok: false, error: "empty" };
   if (!CATEGORIES.includes(category)) return { ok: false, error: "category" };
 
-  const identity = getIdentity();
-  const store = readAll();
-  store.posts.push({
-    id: newId(),
-    category,
-    title: trimmedTitle,
-    body: trimmedBody,
-    createdAt: Date.now(),
-    authorId: identity.id,
-    authorName: identity.name || "",
-    status: "open",
-    comments: [],
-    // Timestamp of the last time the author opened this thread; anything an
-    // admin posts after it counts as an unread reply.
-    readAt: Date.now(),
-  });
-  return writeAll(store) ? { ok: true } : { ok: false, error: "storage" };
+  const result = await guard(() =>
+    getBackend().createPost({ category, title: trimmedTitle, body: trimmedBody }, getIdentity())
+  );
+  if (result.ok) notify();
+  return result;
 }
 
-export function addComment(postId, body, { asAdmin = false } = {}) {
+export async function addComment(postId, body, { asAdmin = false } = {}) {
   const trimmed = clampBody(body);
   if (!trimmed) return { ok: false, error: "empty" };
 
-  const identity = getIdentity();
-  const store = readAll();
-  const post = store.posts.find((p) => p.id === postId);
-  if (!post) return { ok: false, error: "missing" };
-
-  post.comments.push({
-    id: newId(),
-    body: trimmed,
-    createdAt: Date.now(),
-    byAdmin: Boolean(asAdmin),
-    authorId: asAdmin ? "admin" : identity.id,
-    authorName: asAdmin ? "" : identity.name || "",
-  });
-  // The author is reading their own thread as they reply, so only an admin
-  // comment should be able to leave it unread for them.
-  if (!asAdmin && post.authorId === identity.id) post.readAt = Date.now();
-  return writeAll(store) ? { ok: true } : { ok: false, error: "storage" };
+  const result = await guard(() => getBackend().addComment(postId, trimmed, { asAdmin }, getIdentity()));
+  if (result.ok) notify();
+  return result;
 }
 
-export function setStatus(postId, status) {
+export async function setStatus(postId, status) {
   if (!STATUSES.includes(status)) return { ok: false, error: "status" };
-  const store = readAll();
-  const post = store.posts.find((p) => p.id === postId);
-  if (!post) return { ok: false, error: "missing" };
-  post.status = status;
-  return writeAll(store) ? { ok: true } : { ok: false, error: "storage" };
+  const result = await guard(() => getBackend().setStatus(postId, status));
+  if (result.ok) notify();
+  return result;
 }
 
-export function deletePost(postId) {
-  const store = readAll();
-  const index = store.posts.findIndex((p) => p.id === postId);
-  if (index === -1) return { ok: false, error: "missing" };
-  store.posts.splice(index, 1);
-  return writeAll(store) ? { ok: true } : { ok: false, error: "storage" };
+export async function deletePost(postId) {
+  const result = await guard(() => getBackend().deletePost(postId));
+  if (result.ok) notify();
+  return result;
 }
 
-export function markPostRead(postId) {
-  const store = readAll();
-  const post = store.posts.find((p) => p.id === postId);
-  if (!post) return;
-  post.readAt = Date.now();
-  writeAll(store);
+export async function markPostRead(postId) {
+  const result = await guard(() => getBackend().markPostRead(postId, getIdentity()));
+  if (result.ok) notify();
+  return result;
 }
 
-// Posts this browser authored that have an admin reply newer than the last
-// time the author opened the thread. Drives the sidebar's notification dot.
-export function getUnreadReplies() {
+// A backend that throws — an offline fetch, a rejected write — must reach the
+// caller as the same `{ ok: false, error }` a refused write does, since the
+// screens have exactly one way of reporting that something didn't save.
+async function guard(fn) {
+  try {
+    return (await fn()) ?? { ok: false, error: "backend" };
+  } catch (err) {
+    console.warn("AimonSite: suggestion write failed", err);
+    return { ok: false, error: "backend" };
+  }
+}
+
+// Posts this reader authored that have an admin reply newer than the last
+// time they opened the thread. Drives the sidebar's notification dot.
+export async function getUnreadReplies() {
   const me = getIdentity().id;
-  return readAll().posts.filter(
+  const posts = await listPosts({});
+  return posts.filter(
     (post) =>
       post.authorId === me &&
       post.comments.some((comment) => comment.byAdmin && comment.createdAt > (post.readAt ?? 0))
@@ -218,22 +203,7 @@ export function getUnreadReplies() {
 
 // Posts an admin hasn't answered yet — the admin view's own "needs
 // attention" count.
-export function getUnansweredCount() {
-  return readAll().posts.filter(
-    (post) => post.status === "open" && !post.comments.some((comment) => comment.byAdmin)
-  ).length;
+export async function getUnansweredCount() {
+  const posts = await listPosts({});
+  return posts.filter((post) => post.status === "open" && !post.comments.some((c) => c.byAdmin)).length;
 }
-
-// The contract a real backend would implement to replace localStorage here.
-// Kept as documentation rather than a stub implementation so there is no
-// dead abstraction layer to maintain until it's actually needed:
-//
-//   listPosts(filter)            -> Promise<Post[]>
-//   createPost({category,title,body}) -> Promise<{ok, error?}>
-//   addComment(postId, body, {asAdmin}) -> Promise<{ok, error?}>
-//   setStatus(postId, status)    -> Promise<{ok, error?}>
-//   deletePost(postId)           -> Promise<{ok, error?}>
-//
-// Server-side, `asAdmin` and deletion must be authorised from a session, not
-// taken from the client's word — the localStorage flag above is a view
-// toggle only and carries no authority.
