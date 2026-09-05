@@ -14,8 +14,10 @@ const { chromium } = require("playwright");
 // real project, and the mock takes care to *refuse* things the way the real
 // policies do so the client is at least written against honest answers.
 //
-// The config is empty in the repo, so this injects one before any module
-// runs — the same thing filling in core/backend/config.js does.
+// The suite serves its own core/backend/config.js in both states rather than
+// reading whichever one the repo happens to have: once a real project is
+// configured for development, a test that assumed an empty config would start
+// failing for a reason that has nothing to do with the code.
 
 const BASE = "http://localhost:8123/app/index.html?debug=1";
 const FAKE_URL = "https://project.supabase.test";
@@ -163,16 +165,25 @@ async function installMock(page) {
   });
 }
 
-// Stands in for a filled-in core/backend/config.js. The module is fetched, so
-// rewriting the response is exactly what pasting keys into the file does.
-async function configure(page) {
+// core/backend/config.js is served, not bundled, so rewriting the response is
+// exactly what editing the file does. Both states are driven from here rather
+// than read from the repo: whether a real project is configured is the
+// developer's business, and this suite has to test both regardless.
+let configured = false;
+
+async function installConfigRoute(page) {
   await page.route("**/core/backend/config.js", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/javascript",
-      body: `export const SUPABASE_URL = ${JSON.stringify(FAKE_URL)};
+      body: configured
+        ? `export const SUPABASE_URL = ${JSON.stringify(FAKE_URL)};
 export const SUPABASE_ANON_KEY = "anon-key";
 export function isConfigured() { return true; }
+`
+        : `export const SUPABASE_URL = "";
+export const SUPABASE_ANON_KEY = "";
+export function isConfigured() { return false; }
 `,
     })
   );
@@ -193,6 +204,7 @@ async function open(page, url = BASE) {
   });
 
   console.log("\n1. With no backend configured, accounts do not exist");
+  await installConfigRoute(page);
   await open(page);
   check("the sign-in row is hidden", await page.$eval("#account-row", (el) => el.classList.contains("hidden")));
   check(
@@ -201,7 +213,7 @@ async function open(page, url = BASE) {
   );
 
   console.log("\n2. Signing in with Google");
-  await configure(page);
+  configured = true;
   await installMock(page);
   await open(page);
   check("the sign-in row appears once configured", await page.$eval("#account-row", (el) => !el.classList.contains("hidden")));

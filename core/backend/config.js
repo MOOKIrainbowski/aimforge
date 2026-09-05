@@ -11,8 +11,11 @@
 //
 // What must NEVER go here: the `service_role` key. That one bypasses RLS
 // entirely, and this file is served to every visitor.
-export const SUPABASE_URL = "";
-export const SUPABASE_ANON_KEY = "";
+// The bare project URL, with no path and no trailing slash: this client adds
+// `/auth/v1/...` and `/rest/v1/...` itself, so anything past .co here ends up
+// duplicated in every request.
+export const SUPABASE_URL = "https://ldjkfvhotlyounncgxoj.supabase.co";
+export const SUPABASE_ANON_KEY = "sb_publishable_Ewa74pTVz4RfEPg6KfRk9Q_Ma-MdXAR";
 
 // The one admin bootstrap that cannot come from the client: an account is an
 // admin because its `profiles.is_admin` column says so, set once by hand in
