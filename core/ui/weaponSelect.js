@@ -1,11 +1,18 @@
-import { WEAPON_ORDER, getWeapon, DEFAULT_WEAPON_ID, isWeaponId } from "../weapons.js";
+import { WEAPON_ORDER, DEFAULT_WEAPON_ID, isWeaponId } from "../weapons.js";
 import { loadWeaponModel } from "../weaponModel.js";
+import { getWeaponThumbnail } from "../weaponThumb.js";
 import { t } from "../i18n.js";
 
 // The weapon picker, shown on the way into the range rather than as a row on
-// the home screen: the choice belongs next to the moment you use it, and it
-// gives each weapon room to explain how it actually behaves instead of being
-// three unlabelled words in a segmented control.
+// the home screen: the choice belongs next to the moment you use it.
+//
+// Each card is a picture of the gun and its name, and nothing else. It used
+// to carry a tagline plus a six-row stat table per weapon, which turned a
+// choice you make in two seconds into eight paragraphs to read — and the
+// numbers were the least useful part of it, since fire mode and rate of fire
+// are things you feel in the first magazine rather than compare in a table.
+// The full stats still exist and still matter; they belong on a card you can
+// open, not in the way of picking one up.
 const screen = document.getElementById("weapon-screen");
 const grid = document.getElementById("weapon-grid");
 const confirmButton = document.getElementById("weapon-confirm");
@@ -15,55 +22,44 @@ let selectedId = DEFAULT_WEAPON_ID;
 let onConfirm = () => {};
 let onCancel = () => {};
 
-// The stat strip under each weapon's name. Rows that don't apply to a
-// weapon are dropped rather than shown as zero, so a pistol's card isn't
-// padded with "0 pellets / 0ms cycle" noise.
-function statRows(weapon) {
-  const rows = [
-    [t("weaponSelect.stat.fireMode"), t(`weaponSelect.mode.${weapon.fireMode}`)],
-    [t("weaponSelect.stat.rpm"), String(weapon.rpm)],
-    [t("weaponSelect.stat.magazine"), String(weapon.magazine)],
-    [t("weaponSelect.stat.reload"), `${(weapon.reloadMs / 1000).toFixed(1)}s`],
-  ];
-  if (weapon.pellets > 1) rows.push([t("weaponSelect.stat.pellets"), String(weapon.pellets)]);
-  if (weapon.cycleMs > 0) rows.push([t("weaponSelect.stat.cycle"), `${(weapon.cycleMs / 1000).toFixed(2)}s`]);
-  return rows;
+function buildCard(id) {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "weapon-option";
+  card.dataset.weapon = id;
+  card.setAttribute("aria-pressed", String(id === selectedId));
+  card.classList.toggle("selected", id === selectedId);
+
+  const figure = document.createElement("span");
+  figure.className = "weapon-option-figure";
+
+  const image = document.createElement("img");
+  image.className = "weapon-option-image";
+  image.alt = "";
+  // Decorative: the name below it already labels the card, so announcing the
+  // picture too would just read every weapon's name twice.
+  image.setAttribute("aria-hidden", "true");
+  figure.append(image);
+
+  const name = document.createElement("span");
+  name.className = "weapon-option-name";
+  name.textContent = t(`weapon.${id}`);
+
+  card.append(figure, name);
+  card.addEventListener("click", () => select(id));
+
+  // The card is complete and clickable before its picture arrives; the
+  // figure holds its own space so nothing reflows when one lands.
+  getWeaponThumbnail(id).then((url) => {
+    if (url) image.src = url;
+    else figure.classList.add("weapon-option-figure-empty");
+  });
+
+  return card;
 }
 
 function renderGrid() {
-  grid.replaceChildren();
-
-  for (const id of WEAPON_ORDER) {
-    const weapon = getWeapon(id);
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "weapon-option";
-    card.dataset.weapon = id;
-    card.setAttribute("aria-pressed", String(id === selectedId));
-    card.classList.toggle("selected", id === selectedId);
-
-    const name = document.createElement("span");
-    name.className = "weapon-option-name";
-    name.textContent = t(`weapon.${id}`);
-
-    const tagline = document.createElement("span");
-    tagline.className = "weapon-option-tagline";
-    tagline.textContent = t(`weapon.${id}.desc`);
-
-    const stats = document.createElement("dl");
-    stats.className = "weapon-option-stats";
-    for (const [label, value] of statRows(weapon)) {
-      const dt = document.createElement("dt");
-      dt.textContent = label;
-      const dd = document.createElement("dd");
-      dd.textContent = value;
-      stats.append(dt, dd);
-    }
-
-    card.append(name, tagline, stats);
-    card.addEventListener("click", () => select(id));
-    grid.append(card);
-  }
+  grid.replaceChildren(...WEAPON_ORDER.map(buildCard));
 }
 
 function select(id) {

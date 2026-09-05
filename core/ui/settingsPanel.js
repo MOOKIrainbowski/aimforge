@@ -4,6 +4,7 @@ import { t } from "../i18n.js";
 const screen = document.getElementById("settings-screen");
 const themeSwitch = document.getElementById("theme-switch");
 const soundSwitch = document.getElementById("sound-switch");
+const magazineSwitch = document.getElementById("magazine-switch");
 const wallColorInput = document.getElementById("settings-wall-color");
 const floorColorInput = document.getElementById("settings-floor-color");
 const targetColorInput = document.getElementById("settings-target-color");
@@ -24,6 +25,7 @@ function setSwitch(button, checked, onKey, offKey) {
 function syncControls() {
   setSwitch(themeSwitch, config.theme === "light", "theme.light", "theme.dark");
   setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
+  setSwitch(magazineSwitch, config.magazineLimit, "common.on", "common.off");
   wallColorInput.value = config.wallColor;
   floorColorInput.value = config.floorColor;
   targetColorInput.value = config.targetColor;
@@ -48,6 +50,14 @@ export function initSettingsPanel(onChangeCallback) {
   soundSwitch.addEventListener("click", () => {
     config.soundEnabled = !config.soundEnabled;
     setSwitch(soundSwitch, config.soundEnabled, "common.on", "common.off");
+    persistAndApply();
+  });
+  // Takes effect from the next session: a WeaponRuntime is built when a
+  // drill starts and carries the setting for its lifetime, so flipping this
+  // mid-session would leave the HUD and the runtime disagreeing.
+  magazineSwitch.addEventListener("click", () => {
+    config.magazineLimit = !config.magazineLimit;
+    setSwitch(magazineSwitch, config.magazineLimit, "common.on", "common.off");
     persistAndApply();
   });
   wallColorInput.addEventListener("input", () => {

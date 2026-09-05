@@ -1,169 +1,42 @@
-// Shot feedback: a brief crosshair flash plus synthesized audio (no audio
-// asset files — WebAudio oscillator/noise envelopes cover every sound in the
-// app, keeping the project dependency-free). Muted independently via
-// rangeConfig.soundEnabled; the crosshair flash always plays since it costs
-// nothing and reads as instant confirmation the click registered.
+import { getAudioContext, getReverbBus, isSoundEnabled, scheduleNoise, scheduleTone, setSoundEnabled, vary } from "../audio/engine.js";
+import { playGunshot } from "../audio/gunshot.js";
+
+// Shot and UI feedback: a brief crosshair flash plus synthesized audio. The
+// WebAudio graph, its primitives and the gunshot synthesizer itself live in
+// core/audio/ — this module is the UI-facing surface: what a kill, a miss, a
+// reload or a button press sounds like.
 //
-// Everything here is built from three primitives — a tone, a filtered noise
-// burst, and a scheduled sequence of either — layered and varied per event.
-// The variation matters: a trainer session is hundreds of shots and kills,
-// and one identical sample on repeat is the fastest way to make a range feel
-// cheap. Every trigger pull and every kill is detuned and re-gained slightly,
-// each weapon has its own voice built from its own `sound` block in
-// weapons.js, and kills rotate through four distinct sounds.
-let soundEnabled = true;
-let audioCtx = null;
-let masterGain = null;
+// Muted independently via rangeConfig.soundEnabled; the crosshair flash
+// always plays since it costs nothing and reads as instant confirmation the
+// click registered.
+export { setSoundEnabled };
 
-export function setSoundEnabled(enabled) {
-  soundEnabled = enabled;
-}
-
-function getAudioContext() {
-  if (!audioCtx) {
-    const Ctor = window.AudioContext || window.webkitAudioContext;
-    if (!Ctor) return null;
-    audioCtx = new Ctor();
-    // One shared output stage keeps the layered gunshots (three voices per
-    // shot, on an automatic weapon) from clipping into distortion when they
-    // stack during sustained fire.
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.85;
-    masterGain.connect(audioCtx.destination);
-  }
-  if (audioCtx.state === "suspended") audioCtx.resume();
-  return audioCtx;
-}
-
-// Random multiplier around 1 — the per-event jitter that stops repeated
-// sounds from being bit-identical.
-function vary(amount) {
-  return 1 + (Math.random() * 2 - 1) * amount;
-}
-
-// Schedules one oscillator against `ctx`'s own timeline (rather than
-// wall-clock setTimeout) so multi-note sequences stay tightly and
-// consistently spaced regardless of browser timer throttling.
-function scheduleTone(ctx, startTime, freq, durationMs, peakGain, freqEnd, type = "sine") {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type;
-  const durationSec = durationMs / 1000;
-
-  if (freqEnd != null) {
-    osc.frequency.setValueAtTime(freq, startTime);
-    osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), startTime + durationSec);
-  } else {
-    osc.frequency.value = freq;
-  }
-
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.004);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
-
-  osc.connect(gain).connect(masterGain);
-  osc.start(startTime);
-  osc.stop(startTime + durationSec + 0.02);
+function ui(fn) {
+  if (!isSoundEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  fn(ctx, ctx.currentTime);
 }
 
 function beep(freq, durationMs, peakGain, type = "sine") {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  scheduleTone(ctx, ctx.currentTime, freq, durationMs, peakGain, null, type);
+  ui((ctx, now) => scheduleTone(ctx, now, freq, durationMs, peakGain, { type }));
 }
 
 function sweep(freqStart, freqEnd, durationMs, peakGain, type = "sine") {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  scheduleTone(ctx, ctx.currentTime, freqStart, durationMs, peakGain, freqEnd, type);
+  ui((ctx, now) => scheduleTone(ctx, now, freqStart, durationMs, peakGain, { freqEnd, type }));
 }
 
 function chime(notes, stepMs, durationMs, peakGain, type = "sine") {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  notes.forEach((freq, i) => {
-    scheduleTone(ctx, ctx.currentTime + (i * stepMs) / 1000, freq, durationMs, peakGain, null, type);
+  ui((ctx, now) => {
+    notes.forEach((freq, i) => {
+      scheduleTone(ctx, now + (i * stepMs) / 1000, freq, durationMs, peakGain, { type });
+    });
   });
 }
 
-// One second of static noise generated once per AudioContext and reused
-// (sliced via a fresh BufferSource) for every shot — cheaper than
-// regenerating random samples on every trigger-pull.
-let noiseBuffer = null;
-function getNoiseBuffer(ctx) {
-  if (noiseBuffer && noiseBuffer.sampleRate === ctx.sampleRate) return noiseBuffer;
-  const length = ctx.sampleRate;
-  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
-  noiseBuffer = buffer;
-  return buffer;
-}
-
-// A filtered noise burst — the "crack"/"hiss" half of most of these sounds.
-// `filterEnd` sweeps the cutoff over the burst, which is what turns a flat
-// hiss into a gunshot's tail collapsing into the room.
-function scheduleNoise(ctx, startTime, durationMs, peakGain, options = {}) {
-  const { type = "lowpass", freq = 3000, freqEnd = null, q = 0.7 } = options;
-  const source = ctx.createBufferSource();
-  source.buffer = getNoiseBuffer(ctx);
-  // Starting at a random point in the shared buffer means two shots fired a
-  // frame apart don't play the identical noise waveform.
-  const offset = Math.random() * 0.5;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = type;
-  filter.Q.value = q;
-  const gain = ctx.createGain();
-  const durationSec = durationMs / 1000;
-
-  if (freqEnd != null) {
-    filter.frequency.setValueAtTime(freq, startTime);
-    filter.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), startTime + durationSec);
-  } else {
-    filter.frequency.value = freq;
-  }
-
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.003);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
-
-  source.connect(filter).connect(gain).connect(masterGain);
-  source.start(startTime, offset);
-  source.stop(startTime + durationSec + 0.02);
-}
-
-// Fires on every trigger-pull. Three layers, all sized from the weapon's own
-// `sound` block in weapons.js, so a breacher booms, an SMG chatters and a
-// sniper cracks with a long tail — instead of every gun in the range sharing
-// one noise:
-//   crack — a bright, very short filtered burst (the muzzle report)
-//   body  — a fast pitch-dropping low tone (the punch you feel)
-//   tail  — a longer, quieter burst sweeping downward (the room)
+// Fires on every trigger pull, voiced from the weapon's own `sound` block.
 export function playShotSound(weapon) {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  const s = weapon?.sound ?? { body: 140, crack: 3000, noiseMs: 90, gain: 0.22, tailMs: 150 };
-  const now = ctx.currentTime;
-  const g = s.gain * vary(0.08);
-
-  scheduleNoise(ctx, now, s.noiseMs * vary(0.1), g, {
-    type: "bandpass",
-    freq: s.crack * vary(0.06),
-    freqEnd: s.crack * 0.32,
-    q: 0.9,
-  });
-  scheduleTone(ctx, now, s.body * vary(0.05), Math.max(45, s.noiseMs * 0.7), g * 0.8, s.body * 0.45);
-  scheduleNoise(ctx, now + 0.012, s.tailMs * vary(0.12), g * 0.3, {
-    type: "lowpass",
-    freq: s.crack * 0.5,
-    freqEnd: 220,
-    q: 0.4,
-  });
+  playGunshot(weapon);
 }
 
 // Four distinct kill sounds, advanced in rotation so consecutive kills never
@@ -172,48 +45,48 @@ export function playShotSound(weapon) {
 const KILL_VARIANTS = [
   // Bright two-note confirm.
   (ctx, now, p, g) => {
-    scheduleTone(ctx, now, 880 * p, 60, g, null, "triangle");
-    scheduleTone(ctx, now + 0.045, 1320 * p, 90, g * 0.8, null, "triangle");
+    scheduleTone(ctx, now, 880 * p, 60, g, { type: "triangle" });
+    scheduleTone(ctx, now + 0.045, 1320 * p, 90, g * 0.8, { type: "triangle" });
   },
   // Glassy shatter: a short noise tick under a fast upward chirp.
   (ctx, now, p, g) => {
     scheduleNoise(ctx, now, 55, g * 0.5, { type: "highpass", freq: 2600 * p, q: 0.6 });
-    scheduleTone(ctx, now, 640 * p, 110, g, 1560 * p, "sine");
+    scheduleTone(ctx, now, 640 * p, 110, g, { freqEnd: 1560 * p });
   },
   // Hollow "thock" — low body with a quick click on top.
   (ctx, now, p, g) => {
-    scheduleTone(ctx, now, 420 * p, 95, g, 210 * p, "sine");
+    scheduleTone(ctx, now, 420 * p, 95, g, { freqEnd: 210 * p });
     scheduleNoise(ctx, now, 30, g * 0.45, { type: "bandpass", freq: 1900 * p, q: 1.4 });
   },
   // Metallic ping with a short overtone.
   (ctx, now, p, g) => {
-    scheduleTone(ctx, now, 1180 * p, 130, g * 0.9, null, "square");
-    scheduleTone(ctx, now + 0.02, 1770 * p, 70, g * 0.35, null, "sine");
+    scheduleTone(ctx, now, 1180 * p, 130, g * 0.9, { type: "square" });
+    scheduleTone(ctx, now + 0.02, 1770 * p, 70, g * 0.35);
   },
 ];
 let killVariantIndex = 0;
 
 export function playKillSound(streak = 0) {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  const variant = KILL_VARIANTS[killVariantIndex % KILL_VARIANTS.length];
-  killVariantIndex++;
-  // Capped so a long streak brightens the tone without turning it shrill.
-  const streakLift = 1 + Math.min(streak, 12) * 0.018;
-  variant(ctx, ctx.currentTime, streakLift * vary(0.02), 0.17 * vary(0.1));
+  ui((ctx, now) => {
+    const variant = KILL_VARIANTS[killVariantIndex % KILL_VARIANTS.length];
+    killVariantIndex++;
+    // Capped so a long streak brightens the tone without turning it shrill.
+    const streakLift = 1 + Math.min(streak, 12) * 0.018;
+    variant(ctx, now, streakLift * vary(0.02), 0.17 * vary(0.1));
+  });
 }
 
 export function playMissSound() {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
   // A dull thud into the wall rather than a tone, so a miss doesn't compete
-  // with the kill sounds for attention.
-  scheduleNoise(ctx, ctx.currentTime, 85 * vary(0.15), 0.09, {
-    type: "lowpass",
-    freq: 700 * vary(0.15),
-    freqEnd: 180,
+  // with the kill sounds for attention. Sent lightly into the room so it
+  // lands in the same space the gunshot did.
+  ui((ctx, now) => {
+    scheduleNoise(ctx, now, 85 * vary(0.15), 0.09, {
+      type: "lowpass",
+      freq: 700 * vary(0.15),
+      freqEnd: 180,
+      send: getReverbBus() ? 0.35 : 0,
+    });
   });
 }
 
@@ -223,34 +96,38 @@ export function playTargetExpireSound() {
   sweep(500 * vary(0.04), 280, 110, 0.09);
 }
 
-// The manual action between shots on a bolt/pump weapon.
+// The manual action between shots on a bolt/pump weapon: the mechanism
+// unlocking and travelling back, then slamming home. Two clacks with real
+// space between them, because that wait is the mechanic.
 export function playCycleSound() {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  const now = ctx.currentTime;
-  scheduleNoise(ctx, now, 45, 0.075, { type: "bandpass", freq: 1500 * vary(0.1), q: 2.2 });
-  scheduleNoise(ctx, now + 0.09, 60, 0.09, { type: "bandpass", freq: 900 * vary(0.1), q: 2.0 });
+  ui((ctx, now) => {
+    const send = getReverbBus() ? 0.4 : 0;
+    scheduleNoise(ctx, now, 26, 0.1, { type: "bandpass", freq: 1900 * vary(0.1), q: 3.2, send });
+    scheduleNoise(ctx, now + 0.045, 40, 0.07, { type: "bandpass", freq: 1150 * vary(0.1), q: 2.4, send });
+    scheduleNoise(ctx, now + 0.115, 55, 0.12, { type: "bandpass", freq: 780 * vary(0.08), q: 1.8, send });
+    scheduleTone(ctx, now + 0.115, 190, 70, 0.06, { freqEnd: 90 });
+  });
 }
 
-// Magazine change: a clack out, a clack in, and the action closing.
+// Magazine change, spread across the reload's real duration: the old
+// magazine released and dropped, the new one seated, the action closing.
 export function playReloadSound(durationMs) {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  const now = ctx.currentTime;
-  const d = durationMs / 1000;
-  scheduleNoise(ctx, now + d * 0.05, 55, 0.08, { type: "bandpass", freq: 1200, q: 2.0 });
-  scheduleNoise(ctx, now + d * 0.55, 65, 0.09, { type: "bandpass", freq: 820, q: 1.8 });
-  scheduleNoise(ctx, now + d * 0.85, 50, 0.085, { type: "bandpass", freq: 1650, q: 2.4 });
+  ui((ctx, now) => {
+    const d = durationMs / 1000;
+    const send = getReverbBus() ? 0.35 : 0;
+    scheduleNoise(ctx, now + d * 0.05, 30, 0.08, { type: "bandpass", freq: 1450, q: 2.6, send });
+    scheduleNoise(ctx, now + d * 0.28, 70, 0.05, { type: "lowpass", freq: 620, freqEnd: 180, send });
+    scheduleNoise(ctx, now + d * 0.62, 45, 0.11, { type: "bandpass", freq: 900, q: 2.0, send });
+    scheduleTone(ctx, now + d * 0.62, 160, 60, 0.06, { freqEnd: 80 });
+    scheduleNoise(ctx, now + d * 0.88, 35, 0.1, { type: "bandpass", freq: 1750, q: 3.0, send });
+  });
 }
 
 // Trigger pulled with an empty magazine.
 export function playDryFireSound() {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  scheduleNoise(ctx, ctx.currentTime, 35, 0.07, { type: "bandpass", freq: 2200, q: 3.0 });
+  ui((ctx, now) => {
+    scheduleNoise(ctx, now, 22, 0.09, { type: "bandpass", freq: 2400 * vary(0.08), q: 3.4 });
+  });
 }
 
 // A drill finished and the summary screen is about to show.

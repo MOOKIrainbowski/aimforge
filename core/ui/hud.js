@@ -40,19 +40,24 @@ let lastBlockKind = null;
 // Called every frame, so each write is guarded by a comparison — the values
 // only change a few times a second, and repainting unchanged text on a
 // pointer-locked page at 144Hz is pure layout churn.
-export function updateWeaponHud({ weaponId, ammo, capacity, block }) {
+// With the magazine limit off there is no count to keep, so both halves of
+// the readout collapse to an infinity mark rather than showing a number that
+// never moves.
+export function updateWeaponHud({ weaponId, ammo, capacity, block, magazineLimit = true }) {
   if (weaponId !== lastName) {
     lastName = weaponId;
     weaponNameEl.textContent = t(`weapon.${weaponId}`);
   }
-  if (ammo !== lastAmmo) {
-    lastAmmo = ammo;
-    ammoMagEl.textContent = String(ammo);
-    ammoMagEl.classList.toggle("hud-ammo-empty", ammo === 0);
+  const shownAmmo = magazineLimit ? ammo : "∞";
+  const shownCapacity = magazineLimit ? capacity : "∞";
+  if (shownAmmo !== lastAmmo) {
+    lastAmmo = shownAmmo;
+    ammoMagEl.textContent = String(shownAmmo);
+    ammoMagEl.classList.toggle("hud-ammo-empty", magazineLimit && ammo === 0);
   }
-  if (capacity !== lastCapacity) {
-    lastCapacity = capacity;
-    ammoCapEl.textContent = String(capacity);
+  if (shownCapacity !== lastCapacity) {
+    lastCapacity = shownCapacity;
+    ammoCapEl.textContent = String(shownCapacity);
   }
 
   if (!block) {

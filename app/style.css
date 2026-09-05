@@ -1283,9 +1283,12 @@ button {
   margin-bottom: 18px;
 }
 
+/* Cards are a picture and a name. Sized so all eight fit without scrolling
+   on a normal laptop window — the whole point of dropping the stat tables
+   was that the choice reads at a glance. */
 .weapon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
   gap: 12px;
   margin-bottom: 22px;
 }
@@ -1293,9 +1296,9 @@ button {
 .weapon-option {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  text-align: left;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 12px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--bg-input);
@@ -1314,37 +1317,40 @@ button {
   background: var(--accent-soft);
 }
 
+/* Holds its own aspect ratio so the grid is laid out before any thumbnail
+   arrives and nothing reflows as they land one by one. */
+.weapon-option-figure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.weapon-option-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* The renders are lit for a card, but a light theme still needs a touch
+     more separation from the panel behind them. */
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.28));
+}
+
+/* A model that failed to load: the card still works, it just shows an empty
+   plate rather than a broken image. */
+.weapon-option-figure-empty {
+  background: repeating-linear-gradient(135deg,
+      var(--bg-card) 0 8px,
+      var(--bg-input) 8px 16px);
+}
+
 .weapon-option-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-}
-
-.weapon-option-tagline {
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  line-height: 1.45;
-  min-height: 36px;
-}
-
-.weapon-option-stats {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 10px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-}
-
-.weapon-option-stats dt {
-  color: var(--text-muted);
-}
-
-.weapon-option-stats dd {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
 }
 
 /* ---------------------------------------------------------------------------

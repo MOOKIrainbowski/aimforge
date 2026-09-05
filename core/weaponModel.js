@@ -92,7 +92,10 @@ const FOV_REFERENCE = 96;
 const REF_HALF_FOV_TAN = Math.tan(THREE.MathUtils.degToRad(FOV_REFERENCE) / 2);
 
 // Hip: held toward the bottom-right, past the screen edge on the stock side
-// so it reads as carried rather than floating mid-screen.
+// so it reads as carried rather than floating mid-screen. HIP_Y is the hold
+// height for a full-size weapon; each weapon's `viewOffsetY` raises it from
+// there, which is what handguns need — they are short enough to hang below
+// the frame at the shared height and read as dropped rather than carried.
 const HIP_X = 0.4;
 const HIP_Y = -0.58;
 const HIP_DEPTH = -0.62;
@@ -313,8 +316,12 @@ export class Viewmodel {
     const reloadDip = this.reloadT === null ? 0 : Math.sin(this.reloadT * Math.PI) * 0.3;
     const reloadRoll = this.reloadT === null ? 0 : Math.sin(this.reloadT * Math.PI) * 0.5;
 
+    // The per-weapon hip lift is folded into the hip end of the blend, so it
+    // fades out as the weapon comes up: the aimed height is derived from the
+    // scope lens and must not be nudged out from under it.
+    const hipY = HIP_Y + (this.weapon.viewOffsetY ?? 0);
     const x = HIP_X * (1 - this.aimT);
-    const y = HIP_Y + (aimY - HIP_Y) * this.aimT + sway + this.recoilRise.value - actionDip - reloadDip;
+    const y = hipY + (aimY - hipY) * this.aimT + sway + this.recoilRise.value - actionDip - reloadDip;
 
     this.group.position.set(x * fovScale, y * fovScale, depth - this.recoilBack.value);
     this.group.rotation.set(this.recoilPitch.value, 0, this.recoilRoll.value + actionRoll + reloadRoll);

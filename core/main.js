@@ -251,7 +251,7 @@ function startSession(now) {
   targetManager.clear();
   drill = createDrill(lastConfig, { scene, camera, targetManager, controls });
   drill.start(now);
-  weaponRuntime = new WeaponRuntime(weapon);
+  weaponRuntime = new WeaponRuntime(weapon, { magazineLimit: rangeConfig.magazineLimit });
   triggerHeld = false;
   lastBlockKind = null;
   pendingEjectAt = null;
@@ -448,7 +448,7 @@ function tryFire(now) {
   if (!weaponRuntime.canFire(now)) {
     // Distinguish "empty" from "still cycling": clicking a dry weapon should
     // click back, but a bolt gun mid-cycle is already saying so on the HUD.
-    if (weaponRuntime.ammo === 0 && !weaponRuntime.reloading) playDryFireSound();
+    if (weaponRuntime.magazineLimit && weaponRuntime.ammo === 0 && !weaponRuntime.reloading) playDryFireSound();
     return;
   }
 
@@ -457,7 +457,12 @@ function tryFire(now) {
   // rather than as of the last rendered frame.
   controls.flush();
 
-  const rays = buildShotRays(weapon, camera);
+  // Where the shot goes is the crosshair plus this weapon's firing error:
+  // the hip/ADS base term (hence zoomT, the eased aim progress, rather than
+  // the discrete `zoomed` flag — a shot fired halfway into ADS gets halfway
+  // between the two) plus whatever bloom sustained fire has accumulated.
+  // Read before consume(), so the first shot after a pause carries no bloom.
+  const rays = buildShotRays(weapon, camera, { aimT: zoomT, bloomDeg: weaponRuntime.getBloomDeg(now) });
   // The drill's own recoil punch moves the camera at the end of handleShot,
   // so tracer directions are taken first, while the camera still holds the
   // orientation the shot was actually aimed with.
@@ -579,6 +584,7 @@ function tick(now) {
       weaponId: weapon.id,
       ammo: weaponRuntime.ammo,
       capacity: weaponRuntime.magazine,
+      magazineLimit: weaponRuntime.magazineLimit,
       block,
     });
 
