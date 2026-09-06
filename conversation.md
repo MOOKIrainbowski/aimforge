@@ -213,20 +213,139 @@ refuses things the way the real policies do.
 
 ---
 
+## Session — 2026-09-06
+
+Six stages, each verified and pushed before the next began.
+
+### Stage 1 — the landing hero is a sphere again
+
+The animation at the top of the landing page was flicking between three
+humanoid figures. Spheres are the range's default and the thing the whole
+pitch is measured against — the same size from every angle — so that is what
+the loop demonstrates now. The humanoid still has its own hit-zone diagram
+further down the page, where its zones can actually be labelled. The hero
+caption follows the shape it sits over: `ELIMINATED`, not `HEADSHOT`.
+
+### Stage 2 — the weapon is chosen in the range, on B
+
+The picker was a screen on the way in, and before that a row on the home
+screen. Both asked the question before it meant anything: what separates
+eight guns is how they handle, and a card with a picture on it cannot say.
+
+Enter the Range now goes straight in carrying whatever is equipped, and B
+opens the picker inside the range — from the start prompt or mid-session.
+The picker holds the session open the way the pause screen does: pointer
+lock is released so the mouse works, the drill clock is shifted by the time
+spent in there, and the pause overlay steps aside for it. What the old gun
+owned is left behind — fresh magazine, rate gate, recoil pattern re-armed
+from shot one while keeping the compensation already scored. Closing shows
+the pause overlay first and hides it once the lock is granted, so a browser
+refusing the request cannot strand you.
+
+`RecoilTracker.setWeapon()` and a `Drill.setWeapon()` hook are new; every
+tool that used to click through the picker no longer needs to, and the two
+that wanted a specific weapon seed it the way the magazine limit is seeded.
+
+### Stage 3 — the account moved, two switches stopped being duplicated
+
+Sign in with Google is in the sidebar directly above Settings now, full
+width, its menu opening upward. Human Targets and Magazine Limit are off the
+Settings screen: they decide what a session *is*, which is why they are on
+the home screen, and a second copy was one more thing to keep in step. That
+also removed a stray line in the magazine handler that repainted the
+human-targets switch from the magazine one's state.
+
+Found on the way: the `max-width: 900px` block sat *above* the sidebar CSS
+it was meant to override, so at equal specificity the later base rules won
+and none of the narrow-viewport layout had ever taken effect — at 760px the
+rail stayed a 232px column. Moved below what it overrides, plus the
+flex-basis reset it needed.
+
+### Stage 4 — the suggestion box needs an account
+
+A suggestion starts a conversation and a reply needs somewhere to arrive.
+Posting as this browser left the answer sitting in a browser. Signed out,
+the box is now one sentence and the way in.
+
+The gate asks the backend seam whether there is a board that outlives the
+tab, not whether someone is signed in, because that is the fact it depends
+on. A build with no backend configured says there is nowhere for a
+suggestion to go and offers no button rather than a dead one.
+
+### Stage 5 — admin
+
+`supabase/admin.sql` is new and holds the whole procedure: grant, revoke,
+who is an admin now, and everyone who has ever signed in (the query you want
+when a grant returns 0 rows because the address was spelled differently).
+The grant returns the row it changed, so "did that work" has an answer.
+
+The admin screen also stopped lying to whoever earned it. Two things put it
+on the sidebar — an account the server says is an admin, and `?admin=1`, a
+local preview over this browser's own board — and the warning and the "leave
+admin mode" link describe only the second.
+
+### Stage 6 — a guided first run
+
+Seven steps, shown once, reachable from the sidebar afterwards. Each rings a
+real control on the home screen and says what it does, rather than
+describing the app somewhere the app is not — which also means a step whose
+selector stops matching stops ringing anything, loudly.
+
+The card goes on whichever side of the ring has the most room and is capped
+to that room, so it always clears what it is explaining, including where the
+highlight is a panel too tall to clear at all. The ring is measured from the
+target rather than read back off itself: it slides between steps, so its own
+rectangle is the previous step's until that transition ends.
+
+Every other harness opens a browser with nothing stored, which is exactly
+what the tour looks for, so they now declare it seen. `debug_tutorial.js`
+does not, and drives it.
+
+### Verification
+
+`debug_tutorial.js` is new. `debug_weapons.js` gained section 9 (the
+mid-session swap: the picker pauses rather than ends, the clock does not run
+under it, the new gun's magazine is its own). `debug_home.js`,
+`debug_suggestions.js` and `debug_auth.js` were reworked around the new
+flows. All of those pass, along with `debug_recoil.js`,
+`debug_human_targets.js`, `debug_crosshair_editor.js`, and the smoke tools
+`debug_all_modes.js`, `debug_settings.js`, `debug_tracking_switching.js`,
+`debug_reaction_and_hits.js` and `debug_quality_web.js` — zero page errors.
+
 ## Still open
 
-**Stage 7 — needs the project only you can create**
+**The one step that cannot be done from here**
 
-Follow `supabase/README.md`: create the project, run `schema.sql`, enable
-Google, then paste the URL and anon key into `core/backend/config.js`.
-Once those two lines are filled in, what remains is: verify a real sign-in
-end to end, confirm the RLS check the mock cannot answer (the README ends
-with it), promote your own account to admin, and decide whether local
-posts made before sign-in should be offered for migration to the shared
-board.
+Run the first statement in `supabase/admin.sql` in the Supabase SQL editor
+to make `code.rainbow.ski@gmail.com` an admin. It is written and ready; it
+cannot be run from this side, because `is_admin` is reachable only with
+database access — which is the entire point of the column grant in
+`schema.sql`. The address must have signed in through the app once first, or
+the grant comes back with 0 rows. It takes effect on that account's next
+page load.
+
+The project itself is up: `schema.sql` is applied (both tables answer
+PostgREST) and `core/backend/config.js` is filled in. What has still never
+been checked against the real project is the RLS confirmation the README
+ends with — the one thing a mocked Supabase cannot answer.
+
+**Six dev tools that stopped working some time ago**
+
+`debug_coach.js`, `debug_m4_flow.js`, `debug_history_view.js`,
+`debug_stats_persistence.js`, `debug_hit_math.js` and `debug_hit_math2.js`
+all fail, and all for the same reason: none of them ever clicks the canvas
+to take pointer lock, so no drill is ever created and everything after that
+reads from `null`. Confirmed pre-existing — they fail identically on the
+commit before this session — so this is the same rot that `debug_settings`,
+`debug_crosshair_editor` and `debug_recoil` had, caught late again. A canvas
+click after `#home-start` is most of the fix.
 
 **Open work**
 
+- The local suggestion backend is now unreachable from the UI: it is the
+  fallback for a build with no backend configured, and the gate closes over
+  it. It is still exercised through the seam by `debug_suggestions.js`.
+  Whether to keep it at all is a decision, not an accident.
 - Humanoid targets are static figures. PvP will want them moving and
   animated, and the zones sized against a real player model rather than
   against the sphere they replaced.
