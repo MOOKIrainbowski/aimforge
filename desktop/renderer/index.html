@@ -133,6 +133,15 @@
            than floating over the drill you came to run. The whole control is
            absent when no backend is configured (core/backend/config.js). -->
       <div class="sidebar-footer">
+        <button id="home-tutorial" class="sidebar-item" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="8" />
+            <path d="M7.8 7.7a2.3 2.3 0 1 1 2.9 2.2c-.5.2-.7.6-.7 1.1v.5" />
+            <path d="M10 14.4v.1" />
+          </svg>
+          <span data-i18n="nav.tutorial">How it works</span>
+        </button>
+
         <div id="account-row" class="account hidden">
           <button id="account-signin" class="account-signin" type="button">
             <svg viewBox="0 0 18 18" aria-hidden="true" class="google-mark">
@@ -295,6 +304,25 @@
       <div id="weapon-grid" class="weapon-grid"></div>
       <button id="weapon-confirm" class="start-button btn-primary" type="button"
         data-i18n="weaponSelect.confirm">Equip</button>
+    </div>
+  </div>
+
+  <!-- The guided first run. A ring around a real element of the screen
+       behind it, and a card saying what that element does — see
+       core/ui/tutorial.js for why it points at the page rather than
+       describing it. Lives outside every screen because it sits over one. -->
+  <div id="tutorial" class="tutorial hidden" role="dialog" aria-modal="true"
+    data-i18n-attr="aria-label:tutorial.ariaLabel" aria-label="Guided tour" tabindex="-1">
+    <div id="tutorial-spotlight" class="tutorial-spotlight hidden"></div>
+    <div id="tutorial-card" class="tutorial-card">
+      <span id="tutorial-count" class="tutorial-count"></span>
+      <h2 id="tutorial-title" class="tutorial-title"></h2>
+      <p id="tutorial-body" class="tutorial-body"></p>
+      <div class="tutorial-actions">
+        <button id="tutorial-skip" class="link-button" type="button" data-i18n="tutorial.skip">Skip</button>
+        <button id="tutorial-back" class="secondary" type="button" data-i18n="tutorial.back">Back</button>
+        <button id="tutorial-next" class="btn-primary" type="button" data-i18n="tutorial.next">Next</button>
+      </div>
     </div>
   </div>
 

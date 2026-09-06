@@ -76,6 +76,18 @@ async function open(page) {
 (async () => {
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--no-sandbox"] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  // Every one of these harnesses opens a browser with nothing stored, which
+  // is exactly what the guided tour is looking for — it would open over the
+  // home screen and swallow the first click. Declaring it seen is the honest
+  // way to say "this is not a first-time visitor"; debug_tutorial.js is where
+  // the tour itself is driven.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("aimonsite:tutorialSeen", "1");
+    } catch {
+      // Nothing to do; the tour will open and the run will say so.
+    }
+  });
   page.on("pageerror", (err) => {
     failures++;
     console.log(`  [FAIL] page error — ${err.message}`);

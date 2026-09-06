@@ -1446,6 +1446,95 @@ button {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Guided tour
+
+   The dim is the spotlight's own outer shadow rather than a separate sheet
+   with a hole punched in it: one element, no clipping, and the ring moves and
+   resizes as one thing. A step with nothing to ring dims the overlay itself
+   instead. Either way the overlay swallows clicks on the app underneath,
+   which is deliberate — the tour is something to read, not to drive.
+   ------------------------------------------------------------------------ */
+.tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.tutorial-dim {
+  background: var(--bg-overlay);
+}
+
+.tutorial-spotlight {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px var(--bg-overlay), inset 0 0 0 2px var(--accent-border);
+  transition: left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease;
+  pointer-events: none;
+}
+
+.tutorial-card {
+  position: fixed;
+  width: min(370px, calc(100vw - 24px));
+  padding: 20px 22px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: 400 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-shadow: var(--shadow-card);
+  /* Capped to the space beside whatever is being highlighted, so a long step
+     scrolls its own text instead of covering it — see placeCard(). */
+  overflow-y: auto;
+  transition: left 220ms ease, top 220ms ease;
+}
+
+.tutorial-count {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.tutorial-title {
+  margin: 0 0 8px;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+
+.tutorial-body {
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Skip is the odd one out: it leaves rather than advances, so it sits away
+   from the pair of buttons that move through the tour. */
+.tutorial-actions .link-button {
+  margin-right: auto;
+}
+
+.tutorial-actions .secondary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .tutorial-spotlight,
+  .tutorial-card {
+    transition: none;
+  }
+}
+
 /* --- toasts ------------------------------------------------------------
    Bottom centre, above everything, one at a time. */
 .toast-host {

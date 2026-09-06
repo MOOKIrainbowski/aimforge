@@ -17,6 +17,7 @@ import { initSensitivityCalculator, showSensitivityCalculator, hideSensitivityCa
 import { initSettingsPanel, showSettingsPanel, hideSettingsPanel } from "./ui/settingsPanel.js";
 import { initWeaponSelect, showWeaponSelect, hideWeaponSelect } from "./ui/weaponSelect.js";
 import { initSuggestions, showSuggestions, hideSuggestions, refreshSuggestionBadge } from "./ui/suggestions.js";
+import { initTutorial, showTutorial, shouldOfferTutorial } from "./ui/tutorial.js";
 import { initAdmin, showAdmin, hideAdmin, refreshAdminBadge } from "./ui/admin.js";
 import { setAdmin, isAdmin } from "./suggestions/store.js";
 import { initAuth } from "./auth.js";
@@ -420,6 +421,14 @@ initSettingsPanel((newConfig) => {
 document.getElementById("home-settings-btn").addEventListener("click", () => openScreen("SETTINGS", showSettingsPanel));
 document.getElementById("settings-back").addEventListener("click", () => closeScreen(hideSettingsPanel));
 
+// The guided tour is not a screen: it sits *over* the home screen and points
+// at the real controls on it, so it must not hide what it is explaining.
+initTutorial();
+document.getElementById("home-tutorial").addEventListener("click", () => {
+  playMenuSound();
+  showTutorial();
+});
+
 initSuggestions();
 initAccount();
 // Started, not awaited: a redirect back from Google has to be exchanged
@@ -708,6 +717,10 @@ function tick(now) {
   if (!firstFrameRendered) {
     firstFrameRendered = true;
     loadingScreen.classList.add("hidden");
+    // Offered here rather than at boot so it opens onto a home screen that
+    // has been laid out and painted — every step is positioned from a real
+    // element's measured rectangle, and nothing has one until then.
+    if (appState === "MENU" && shouldOfferTutorial()) showTutorial();
   }
 
   requestAnimationFrame(tick);
