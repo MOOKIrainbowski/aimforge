@@ -26,6 +26,16 @@ export class RecoilTracker {
     return this.preset !== null;
   }
 
+  // Called when the weapon is swapped mid-session (B in the range). The
+  // pattern belongs to the gun, so it is re-armed from shot one; the
+  // compensation scored so far is kept, because it was really earned and a
+  // swap is not a reason to throw away half a session's measurement.
+  setWeapon(weaponId) {
+    this.preset = getWeaponPreset(weaponId);
+    this.shotIndex = 0;
+    this.pending = null;
+  }
+
   // Call before resolving a shot's hit/miss — scores compensation for the
   // *previous* punch based on how the player's aim moved since it landed.
   recordShot(controls) {

@@ -33,13 +33,11 @@ function check(label, condition, detail) {
   await page.goto(BASE, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
 
-  // Recoil Control is a two-state switch on the home screen; the carried
-  // weapon (rifle by default) is what supplies the pattern.
+  // Recoil Control is a two-state switch on the home screen; the equipped
+  // weapon (the rifle, by default) is what supplies the pattern.
   await page.click("#recoil-switch");
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
-  await page.click('.weapon-option[data-weapon="rifle"]');
-  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
   await page.mouse.click(640, 400);
   await page.waitForTimeout(300);

@@ -1,8 +1,5 @@
 import { getAggregateStats } from "../stats.js";
 import { loadRangeConfig, saveRangeConfig } from "../rangeConfig.js";
-import { getWeapon, DEFAULT_WEAPON_ID, isWeaponId } from "../weapons.js";
-import { getWeaponThumbnail } from "../weaponThumb.js";
-import { loadSettings } from "../settings.js";
 import { t } from "../i18n.js";
 
 const homeScreen = document.getElementById("home-screen");
@@ -11,10 +8,6 @@ const difficultyButtons = Array.from(document.querySelectorAll("#difficulty-grou
 const durationButtons = Array.from(document.querySelectorAll("#duration-group button"));
 const recoilSwitch = document.getElementById("recoil-switch");
 const startButton = document.getElementById("home-start");
-const loadoutButton = document.getElementById("home-loadout");
-const loadoutImage = document.getElementById("loadout-image");
-const loadoutName = document.getElementById("loadout-name");
-const loadoutMeta = document.getElementById("loadout-meta");
 const humanSwitch = document.getElementById("home-human-switch");
 const magazineSwitch = document.getElementById("home-magazine-switch");
 
@@ -26,8 +19,6 @@ const DIFFICULTY_PRESETS = {
   normal: { targetRadius: 0.35, speedMultiplier: 1.0, waveSize: 4 },
   hard: { targetRadius: 0.22, speedMultiplier: 1.4, waveSize: 5 },
 };
-
-let onChangeWeapon = () => {};
 
 let selectedMode = "gridshot";
 let selectedDifficulty = "normal";
@@ -62,25 +53,6 @@ function renderBestScores() {
   }
 }
 
-// The weapon carried into the range, read back from the same persisted
-// setting the picker writes, so the two can never disagree about what is
-// currently equipped.
-function currentWeaponId() {
-  const stored = loadSettings().weaponId;
-  return isWeaponId(stored) ? stored : DEFAULT_WEAPON_ID;
-}
-
-function renderLoadout() {
-  const weapon = getWeapon(currentWeaponId());
-  loadoutName.textContent = t(`weapon.${weapon.id}`);
-  loadoutMeta.textContent = t(`weapons.mode.${weapon.fireMode}`);
-  // The same rendered-from-the-model thumbnail the picker uses, so this row
-  // never shows a weapon the picker would draw differently.
-  getWeaponThumbnail(weapon.id).then((url) => {
-    if (url) loadoutImage.src = url;
-  });
-}
-
 // Human targets and the magazine limit live in rangeConfig and are mirrored
 // here. They are read on every show rather than cached, so changing one in
 // Settings is reflected the next time this screen is opened.
@@ -97,10 +69,7 @@ function toggleRangeConfig(key, button) {
   setSwitch(button, config[key], "common.on", "common.off");
 }
 
-export function initHome(onStart, { onChangeWeapon: changeWeaponCallback } = {}) {
-  onChangeWeapon = changeWeaponCallback ?? (() => {});
-
-  loadoutButton.addEventListener("click", () => onChangeWeapon());
+export function initHome(onStart) {
   humanSwitch.addEventListener("click", () => toggleRangeConfig("humanTargets", humanSwitch));
   magazineSwitch.addEventListener("click", () => toggleRangeConfig("magazineLimit", magazineSwitch));
 
@@ -136,22 +105,20 @@ export function initHome(onStart, { onChangeWeapon: changeWeaponCallback } = {})
       mode: selectedMode,
       durationMs: selectedDurationMs,
       ...DIFFICULTY_PRESETS[selectedDifficulty],
-      // Which weapon is carried is no longer decided here — the picker on
-      // the way into the range owns that. This only reports whether the
+      // Which weapon is carried is not decided here — it is whatever is
+      // equipped, changed in the range with B. This only reports whether the
       // Recoil Control training pattern should be armed for it; main.js
-      // combines the two once the weapon is chosen.
+      // combines the two.
       recoilEnabled,
     });
   });
 
   renderBestScores();
-  renderLoadout();
   renderRangeSwitches();
 }
 
 export function showHome() {
   renderBestScores();
-  renderLoadout();
   renderRangeSwitches();
   homeScreen.classList.remove("hidden");
 }

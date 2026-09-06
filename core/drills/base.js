@@ -23,6 +23,10 @@ export class Drill {
 
   update(_dt, _now, _expiredTargets) {}
 
+  // The weapon can be swapped without leaving the range, so modes that hold
+  // per-weapon state (the recoil tracker) re-arm it here. Most have none.
+  setWeapon(_weaponId) {}
+
   // `rays` is the set of screen-space (NDC) offsets this trigger pull fires
   // along — one for most weapons, a cone for shotguns.
   //

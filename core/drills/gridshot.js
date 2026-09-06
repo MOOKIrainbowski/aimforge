@@ -51,6 +51,10 @@ export class GridshotDrill extends Drill {
     this.hitOffsets = [];
   }
 
+  setWeapon(weaponId) {
+    this.recoil.setWeapon(weaponId);
+  }
+
   start(now) {
     super.start(now);
     this._spawnTarget(now);

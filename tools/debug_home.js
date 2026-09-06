@@ -1,9 +1,10 @@
 const { chromium } = require("playwright");
 
-// Covers the home screen's own surface: the loadout row, the two range
-// switches mirrored from Settings, and the account control — including the
-// thing that prompted it, which is that signing out used to leave no trace on
-// screen at all. Run `npm run serve` first.
+// Covers the home screen's own surface: that starting a drill goes straight
+// into the range, the two range switches mirrored from Settings, and the
+// account control — including the thing that prompted it, which is that
+// signing out used to leave no trace on screen at all. Run `npm run serve`
+// first.
 //
 // The account half reuses the mocked Supabase from tools/debug_auth.js so it
 // runs without a project.
@@ -81,41 +82,22 @@ async function open(page) {
   });
   await installRoutes(page);
 
-  console.log("\n1. The loadout row");
+  console.log("\n1. There is nothing about weapons on the home screen");
   await open(page);
-  const loadout = await page.evaluate(() => ({
-    visible: !document.getElementById("home-loadout").classList.contains("hidden"),
-    name: document.getElementById("loadout-name").textContent,
-    meta: document.getElementById("loadout-meta").textContent,
-  }));
-  check("the equipped weapon is shown on the home screen", loadout.visible && loadout.name.length > 0, JSON.stringify(loadout));
-  check("with its fire mode", loadout.meta.length > 0, loadout.meta);
+  // The loadout row is gone: the weapon is chosen in the range with B, where
+  // its handling is the thing you are choosing on. debug_weapons.js section 9
+  // covers the picker itself.
+  check("no loadout row", await page.$eval("#home-screen", (el) => el.querySelector("#home-loadout") === null));
 
-  await page.waitForTimeout(2500);
-  check(
-    "and a picture rendered from the model",
-    await page.$eval("#loadout-image", (el) => el.naturalWidth > 0)
-  );
+  console.log("\n2. Starting a drill goes straight into the range");
+  await page.click('.mode-card[data-mode="gridshot"]');
+  await page.click("#home-start");
+  await page.waitForTimeout(500);
+  check("the picker does not stand in the way", await page.$eval("#weapon-screen", (el) => el.classList.contains("hidden")));
+  check("the home screen is left", await page.$eval("#home-screen", (el) => el.classList.contains("hidden")));
+  check("and the range is waiting to be clicked into", await page.$eval("#start-prompt", (el) => !el.classList.contains("hidden")));
 
-  console.log("\n2. Changing the loadout does not start a session");
-  await page.click("#home-loadout");
-  await page.waitForTimeout(300);
-  check("the picker opens", await page.$eval("#weapon-screen", (el) => !el.classList.contains("hidden")));
-
-  await page.click('.weapon-option[data-weapon="sniper"]');
-  await page.click("#weapon-confirm");
-  await page.waitForTimeout(400);
-  check("confirming returns to the home screen", await page.$eval("#home-screen", (el) => !el.classList.contains("hidden")));
-  check("rather than entering the range", await page.$eval("#hud-weapon", (el) => el.classList.contains("hidden")));
-  check(
-    "and the row shows the new weapon",
-    (await page.$eval("#loadout-name", (el) => el.textContent)).toLowerCase().includes("sniper"),
-    await page.$eval("#loadout-name", (el) => el.textContent)
-  );
-  check(
-    "which is remembered",
-    await page.evaluate(() => JSON.parse(localStorage.getItem("aimonsite:settings")).weaponId === "sniper")
-  );
+  await open(page);
 
   console.log("\n3. Range switches, mirrored from Settings");
   await page.click("#home-human-switch");

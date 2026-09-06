@@ -22,12 +22,11 @@ function check(label, condition, detail) {
 }
 
 async function enterRange(page, { mode = "gridshot", weapon = "rifle" } = {}) {
+  await withWeapon(page, weapon);
   await page.goto(BASE, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
   await page.click(`.mode-card[data-mode="${mode}"]`);
   await page.click("#home-start");
-  await page.click(`.weapon-option[data-weapon="${weapon}"]`);
-  await page.click("#weapon-confirm");
   await page.waitForTimeout(300);
   // Deliberately *not* clicking the canvas: if pointer lock happened to be
   // granted, main.js would start a session of its own against the same
@@ -51,6 +50,24 @@ async function withMagazineLimit(page, enabled) {
     }
     localStorage.setItem(key, JSON.stringify({ ...config, magazineLimit: on }));
   }, enabled);
+}
+
+// Same idea for the equipped weapon. It used to be chosen from a picker on
+// the way into the range; it is persisted state now, changed in the range
+// with B (section 9), so a test that wants to *start* with a given weapon
+// seeds it rather than clicking through a screen that no longer appears
+// there.
+async function withWeapon(page, weaponId) {
+  await page.addInitScript((id) => {
+    const key = "aimonsite:settings";
+    let settings = {};
+    try {
+      settings = JSON.parse(localStorage.getItem(key) ?? "{}");
+    } catch {
+      settings = {};
+    }
+    localStorage.setItem(key, JSON.stringify({ ...settings, weaponId: id }));
+  }, weaponId);
 }
 
 async function setupHeadlessSession(page, weaponId, mode, { magazineLimit = true } = {}) {
@@ -123,12 +140,22 @@ async function setupHeadlessSession(page, weaponId, mode, { magazineLimit = true
   });
 
   console.log("\n1. Weapon picker");
+  // Opened with B from inside the range — including from the start prompt,
+  // before the first click into a session. Section 9 covers the mid-session
+  // swap; this is only about what the picker offers.
   await page.goto(BASE, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
   await page.click("#home-start");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("KeyB");
+  await page.waitForTimeout(200);
+  check("B opens it before the session has even started", await page.$eval("#weapon-screen", (el) => !el.classList.contains("hidden")));
   const cards = await page.$$eval(".weapon-option", (els) => els.map((e) => e.dataset.weapon));
   check("all eight weapons offered", cards.length === 8, cards.join(", "));
   check("a weapon is preselected", (await page.$$(".weapon-option.selected")).length === 1);
+  await page.keyboard.press("KeyB");
+  await page.waitForTimeout(200);
+  check("and B closes it again", await page.$eval("#weapon-screen", (el) => el.classList.contains("hidden")));
 
   console.log("\n2. Rifle — rate of fire and magazine");
   await enterRange(page, { weapon: "rifle" });
@@ -343,12 +370,11 @@ async function setupHeadlessSession(page, weaponId, mode, { magazineLimit = true
   // pointer lock, mousedown/mouseup, the per-frame auto-fire loop, the ammo
   // HUD, and the R-to-reload key.
   await withMagazineLimit(page, true);
+  await withWeapon(page, "smg");
   await page.goto(BASE.replace("duration=30000", "duration=20000"), { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
-  await page.click('.weapon-option[data-weapon="smg"]');
-  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
   await page.mouse.click(640, 400);
   await page.waitForTimeout(300);
@@ -393,12 +419,11 @@ async function setupHeadlessSession(page, weaponId, mode, { magazineLimit = true
 
   console.log("\n8. Live session, magazine limit OFF (the default) — infinite fire");
   await withMagazineLimit(page, false);
+  await withWeapon(page, "smg");
   await page.goto(BASE.replace("duration=30000", "duration=20000"), { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
-  await page.click('.weapon-option[data-weapon="smg"]');
-  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
   await page.mouse.click(640, 400);
   await page.waitForTimeout(300);
@@ -423,6 +448,80 @@ async function setupHeadlessSession(page, weaponId, mode, { magazineLimit = true
   // quietly turn every weapon into the same gun.
   const rateHeld = infinite.shots < 2600 / (60000 / 950) + 6;
   check("rate of fire still applies", rateHeld, `shots=${infinite.shots} ceiling=${Math.round(2600 / (60000 / 950) + 6)}`);
+
+  console.log("\n9. Swapping the weapon mid-session with B");
+  // The picker is no longer a step on the way into the range; it is an
+  // overlay inside it. What matters is that the session survives the trip —
+  // it pauses rather than ends, its clock does not run while the picker is
+  // up, and everything the *old* gun owned is left behind.
+  await withMagazineLimit(page, true);
+  await withWeapon(page, "smg");
+  await page.goto(BASE.replace("duration=30000", "duration=20000"), { waitUntil: "load" });
+  await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
+  await page.click('.mode-card[data-mode="gridshot"]');
+  await page.click("#home-start");
+  await page.waitForTimeout(200);
+  await page.mouse.click(640, 400);
+  await page.waitForTimeout(300);
+
+  // Spend some of the SMG's magazine, so a full one afterwards can only mean
+  // the runtime was rebuilt rather than carried over.
+  await page.mouse.down();
+  await page.waitForTimeout(500);
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+  const beforeSwap = await page.evaluate(() => ({
+    weapon: window.__aimonsiteDebug.weaponRuntime.weapon.id,
+    ammo: window.__aimonsiteDebug.weaponRuntime.ammo,
+    remaining: window.__aimonsiteDebug.drill.getLiveStats(performance.now()).timeRemainingMs,
+    shots: window.__aimonsiteDebug.drill.shotsTotal,
+  }));
+  check("started on the equipped weapon", beforeSwap.weapon === "smg", beforeSwap.weapon);
+  check("with rounds spent out of its magazine", beforeSwap.ammo < 32, "ammo=" + beforeSwap.ammo);
+
+  await page.keyboard.press("KeyB");
+  await page.waitForTimeout(250);
+  const opened = await page.evaluate(() => ({
+    picker: !document.getElementById("weapon-screen").classList.contains("hidden"),
+    pause: !document.getElementById("pause-screen").classList.contains("hidden"),
+    locked: document.pointerLockElement !== null,
+    stillPlaying: Boolean(window.__aimonsiteDebug.drill),
+  }));
+  check("B opens the picker in the range", opened.picker, JSON.stringify(opened));
+  check("the pause overlay stays out of its way", opened.pause === false);
+  check("the mouse is released so the picker can be used", opened.locked === false);
+  check("and the session is paused, not ended", opened.stillPlaying);
+
+  await page.waitForTimeout(700);
+  await page.click('.weapon-option[data-weapon="sniper"]');
+  await page.click("#weapon-confirm");
+  await page.waitForTimeout(400);
+
+  const afterSwap = await page.evaluate(() => ({
+    picker: !document.getElementById("weapon-screen").classList.contains("hidden"),
+    locked: document.pointerLockElement !== null,
+    weapon: window.__aimonsiteDebug.weaponRuntime.weapon.id,
+    ammo: window.__aimonsiteDebug.weaponRuntime.ammo,
+    capacity: window.__aimonsiteDebug.weaponRuntime.magazine,
+    hudName: document.getElementById("hud-weapon-name").textContent,
+    remaining: window.__aimonsiteDebug.drill.getLiveStats(performance.now()).timeRemainingMs,
+    shots: window.__aimonsiteDebug.drill.shotsTotal,
+    stored: JSON.parse(localStorage.getItem("aimonsite:settings")).weaponId,
+  }));
+  check("confirming closes the picker", afterSwap.picker === false, JSON.stringify(afterSwap));
+  check("and hands the mouse back to the range", afterSwap.locked === true);
+  check("the new weapon is the one firing", afterSwap.weapon === "sniper");
+  check("carrying its own magazine, full", afterSwap.ammo === afterSwap.capacity && afterSwap.capacity === 5, `${afterSwap.ammo}/${afterSwap.capacity}`);
+  check("the HUD names it", afterSwap.hudName.toLowerCase().includes("sniper"), afterSwap.hudName);
+  check("the same session is still running", afterSwap.shots === beforeSwap.shots, `${beforeSwap.shots} -> ${afterSwap.shots}`);
+  // ~1.35s of real time passed inside the picker. If the drill clock had run
+  // through it, well over a second would be missing from the countdown.
+  check(
+    "and its clock did not run while the picker was up",
+    beforeSwap.remaining - afterSwap.remaining < 700,
+    `${Math.round(beforeSwap.remaining)}ms -> ${Math.round(afterSwap.remaining)}ms`
+  );
+  check("the choice is remembered for next time", afterSwap.stored === "sniper", afterSwap.stored);
 
   console.log(`\n${failures === 0 ? "All checks passed." : `${failures} check(s) FAILED.`}`);
   await browser.close();

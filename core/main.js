@@ -125,9 +125,9 @@ const durationOverride = Number(params.get("duration"));
 // a view role rather than an authorisation check.
 if (params.get("admin") === "1") setAdmin(true);
 
-// appState is the MENU -> WEAPON -> PLAYING -> SUMMARY state machine (the
-// side screens — HISTORY, CROSSHAIR, SENSITIVITY, SETTINGS, SUGGESTIONS,
-// ADMIN — are reachable from MENU and always return to it).
+// appState is the MENU -> PLAYING -> SUMMARY state machine (the side screens
+// — HISTORY, CROSSHAIR, SENSITIVITY, SETTINGS, SUGGESTIONS, ADMIN — are
+// reachable from MENU and always return to it).
 // `drill` is only ever non-null while appState === "PLAYING" (and
 // pauseStartedAt tracks a mid-session pointer-lock loss within that state).
 let appState = "MENU";
@@ -135,6 +135,10 @@ let drill = null;
 let pauseStartedAt = null;
 let lastConfig = null;
 let pendingConfig = null;
+// The weapon picker is an overlay inside PLAYING rather than a state of its
+// own: it holds a session open the same way the pause screen does, and what
+// is underneath it is still the session you come back to.
+let weaponPickerOpen = false;
 
 // Live firing state for the carried weapon. Non-null only during a session.
 let weapon = getWeapon(selectedWeaponId);
@@ -209,35 +213,18 @@ function createDrill(config, deps) {
   }
 }
 
-// Home screen -> weapon picker. The drill config is parked here until a
-// weapon is chosen, since the weapon decides the recoil pattern that goes
-// into it.
-function beginSession(config) {
+// Home screen -> the range. The weapon is whichever one is equipped; it is
+// swapped inside the range with B rather than picked from a menu on the way
+// in, because how a gun handles is the only thing worth choosing it on and
+// none of that is legible from a card.
+//
+// Entering a drill doesn't grab pointer lock instantly: the range shows with
+// the start-prompt overlay, and the player locks in explicitly by clicking
+// (see the canvas `click` listener below), matching a deliberate "click to
+// start" flow.
+async function beginSession(config) {
   pendingConfig = config;
-  appState = "WEAPON";
   hideHome();
-  showWeaponSelect();
-}
-
-// The same picker, opened from the home screen's loadout row to change what
-// is equipped without starting anything. Confirming here saves the choice and
-// comes back, rather than dropping you into the range — the row said
-// "Change", so it has to mean only that.
-function openLoadout() {
-  pendingConfig = null;
-  appState = "WEAPON";
-  hideHome();
-  showWeaponSelect();
-}
-
-// Weapon chosen -> the range itself. Entering a drill doesn't grab pointer
-// lock instantly: the range shows with the start-prompt overlay, and the
-// player locks in explicitly by clicking (see the canvas `click` listener
-// below), matching a deliberate "click to start" flow.
-async function enterRange(weaponId) {
-  selectedWeaponId = weaponId;
-  weapon = getWeapon(weaponId);
-  saveSettings({ ...loadSettings(), weaponId });
 
   lastConfig = {
     ...pendingConfig,
@@ -250,16 +237,17 @@ async function enterRange(weaponId) {
     // weaponId gates the Recoil Control training pattern (core/weapon.js);
     // the carried weapon applies regardless of that toggle, so a player can
     // shoot a sniper without also fighting its recoil pattern.
-    weaponId: pendingConfig.recoilEnabled ? weaponId : "none",
+    weaponId: pendingConfig.recoilEnabled ? selectedWeaponId : "none",
   };
 
-  hideWeaponSelect();
   appState = "PLAYING";
-  await viewmodel.setWeapon(weaponId);
+  await viewmodel.setWeapon(selectedWeaponId);
   // No pointerlockchange event fires just from entering this state (lock
   // hasn't been requested yet), so the prompt needs to be shown directly
-  // rather than relying on handleLockChange()'s usual toggle.
-  startPrompt.classList.remove("hidden");
+  // rather than relying on handleLockChange()'s usual toggle. Unless B was
+  // pressed while the model above was still loading, in which case the
+  // picker is what should be on screen.
+  if (!weaponPickerOpen) startPrompt.classList.remove("hidden");
 }
 
 function startSession(now) {
@@ -276,6 +264,7 @@ function startSession(now) {
 
 function returnToMenu() {
   appState = "MENU";
+  weaponPickerOpen = false;
   drill = null;
   weaponRuntime = null;
   triggerHeld = false;
@@ -309,32 +298,76 @@ document.getElementById("pause-quit").addEventListener("click", () => {
   returnToMenu();
 });
 
-initHome(beginSession, { onChangeWeapon: openLoadout });
+initHome(beginSession);
 initHistory();
 initWeaponSelect({
+  // Equipping and closing are kept separate and in this order, and neither
+  // awaits the model: closing calls requestLock(), which needs the click that
+  // reached it to still count as a user gesture, and an await would spend it.
+  // The viewmodel swaps itself in whenever its glTF lands (see loadToken).
   onConfirm: (weaponId) => {
-    // No pending config means the picker was opened to change the loadout,
-    // not to start a session.
-    if (!pendingConfig) {
-      selectedWeaponId = weaponId;
-      weapon = getWeapon(weaponId);
-      saveSettings({ ...loadSettings(), weaponId });
-      viewmodel.setWeapon(weaponId);
-      hideWeaponSelect();
-      appState = "MENU";
-      showHome();
-      return;
-    }
-    enterRange(weaponId);
+    equipWeapon(weaponId);
+    closeWeaponPicker();
   },
-  onCancel: () => {
-    hideWeaponSelect();
-    pendingConfig = null;
-    appState = "MENU";
-    showHome();
-  },
+  onCancel: () => closeWeaponPicker(),
   initialWeaponId: selectedWeaponId,
 });
+
+// B, from inside the range: swap the gun without leaving the session.
+//
+// The picker needs the mouse, so opening it drops pointer lock, which is the
+// same thing Esc does — the session pauses and its clocks are shifted back on
+// the way in. The pause overlay is simply suppressed in favour of this one.
+function openWeaponPicker() {
+  if (weaponPickerOpen || appState !== "PLAYING") return;
+  weaponPickerOpen = true;
+  hidePauseScreen();
+  startPrompt.classList.add("hidden");
+  showWeaponSelect();
+  if (controls.locked) document.exitPointerLock();
+  playMenuSound();
+}
+
+function closeWeaponPicker() {
+  if (!weaponPickerOpen) return;
+  weaponPickerOpen = false;
+  hideWeaponSelect();
+  if (appState !== "PLAYING") return;
+  // Shown first, and hidden again by handleLockChange the moment the lock is
+  // granted. A browser is free to refuse the request, and a refusal must not
+  // leave the range with no visible way back into it.
+  if (drill) showPauseScreen();
+  else startPrompt.classList.remove("hidden");
+  controls.requestLock();
+}
+
+// Everything a weapon owns is re-armed here: ammunition and the rate-of-fire
+// gate belong to the new gun rather than to the old one's part-spent
+// magazine, and a held trigger or a due ejection belongs to a shot that is no
+// longer being fired.
+function equipWeapon(weaponId) {
+  if (!isWeaponId(weaponId)) return;
+  selectedWeaponId = weaponId;
+  weapon = getWeapon(weaponId);
+  saveSettings({ ...loadSettings(), weaponId });
+  viewmodel.setWeapon(weaponId);
+  setZoomed(false);
+  triggerHeld = false;
+  pendingEjectAt = null;
+  lastBlockKind = null;
+
+  if (appState !== "PLAYING") return;
+  if (weaponRuntime) {
+    weaponRuntime = new WeaponRuntime(weapon, { magazineLimit: rangeConfig.magazineLimit });
+    resetWeaponHud();
+  }
+  if (lastConfig) {
+    // The recoil pattern is the weapon's, so a mid-session swap re-arms it —
+    // keeping the compensation scored so far rather than restarting it.
+    lastConfig.weaponId = lastConfig.recoilEnabled ? weaponId : "none";
+    drill?.setWeapon(lastConfig.weaponId);
+  }
+}
 
 // Live-tracked so the in-game crosshair repaints as the editor changes it.
 renderCrosshairInto(crosshair, loadCrosshairConfig());
@@ -420,7 +453,11 @@ function handleLockChange(locked) {
   crosshair.classList.toggle("hidden", !locked);
   // The click-to-start prompt only applies before a drill's first lock;
   // once a drill is running, a lost lock shows the pause overlay instead.
-  startPrompt.classList.toggle("hidden", locked || appState !== "PLAYING" || Boolean(drill));
+  // Neither belongs under the weapon picker, which is its own overlay.
+  startPrompt.classList.toggle(
+    "hidden",
+    locked || appState !== "PLAYING" || Boolean(drill) || weaponPickerOpen
+  );
 
   if (locked) {
     hidePauseScreen();
@@ -436,7 +473,7 @@ function handleLockChange(locked) {
     }
   } else if (appState === "PLAYING" && drill) {
     pauseStartedAt = performance.now();
-    showPauseScreen();
+    if (!weaponPickerOpen) showPauseScreen();
   }
   // Losing pointer lock (pause, Esc, session end) always drops zoom and the
   // trigger immediately — no lingering narrowed FOV or held fire across a
@@ -448,7 +485,7 @@ function handleLockChange(locked) {
 }
 
 canvas.addEventListener("click", () => {
-  if (appState === "PLAYING" && !controls.locked) controls.requestLock();
+  if (appState === "PLAYING" && !controls.locked && !weaponPickerOpen) controls.requestLock();
 });
 
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -550,8 +587,16 @@ canvas.addEventListener("mouseup", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
-  if (e.code !== "KeyR") return;
-  if (appState === "PLAYING" && controls.locked) tryReload(performance.now());
+  if (e.code === "KeyR") {
+    if (appState === "PLAYING" && controls.locked) tryReload(performance.now());
+    return;
+  }
+  // B toggles the picker, and works from the pause screen and the start
+  // prompt too — anywhere inside the range, which is what "in-game" means.
+  if (e.code === "KeyB" && appState === "PLAYING") {
+    if (weaponPickerOpen) closeWeaponPicker();
+    else openWeaponPicker();
+  }
 });
 
 window.addEventListener("resize", () => {

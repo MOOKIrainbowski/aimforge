@@ -287,8 +287,7 @@ const STRINGS = {
 
     // Weapon select
     "weaponSelect.title": "Select Weapon",
-    "weaponSelect.intro": "Each one shoots, kicks and sounds different. Pick one and find out.",
-    "weaponSelect.confirm": "Enter the Range",
+    "weaponSelect.confirm": "Equip",
 
     // In-range HUD
     "hud.reloading": "Reloading",
@@ -296,6 +295,7 @@ const STRINGS = {
     "start.reloadHint": "reload",
     "start.adsHint": "aim",
     "start.rmb": "RMB",
+    "start.weaponHint": "weapons",
 
     // Suggestion box
     "nav.suggestions": "Suggestion Box",
@@ -331,8 +331,6 @@ const STRINGS = {
     "account.signInFailed": "Sign-in is unavailable right now.",
     "account.toastSignedIn": "Signed in as {name}",
     "account.toastSignedOut": "Signed out",
-    "home.loadout": "Loadout",
-    "home.changeWeapon": "Change",
     "home.humanTargetsNote": "Head, torso and leg zones",
     "home.magazineLimitNote": "Reloads, dry fire and a real magazine",
     "account.signOut": "Sign out",
@@ -623,8 +621,7 @@ const STRINGS = {
 
     // Weapon select
     "weaponSelect.title": "\ubb34\uae30 \uc120\ud0dd",
-    "weaponSelect.intro": "\ubb34\uae30\ub9c8\ub2e4 \ubc1c\uc0ac\uac10\uacfc \ubc18\ub3d9, \uc18c\ub9ac\uac00 \uc804\ubd80 \ub2e4\ub985\ub2c8\ub2e4. \uc9c1\uc811 \uace8\ub77c \uc4f0\uba74\uc11c \ud655\uc778\ud574 \ubcf4\uc138\uc694.",
-    "weaponSelect.confirm": "\uc0ac\uaca9\uc7a5 \uc785\uc7a5",
+    "weaponSelect.confirm": "\uc7a5\ucc29",
 
     // In-range HUD
     "hud.reloading": "\uc7ac\uc7a5\uc804 \uc911",
@@ -632,6 +629,7 @@ const STRINGS = {
     "start.reloadHint": "\uc7ac\uc7a5\uc804",
     "start.adsHint": "\uc815\ubc00\uc870\uc900",
     "start.rmb": "\uc6b0\ud074\ub9ad",
+    "start.weaponHint": "\ubb34\uae30 \uad50\uccb4",
 
     // Suggestion box
     "nav.suggestions": "\uac74\uc758\ud568",
@@ -667,8 +665,6 @@ const STRINGS = {
     "account.signInFailed": "지금은 로그인할 수 없습니다.",
     "account.toastSignedIn": "{name} 계정으로 로그인되었습니다",
     "account.toastSignedOut": "로그아웃되었습니다",
-    "home.loadout": "장비",
-    "home.changeWeapon": "변경",
     "home.humanTargetsNote": "머리·몸통·다리 부위 판정",
     "home.magazineLimitNote": "재장전과 불발, 실제 탄창 적용",
     "account.signOut": "로그아웃",

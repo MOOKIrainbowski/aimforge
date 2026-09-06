@@ -1407,87 +1407,6 @@ button {
   background: var(--bg-input);
 }
 
-/* --- loadout row -------------------------------------------------------
-   The equipped weapon, on the screen where the session is set up. */
-.loadout {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  margin-bottom: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease;
-}
-
-.loadout:hover {
-  border-color: var(--border-strong);
-}
-
-.loadout-figure {
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 44px;
-  flex: none;
-  border-radius: 8px;
-  background: var(--bg-card);
-}
-
-.loadout-image {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.loadout-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.loadout-label {
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.loadout-name {
-  font-size: 15px;
-  font-weight: 650;
-}
-
-.loadout-meta {
-  margin-left: auto;
-  color: var(--text-secondary);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.loadout-change {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.loadout:hover .loadout-change {
-  color: var(--text-primary);
-  border-color: var(--border-strong);
-}
-
 /* --- toasts ------------------------------------------------------------
    Bottom centre, above everything, one at a time. */
 .toast-host {
@@ -1537,10 +1456,6 @@ button {
 }
 
 @media (max-width: 720px) {
-  .loadout-meta {
-    display: none;
-  }
-
   .account-name {
     max-width: 110px;
   }
@@ -1579,12 +1494,6 @@ button {
   box-shadow: var(--shadow-card);
   font: 400 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
   animation: card-in 220ms ease;
-}
-
-.weapon-intro {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin-bottom: 18px;
 }
 
 /* Cards are a picture and a name. Sized so all eight fit without scrolling

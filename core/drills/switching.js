@@ -29,6 +29,10 @@ export class SwitchingDrill extends Drill {
     this.recoil = new RecoilTracker(config.weaponId);
   }
 
+  setWeapon(weaponId) {
+    this.recoil.setWeapon(weaponId);
+  }
+
   start(now) {
     super.start(now);
     this._spawnWave(now);

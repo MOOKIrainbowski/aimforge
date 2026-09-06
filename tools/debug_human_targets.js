@@ -37,7 +37,6 @@ async function openRange(page) {
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
   await page.click('.mode-card[data-mode="gridshot"]');
   await page.click("#home-start");
-  await page.click("#weapon-confirm");
   await page.waitForTimeout(200);
 }
 
