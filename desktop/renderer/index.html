@@ -128,26 +128,11 @@
         </button>
       </nav>
 
-      <div class="sidebar-footer">
-        <button id="home-settings-btn" class="sidebar-item" type="button"
-          data-i18n-attr="aria-label:nav.settingsAria">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="2.6" />
-            <path
-              d="M10 1.8v2.1M10 16.1v2.1M3.2 10H1.1M18.9 10h-2.1M5.2 5.2 3.7 3.7M16.3 16.3l-1.5-1.5M14.8 5.2l1.5-1.5M3.7 16.3l1.5-1.5" />
-          </svg>
-          <span data-i18n="settings.title">Settings</span>
-        </button>
-      </div>
-    </aside>
-
-    <div class="home-main">
-      <!-- The account lives at the top of the page rather than wedged into
-           the sidebar footer next to Settings. Signed in, it is where a
-           profile is expected to be; signed out, the one call to action here
-           does not compete with the drill you came to run. The whole bar is
+      <!-- The account sits directly above Settings: it is the account for
+           this site, so it belongs with the rest of what this site is rather
+           than floating over the drill you came to run. The whole control is
            absent when no backend is configured (core/backend/config.js). -->
-      <div class="home-topbar wrap">
+      <div class="sidebar-footer">
         <div id="account-row" class="account hidden">
           <button id="account-signin" class="account-signin" type="button">
             <svg viewBox="0 0 18 18" aria-hidden="true" class="google-mark">
@@ -182,8 +167,20 @@
             </div>
           </div>
         </div>
-      </div>
 
+        <button id="home-settings-btn" class="sidebar-item" type="button"
+          data-i18n-attr="aria-label:nav.settingsAria">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="2.6" />
+            <path
+              d="M10 1.8v2.1M10 16.1v2.1M3.2 10H1.1M18.9 10h-2.1M5.2 5.2 3.7 3.7M16.3 16.3l-1.5-1.5M14.8 5.2l1.5-1.5M3.7 16.3l1.5-1.5" />
+          </svg>
+          <span data-i18n="settings.title">Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="home-main">
       <div class="home-dashboard wrap">
         <div class="home-hero">
           <span class="eyebrow"><span class="dot"></span> <span data-i18n="home.eyebrow">Training Range</span></span>
@@ -513,32 +510,10 @@
         </button>
       </div>
 
-      <div class="option-row">
-        <span class="option-label" data-i18n="settings.magazineLimit">Magazine Limit</span>
-        <button type="button" class="switch" id="magazine-switch" role="switch" aria-checked="false">
-          <span class="switch-state" data-i18n="common.off">Off</span>
-          <span class="switch-track">
-            <span class="switch-thumb"></span>
-          </span>
-        </button>
-      </div>
-      <p class="option-note" data-i18n="settings.magazineLimitNote">Off: fire without ever reloading. On: every weapon
-        runs its real magazine, reload and dry-fire. Rate of fire, bolt cycles and accuracy are unaffected either way.
-      </p>
-
-      <div class="option-row">
-        <span class="option-label" data-i18n="settings.humanTargets">Human Targets</span>
-        <button type="button" class="switch" id="human-targets-switch" role="switch" aria-checked="false">
-          <span class="switch-state" data-i18n="common.off">Off</span>
-          <span class="switch-track">
-            <span class="switch-thumb"></span>
-          </span>
-        </button>
-      </div>
-      <p class="option-note" data-i18n="settings.humanTargetsNote">Off: spheres, the same size from every angle. On:
-        humanoid figures with head, torso and leg zones — headshots are called out as you land them and counted in the
-        summary.
-      </p>
+      <!-- Human Targets and Magazine Limit used to be here as well as on
+           the home screen. They decide what a session *is*, so the home
+           screen is the right place for them, and the second copy was only
+           ever a second thing to keep in sync. -->
 
       <div class="option-row">
         <span class="option-label" data-i18n="settings.wallColor">Wall Color</span>

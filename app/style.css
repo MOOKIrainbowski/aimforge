@@ -742,44 +742,6 @@ button {
   transform: translateY(0) scale(0.99);
 }
 
-@media (max-width: 900px) {
-  .home-mode-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .app-sidebar {
-    position: static;
-    width: auto;
-    height: auto;
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 10px 14px;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
-    gap: 4px;
-  }
-
-  .sidebar-brand span,
-  .sidebar-item span:not(.sidebar-badge) {
-    display: none;
-  }
-
-  .sidebar-footer {
-    margin-top: 0;
-    border-top: none;
-    padding-top: 0;
-  }
-
-  #home-screen {
-    flex-direction: column;
-  }
-}
-
 .option-row {
   display: flex;
   align-items: center;
@@ -1261,39 +1223,36 @@ button {
 }
 
 /* --- account -----------------------------------------------------------
-   Top of the home screen, right-aligned: where a profile is looked for.
-   The whole bar collapses when no backend is configured. */
-.home-topbar {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 20px;
-  min-height: 20px;
-}
-
+   In the sidebar footer, directly above Settings. Both controls are full
+   width there, like the nav items they line up under, rather than the pills
+   they were as a floating bar. The whole thing collapses when no backend is
+   configured. */
 .account {
   position: relative;
+  margin-bottom: 6px;
 }
 
 .account-signin {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px;
+  width: 100%;
+  padding: 9px 12px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-card);
+  border-radius: 10px;
+  background: var(--bg-input);
   color: var(--text-primary);
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
+  text-align: left;
   cursor: pointer;
-  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease;
 }
 
 .account-signin:hover {
   border-color: var(--border-strong);
-  box-shadow: 0 6px 18px rgba(15, 20, 40, 0.1);
-  transform: translateY(-1px);
+  background: var(--bg-card);
 }
 
 .google-mark {
@@ -1303,23 +1262,26 @@ button {
 }
 
 .account-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 9px;
-  padding: 6px 12px 6px 6px;
+  width: 100%;
+  padding: 6px 10px 6px 6px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-card);
+  border-radius: 10px;
+  background: var(--bg-input);
   color: var(--text-primary);
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
+  text-align: left;
   cursor: pointer;
   transition: border-color 140ms ease, background 140ms ease;
 }
 
 .account-chip:hover {
   border-color: var(--border-strong);
+  background: var(--bg-card);
 }
 
 .account-avatar {
@@ -1342,7 +1304,8 @@ button {
 }
 
 .account-name {
-  max-width: 160px;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1352,13 +1315,16 @@ button {
   width: 12px;
   height: 12px;
   flex: none;
+  margin-left: auto;
   color: var(--text-muted);
 }
 
+/* Opens upward: this control is at the bottom of the rail, so a menu
+   dropping from it would fall off the screen. */
 .account-menu {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
   z-index: 30;
   min-width: 232px;
   padding: 6px;
@@ -1405,6 +1371,79 @@ button {
 
 .account-menu-item:hover {
   background: var(--bg-input);
+}
+
+/* Narrow viewports: the rail flattens into a horizontal strip of icons
+   rather than disappearing, which is what the old top nav did.
+
+   This block lives *below* the sidebar and account rules on purpose. It used
+   to sit further up the file, above them, where every rule in it was
+   silently overridden by the later base rules of equal specificity — so none
+   of this had been taking effect at all. */
+@media (max-width: 900px) {
+  .home-mode-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .app-sidebar {
+    position: static;
+    /* The rail is a row now, so its 232px basis would become its *height*
+       in the column the home screen has become. */
+    flex: none;
+    width: auto;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .sidebar-brand span,
+  .sidebar-item span:not(.sidebar-badge) {
+    display: none;
+  }
+
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  /* The account becomes an icon the way every other rail item does, and its
+     menu hangs from the strip rather than from the bottom of a column. */
+  .account {
+    margin-bottom: 0;
+  }
+
+  .account-signin span,
+  .account-name,
+  .account-caret {
+    display: none;
+  }
+
+  .account-signin,
+  .account-chip {
+    width: auto;
+  }
+
+  .account-menu {
+    bottom: auto;
+    top: calc(100% + 8px);
+  }
+
+  #home-screen {
+    flex-direction: column;
+  }
 }
 
 /* --- toasts ------------------------------------------------------------
@@ -1455,11 +1494,7 @@ button {
   }
 }
 
-@media (max-width: 720px) {
-  .account-name {
-    max-width: 110px;
-  }
-}
+
 
 /* Says which board you are looking at — this browser's, or the shared one.
    Worth a line of its own: the two look identical and behave completely

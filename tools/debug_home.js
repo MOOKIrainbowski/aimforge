@@ -99,37 +99,55 @@ async function open(page) {
 
   await open(page);
 
-  console.log("\n3. Range switches, mirrored from Settings");
+  console.log("\n3. The two range switches live here and only here");
   await page.click("#home-human-switch");
   await page.waitForTimeout(150);
   check(
     "turning Human Targets on from the home screen persists",
     await page.evaluate(() => JSON.parse(localStorage.getItem("aimonsite:rangeConfig")).humanTargets === true)
   );
+  await page.click("#home-magazine-switch");
+  await page.waitForTimeout(150);
+  check(
+    "so does the Magazine Limit",
+    await page.evaluate(() => JSON.parse(localStorage.getItem("aimonsite:rangeConfig")).magazineLimit === true)
+  );
 
+  // They used to be duplicated under Settings, which meant two switches for
+  // one setting and two places to have to look for it.
   await page.click("#home-settings-btn");
   await page.waitForTimeout(200);
   check(
-    "and Settings agrees",
-    await page.$eval("#magazine-switch", () => true) &&
-      (await page.$eval("#human-targets-switch", (el) => el.getAttribute("aria-checked") === "true"))
+    "Settings no longer carries a second copy of either",
+    await page.$eval("#settings-screen", (el) => el.querySelector("#human-targets-switch") === null && el.querySelector("#magazine-switch") === null)
   );
 
-  await page.click("#human-targets-switch");
   await page.click("#settings-back");
   await page.waitForTimeout(250);
   check(
-    "changing it back in Settings is reflected on the home screen",
-    await page.$eval("#home-human-switch", (el) => el.getAttribute("aria-checked") === "false")
+    "and the home screen still reads them back correctly",
+    (await page.$eval("#home-human-switch", (el) => el.getAttribute("aria-checked"))) === "true" &&
+      (await page.$eval("#home-magazine-switch", (el) => el.getAttribute("aria-checked"))) === "true"
   );
 
   console.log("\n4. With no backend, the account control is absent");
   check("no account row", await page.$eval("#account-row", (el) => el.classList.contains("hidden")));
 
-  console.log("\n5. Signed in, the account sits at the top of the page");
+  console.log("\n5. Signed in, the account sits above Settings");
   configured = true;
   await open(page);
-  check("the sign-in button is in the top bar", await page.$eval("#account-signin", (el) => el.closest(".home-topbar") !== null));
+  check(
+    "the sign-in button is in the sidebar footer",
+    await page.$eval("#account-signin", (el) => el.closest(".sidebar-footer") !== null)
+  );
+  check(
+    "directly above Settings",
+    await page.evaluate(() => {
+      const footer = document.querySelector(".sidebar-footer");
+      const kids = [...footer.children];
+      return kids.indexOf(document.getElementById("account-row")) < kids.indexOf(document.getElementById("home-settings-btn"));
+    })
+  );
 
   await page.click("#account-signin");
   await page.waitForTimeout(900);

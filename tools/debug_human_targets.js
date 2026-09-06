@@ -109,18 +109,18 @@ async function setupDrill(page, shape) {
   });
 
   console.log("\n1. The setting");
-  // From the home screen: the sidebar is gone once the range is open.
+  // On the home screen, where the session is set up. It used to be under
+  // Settings as well; the duplicate is gone.
   await page.goto(BASE, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
-  await page.click("#home-settings-btn");
   const switchState = await page.evaluate(() => {
-    const el = document.getElementById("human-targets-switch");
+    const el = document.getElementById("home-human-switch");
     return { present: Boolean(el), checked: el?.getAttribute("aria-checked") };
   });
-  check("a Human Targets switch exists in Settings", switchState.present);
+  check("a Human Targets switch exists on the home screen", switchState.present);
   check("it is off by default", switchState.checked === "false", `aria-checked=${switchState.checked}`);
 
-  await page.click("#human-targets-switch");
+  await page.click("#home-human-switch");
   const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem("aimonsite:rangeConfig")).humanTargets);
   check("turning it on persists", persisted === true, `humanTargets=${persisted}`);
 

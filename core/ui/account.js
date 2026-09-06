@@ -2,13 +2,12 @@ import { getAccount, isAuthAvailable, onAccountChange, signIn, signOutAccount } 
 import { showToast } from "./toast.js";
 import { t } from "../i18n.js";
 
-// The account control at the top of the home screen: sign in with Google, or
-// see who you are and sign out again.
+// The account control in the sidebar, directly above Settings: sign in with
+// Google, or see who you are and sign out again.
 //
-// It sits here rather than in the sidebar footer because that is where a
-// profile is looked for, and because the footer put it a few pixels from
-// Settings — two unrelated things sharing a corner, with the sign-out reduced
-// to a text link beside a name.
+// It is a full-width control there rather than the pill it was as a floating
+// top bar, and its menu opens upward, because the footer it sits in is at
+// the bottom of the rail.
 //
 // The whole control renders nothing when no backend is configured. That is
 // the point of checking rather than disabling: a greyed-out "Sign in" is a
