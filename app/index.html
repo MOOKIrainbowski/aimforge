@@ -552,46 +552,69 @@
         <button id="suggestions-back" class="secondary" type="button" data-i18n="common.back">Back</button>
       </div>
 
-      <!-- Filled in by core/ui/suggestions.js: which board this is depends on
-           whether anyone is signed in, and the two look identical. -->
-      <p id="suggestion-scope" class="board-note" data-i18n="suggestions.localNote">AimonSite has no server, so posts
-        are stored in this browser only. Nothing is uploaded or shared.</p>
-
-      <form id="suggestion-form" class="board-form">
-        <div class="option-row">
-          <span class="option-label" data-i18n="suggestions.category">Category</span>
-          <div class="option-group" id="suggestion-category-group">
-            <button data-category="suggestion" type="button" class="selected" aria-pressed="true"
-              data-i18n="suggestions.category.suggestion">Suggestion</button>
-            <button data-category="bug" type="button" aria-pressed="false"
-              data-i18n="suggestions.category.bug">Error Correction</button>
-          </div>
-        </div>
-        <input id="suggestion-title" type="text" maxlength="120" class="board-input"
-          data-i18n-attr="placeholder:suggestions.titlePlaceholder" placeholder="Title" />
-        <textarea id="suggestion-body" class="board-textarea" maxlength="1000" rows="5"
-          data-i18n-attr="placeholder:suggestions.bodyPlaceholder" placeholder="Describe it…"></textarea>
-        <div class="board-form-footer">
-          <span id="suggestion-counter" class="board-counter">0 / 1000</span>
-          <button id="suggestion-submit" class="btn-primary" type="submit" data-i18n="suggestions.submit">Post</button>
-        </div>
-        <p id="suggestion-error" class="board-error hidden"></p>
-      </form>
-
-      <div class="board-filters">
-        <div class="option-group" id="suggestion-filter-group">
-          <button data-filter="all" type="button" class="selected" aria-pressed="true"
-            data-i18n="suggestions.filter.all">All</button>
-          <button data-filter="suggestion" type="button" aria-pressed="false"
-            data-i18n="suggestions.category.suggestion">Suggestion</button>
-          <button data-filter="bug" type="button" aria-pressed="false"
-            data-i18n="suggestions.category.bug">Error Correction</button>
-          <button data-filter="mine" type="button" aria-pressed="false"
-            data-i18n="suggestions.filter.mine">My Posts</button>
-        </div>
+      <!-- Signed out, this is the whole screen. The board is one shared
+           board: there is nothing here to read as nobody and nothing to
+           write as nobody either, so the only thing to offer is the way in.
+           core/ui/suggestions.js decides which half is on screen. -->
+      <div id="suggestion-gate" class="board-gate hidden">
+        <p id="suggestion-gate-note" class="board-gate-note" data-i18n="suggestions.signInRequired">The suggestion box
+          is a shared board. Sign in to read it and to post — that is also how a reply finds you again, wherever you
+          next sign in.</p>
+        <button id="suggestion-gate-signin" class="account-signin account-signin-wide" type="button">
+          <svg viewBox="0 0 18 18" aria-hidden="true" class="google-mark">
+            <path fill="#4285F4"
+              d="M17.6 9.2c0-.6-.1-1.3-.2-1.9H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5Z" />
+            <path fill="#34A853"
+              d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18Z" />
+            <path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3Z" />
+            <path fill="#EA4335"
+              d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6Z" />
+          </svg>
+          <span data-i18n="account.signIn">Sign in with Google</span>
+        </button>
       </div>
 
-      <div id="suggestion-list" class="board-list"></div>
+      <div id="suggestion-board">
+        <!-- Filled in by core/ui/suggestions.js: whose account the posts go
+             out under. -->
+        <p id="suggestion-scope" class="board-note"></p>
+
+        <form id="suggestion-form" class="board-form">
+          <div class="option-row">
+            <span class="option-label" data-i18n="suggestions.category">Category</span>
+            <div class="option-group" id="suggestion-category-group">
+              <button data-category="suggestion" type="button" class="selected" aria-pressed="true"
+                data-i18n="suggestions.category.suggestion">Suggestion</button>
+              <button data-category="bug" type="button" aria-pressed="false"
+                data-i18n="suggestions.category.bug">Error Correction</button>
+            </div>
+          </div>
+          <input id="suggestion-title" type="text" maxlength="120" class="board-input"
+            data-i18n-attr="placeholder:suggestions.titlePlaceholder" placeholder="Title" />
+          <textarea id="suggestion-body" class="board-textarea" maxlength="1000" rows="5"
+            data-i18n-attr="placeholder:suggestions.bodyPlaceholder" placeholder="Describe it…"></textarea>
+          <div class="board-form-footer">
+            <span id="suggestion-counter" class="board-counter">0 / 1000</span>
+            <button id="suggestion-submit" class="btn-primary" type="submit" data-i18n="suggestions.submit">Post</button>
+          </div>
+          <p id="suggestion-error" class="board-error hidden"></p>
+        </form>
+
+        <div class="board-filters">
+          <div class="option-group" id="suggestion-filter-group">
+            <button data-filter="all" type="button" class="selected" aria-pressed="true"
+              data-i18n="suggestions.filter.all">All</button>
+            <button data-filter="suggestion" type="button" aria-pressed="false"
+              data-i18n="suggestions.category.suggestion">Suggestion</button>
+            <button data-filter="bug" type="button" aria-pressed="false"
+              data-i18n="suggestions.category.bug">Error Correction</button>
+            <button data-filter="mine" type="button" aria-pressed="false"
+              data-i18n="suggestions.filter.mine">My Posts</button>
+          </div>
+        </div>
+
+        <div id="suggestion-list" class="board-list"></div>
+      </div>
     </div>
   </div>
 

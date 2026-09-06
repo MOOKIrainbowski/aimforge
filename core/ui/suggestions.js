@@ -10,6 +10,8 @@ import {
   onBackendChange,
   isRemote,
 } from "../suggestions/store.js";
+import { isAuthAvailable, signIn } from "../auth.js";
+import { showToast } from "./toast.js";
 import { t, getLanguage } from "../i18n.js";
 
 // The player-facing suggestion box: post a suggestion or an error report,
@@ -22,6 +24,10 @@ import { t, getLanguage } from "../i18n.js";
 // only because every value feeding it comes from a browser-validated colour
 // or range input.
 const screen = document.getElementById("suggestions-screen");
+const gate = document.getElementById("suggestion-gate");
+const gateNote = document.getElementById("suggestion-gate-note");
+const gateSignIn = document.getElementById("suggestion-gate-signin");
+const board = document.getElementById("suggestion-board");
 const form = document.getElementById("suggestion-form");
 const categoryGroup = document.getElementById("suggestion-category-group");
 const titleInput = document.getElementById("suggestion-title");
@@ -203,15 +209,35 @@ const ERROR_KEYS = {
   storage: "suggestions.error.storage",
 };
 
+// The board is reachable only from an account. Not a rule about who deserves
+// to be heard — it is that a suggestion is the start of a conversation, and a
+// reply has to have somewhere to arrive. Posting as this browser meant the
+// answer was waiting in a browser rather than for a person.
+//
+// `isRemote()` rather than "is somebody signed in" on purpose: what the
+// screen actually needs is a board that outlives the tab, and the backend
+// seam is where that is decided (core/suggestions/backend.js).
+function boardIsOpen() {
+  return isRemote();
+}
+
 async function render() {
   const token = ++renderToken;
+  const open = boardIsOpen();
+  gate.classList.toggle("hidden", open);
+  board.classList.toggle("hidden", !open);
+  if (!open) {
+    // A build with no backend configured has no shared board to sign in to,
+    // and offering a button that cannot work is worse than saying so.
+    const canSignIn = isAuthAvailable();
+    gateNote.textContent = t(canSignIn ? "suggestions.signInRequired" : "suggestions.unavailable");
+    gateSignIn.classList.toggle("hidden", !canSignIn);
+    return;
+  }
+
   const identity = getIdentity();
   const me = identity.id;
-  // Which board is on screen. The shared one and the local one are the same
-  // list of posts to look at and completely different things to write to.
-  scopeEl.textContent = isRemote()
-    ? t("account.sharedBoard", { name: identity.name })
-    : t("suggestions.localNote");
+  scopeEl.textContent = t("account.sharedBoard", { name: identity.name });
   const filter =
     selectedFilter === "mine"
       ? { mine: true }
@@ -232,10 +258,11 @@ async function render() {
   for (const post of posts) listEl.append(buildPost(post, me));
 }
 
-// The sidebar dot: how many of this browser's own posts have an admin reply
-// it hasn't seen yet.
+// The sidebar dot: how many of your own posts have an admin reply you
+// haven't seen yet. Signed out there is no "your own", so there is nothing to
+// count and nothing to point at.
 export async function refreshSuggestionBadge() {
-  const count = (await getUnreadReplies()).length;
+  const count = boardIsOpen() ? (await getUnreadReplies()).length : 0;
   badge.textContent = String(count);
   badge.classList.toggle("hidden", count === 0);
 }
@@ -257,6 +284,17 @@ export function initSuggestions() {
   }
 
   bodyInput.addEventListener("input", updateCounter);
+
+  // The same sign-in the sidebar offers, put where the player hit the wall.
+  gateSignIn.addEventListener("click", async () => {
+    gateSignIn.disabled = true;
+    const result = await signIn();
+    // On success the browser is already on its way to Google.
+    if (!result?.ok) {
+      gateSignIn.disabled = false;
+      showToast(t("account.signInFailed"));
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -207,10 +207,19 @@ async function open(page, url = BASE) {
   await installConfigRoute(page);
   await open(page);
   check("the sign-in row is hidden", await page.$eval("#account-row", (el) => el.classList.contains("hidden")));
+  await page.click("#home-suggestions");
+  await page.waitForTimeout(250);
   check(
-    "and the board says posts stay in this browser",
-    (await page.$eval("#suggestion-scope", (el) => el.textContent)).includes("browser")
+    "and the board says there is nowhere for a suggestion to go",
+    (await page.$eval("#suggestion-gate", (el) => !el.classList.contains("hidden"))) &&
+      (await page.$eval("#suggestion-gate-note", (el) => el.textContent.trim().length > 20))
   );
+  check(
+    "without offering a sign-in this build cannot honour",
+    await page.$eval("#suggestion-gate-signin", (el) => el.classList.contains("hidden"))
+  );
+  await page.click("#suggestions-back");
+  await page.waitForTimeout(150);
 
   console.log("\n2. Signing in with Google");
   configured = true;
@@ -314,8 +323,13 @@ async function open(page, url = BASE) {
   await page.click("#home-suggestions");
   await page.waitForTimeout(300);
   check(
-    "and the board is the local one again",
-    (await page.$eval("#suggestion-scope", (el) => el.textContent)).includes("browser")
+    "and the board closes behind you",
+    (await page.$eval("#suggestion-gate", (el) => !el.classList.contains("hidden"))) &&
+      (await page.$eval("#suggestion-board", (el) => el.classList.contains("hidden")))
+  );
+  check(
+    "with the way back in still on offer",
+    await page.$eval("#suggestion-gate-signin", (el) => !el.classList.contains("hidden"))
   );
 
   console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);

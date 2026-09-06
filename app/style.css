@@ -1733,6 +1733,31 @@ button {
   border: 1px solid var(--warning);
 }
 
+/* The signed-out state of the suggestion box: a sentence and the way in. */
+.board-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 30px 12px 22px;
+  text-align: center;
+}
+
+.board-gate-note {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* The sidebar's sign-in button is full width because its rail is; here it is
+   a button in the middle of a card, so it sizes to its own label. */
+.account-signin-wide {
+  width: auto;
+  padding: 10px 18px;
+}
+
 .board-form {
   display: flex;
   flex-direction: column;

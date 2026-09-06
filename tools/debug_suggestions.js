@@ -4,12 +4,16 @@ const { chromium } = require("playwright");
 // seam underneath them. Run `npm run serve` first.
 //
 // The seam is the point of this file. Everything above core/suggestions/
-// backend.js is written against one async contract, so this drives the
-// screens against the local backend, then swaps in a stand-in "remote"
-// backend at runtime and drives the same screens again — which is exactly
-// what signing in will do. If the UI has smuggled in an assumption that a
-// read is instant or that storage is localStorage, it fails here rather
-// than the first time someone signs in.
+// backend.js is written against one async contract, so this swaps a stand-in
+// "remote" backend in at runtime — exactly what signing in does — and drives
+// the real screens against it. If the UI has smuggled in an assumption that
+// a read is instant, it fails here rather than the first time someone signs
+// in.
+//
+// The board is also gated on having one of those: a suggestion is the start
+// of a conversation and a reply needs somewhere to arrive, so with no
+// account there is nothing to read and nowhere to write. Sections 1 and 6
+// cover both sides of that gate.
 
 const BASE = "http://localhost:8123/app/index.html?debug=1&admin=1";
 
@@ -111,10 +115,40 @@ async function titles(page, selector) {
   await page.goto(BASE, { waitUntil: "load" });
   await page.waitForFunction(() => Boolean(window.__aimonsiteDebug), null, { timeout: 15000 });
 
-  console.log("\n1. Posting, on the local backend");
+  console.log("\n1. Signed out, the box is an invitation rather than a board");
   await openSuggestions(page);
+  check("the gate is what is on screen", await page.$eval("#suggestion-gate", (el) => !el.classList.contains("hidden")));
+  check("the form is not", await page.$eval("#suggestion-board", (el) => el.classList.contains("hidden")));
+  check(
+    "with a sentence saying why and a way to fix it",
+    (await page.$eval("#suggestion-gate-note", (el) => el.textContent.trim().length > 20)) &&
+      (await page.$eval("#suggestion-gate-signin", (el) => !el.classList.contains("hidden")))
+  );
+
+  console.log("\n2. Posting, on the shared board");
+  const swappedIn = await page.evaluate(async (source) => {
+    const base = new URL("../core/", location.href).href;
+    const { setBackend, isRemote } = await import(`${base}suggestions/backend.js`);
+    // eslint-disable-next-line no-eval
+    window.__fakeRemote = eval(source);
+    setBackend(window.__fakeRemote);
+    return isRemote();
+  }, FAKE_REMOTE);
+  check("a backend that outlives the tab opens the board", swappedIn);
+  await page.waitForTimeout(200);
+  check("the gate is gone", await page.$eval("#suggestion-gate", (el) => el.classList.contains("hidden")));
+  check("and the form is there", await page.$eval("#suggestion-board", (el) => !el.classList.contains("hidden")));
+
   await post(page, { title: "Add a metronome mode", body: "For pacing flicks to a beat." });
   check("the post appears in the list", (await titles(page, "#suggestion-list")).includes("Add a metronome mode"));
+  check(
+    "and it went to the backend, not to localStorage",
+    await page.evaluate(
+      () =>
+        window.__fakeRemote.posts.length === 1 &&
+        !(localStorage.getItem("aimonsite:suggestions") ?? "").includes("Add a metronome mode")
+    )
+  );
 
   await post(page, { title: "", body: "no title" });
   check(
@@ -122,7 +156,7 @@ async function titles(page, selector) {
     await page.$eval("#suggestion-error", (el) => el.textContent.trim().length > 0 && !el.classList.contains("hidden"))
   );
 
-  console.log("\n2. An admin reply raises the author's dot");
+  console.log("\n3. An admin reply raises the author's dot");
   await page.click("#suggestions-back");
   await page.click("#home-admin");
   await page.waitForTimeout(200);
@@ -146,7 +180,7 @@ async function titles(page, selector) {
   });
   check("the sidebar dot shows one unread reply", !badge.hidden && badge.text === "1", JSON.stringify(badge));
 
-  console.log("\n3. Status and deletion");
+  console.log("\n4. Status and deletion");
   await page.click('#admin-list .admin-status-row .option-group button:nth-child(2)');
   await page.waitForTimeout(250);
   check(
@@ -159,33 +193,10 @@ async function titles(page, selector) {
     })
   );
 
-  console.log("\n4. The same screens against a slow remote backend");
-  const swapped = await page.evaluate(async (source) => {
-    const base = new URL("../core/", location.href).href;
-    const { setBackend, isRemote } = await import(`${base}suggestions/backend.js`);
-    // eslint-disable-next-line no-eval
-    window.__fakeRemote = eval(source);
-    setBackend(window.__fakeRemote);
-    return { remote: isRemote() };
-  }, FAKE_REMOTE);
-  check("the app is now talking to a remote backend", swapped.remote);
-
+  console.log("\n5. A backend that fails is reported, not swallowed");
   await page.click("#admin-back");
   await openSuggestions(page);
   await page.waitForTimeout(200);
-  check(
-    "the local posts are gone — a different backend is a different board",
-    (await titles(page, "#suggestion-list")).length === 0
-  );
-
-  await post(page, { title: "Remote-only post", body: "Written while signed in." });
-  check("posting works against it", (await titles(page, "#suggestion-list")).includes("Remote-only post"));
-  check(
-    "and it went to the remote, not to localStorage",
-    await page.evaluate(() => window.__fakeRemote.posts.length === 1 && !localStorage.getItem("aimonsite:suggestions").includes("Remote-only post"))
-  );
-
-  console.log("\n5. A backend that fails is reported, not swallowed");
   await page.evaluate(() => window.__fakeRemote.breakWrites());
   await post(page, { title: "This will not save", body: "The backend is going to throw." });
   check(
@@ -198,16 +209,18 @@ async function titles(page, selector) {
     JSON.stringify(await titles(page, "#suggestion-list"))
   );
 
-  console.log("\n6. Switching back restores the local board");
+  console.log("\n6. Losing the account closes the board again");
   await page.evaluate(async () => {
     const base = new URL("../core/", location.href).href;
     const { setBackend } = await import(`${base}suggestions/backend.js`);
     setBackend(null);
   });
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(250);
+  check("the gate is back on an open screen", await page.$eval("#suggestion-gate", (el) => !el.classList.contains("hidden")));
+  check("the board is hidden with it", await page.$eval("#suggestion-board", (el) => el.classList.contains("hidden")));
   check(
-    "the browser's own posts are still there",
-    (await titles(page, "#suggestion-list")).includes("Add a metronome mode")
+    "and the unread dot is cleared — there is no 'yours' to count",
+    await page.$eval("#suggestions-badge", (el) => el.classList.contains("hidden"))
   );
 
   console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);
