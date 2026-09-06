@@ -36,7 +36,7 @@ const STRINGS = {
     "hero.meta2": "Sensitivity matched to your game",
     "hero.meta3": "Stats stay on your device",
     "hero.captionMode": "GRIDSHOT \u00b7 RIFLE",
-    "hero.captionStat": "HEADSHOT",
+    "hero.captionStat": "ELIMINATED",
 
     // Landing measurement strip
     "strip.weapons": "weapons, each with its own behaviour",
@@ -388,7 +388,7 @@ const STRINGS = {
     "hero.meta2": "실제 게임 감도에 맞춤",
     "hero.meta3": "기록은 기기에만 저장",
     "hero.captionMode": "GRIDSHOT \u00b7 RIFLE",
-    "hero.captionStat": "HEADSHOT",
+    "hero.captionStat": "ELIMINATED",
 
     "strip.weapons": "종의 무기, 각각 다른 사격 특성",
     "strip.drills": "가지 훈련 모드, 플릭부터 반응 속도까지",

@@ -465,60 +465,41 @@
       opacity: 0.9;
     }
 
-    .figure {
+    /* The target is a sphere, which is what the range spawns by default and
+       what the whole product is measured against: the same size from every
+       angle, so the loop above reads as pure aim rather than as a hit-zone
+       demo. The humanoid figure has its own diagram further down the page,
+       where the zones it exists to show can actually be labelled. */
+    .orb {
       position: absolute;
-      width: 46px;
-      opacity: 0;
-      filter: drop-shadow(0 6px 14px rgba(255, 92, 92, 0.25));
-      animation: figure-cycle 6s cubic-bezier(.2, .8, .3, 1) infinite;
-    }
-
-    .figure i {
-      display: block;
-      margin: 0 auto;
-      background: var(--hit);
-      border-radius: 3px;
-    }
-
-    .figure .head {
-      width: 15px;
-      height: 15px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
+      opacity: 0;
+      background: radial-gradient(circle at 35% 30%, #ff9a9a, var(--hit) 58%, #b93232);
+      box-shadow: 0 0 22px rgba(255, 92, 92, 0.45), inset 0 -6px 12px rgba(0, 0, 0, 0.25);
+      animation: orb-cycle 6s cubic-bezier(.2, .8, .3, 1) infinite;
     }
 
-    .figure .torso {
-      width: 40px;
-      height: 27px;
-      margin-top: 4px;
-      opacity: 0.86;
-    }
-
-    .figure .legs {
-      width: 26px;
-      height: 29px;
-      margin-top: 4px;
-      opacity: 0.66;
-    }
-
-    .figure.a {
+    .orb.a {
       left: 22%;
       top: 26%;
       animation-delay: 0s;
     }
 
-    .figure.b {
+    .orb.b {
       left: 58%;
       top: 18%;
       animation-delay: 2s;
     }
 
-    .figure.c {
+    .orb.c {
       left: 40%;
       top: 42%;
       animation-delay: 4s;
     }
 
-    @keyframes figure-cycle {
+    @keyframes orb-cycle {
       0% {
         opacity: 0;
         transform: scale(0.9);
@@ -1029,13 +1010,13 @@
         transition: none;
       }
 
-      .figure,
+      .orb,
       .reticle,
       .marker {
         animation: none;
       }
 
-      .figure {
+      .orb {
         opacity: 1;
       }
 
@@ -1193,21 +1174,9 @@
         <div class="scene-horizon"></div>
         <div class="scene-floor"></div>
 
-        <div class="figure a">
-          <i class="head"></i>
-          <i class="torso"></i>
-          <i class="legs"></i>
-        </div>
-        <div class="figure b">
-          <i class="head"></i>
-          <i class="torso"></i>
-          <i class="legs"></i>
-        </div>
-        <div class="figure c">
-          <i class="head"></i>
-          <i class="torso"></i>
-          <i class="legs"></i>
-        </div>
+        <div class="orb a"></div>
+        <div class="orb b"></div>
+        <div class="orb c"></div>
 
         <div class="reticle">
           <span></span><span></span><span></span><span></span>
@@ -1218,7 +1187,7 @@
 
         <div class="scene-hud">
           <span data-i18n="hero.captionMode">GRIDSHOT · RIFLE</span>
-          <span><b data-i18n="hero.captionStat">HEADSHOT</b></span>
+          <span><b data-i18n="hero.captionStat">ELIMINATED</b></span>
         </div>
       </div>
     </div>
