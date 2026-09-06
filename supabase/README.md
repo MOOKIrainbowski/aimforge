@@ -48,18 +48,40 @@ row-level security evaluated against the signed-in user's token.
 **Never put the `service_role` key here.** That one bypasses RLS, and this
 file is served to every visitor.
 
-## 4. Make yourself an admin
+## 4. Admins
 
-Sign in through the app once so the account exists, then run this in the SQL
-editor with your own address:
+Admin is one boolean in one row — `public.profiles.is_admin` — and it is set
+in the SQL editor, never from the app. [`admin.sql`](./admin.sql) holds every
+statement you need: grant, revoke, list the current admins, and list everyone
+who has ever signed in (for when a grant comes back with 0 rows because the
+address was spelled differently).
+
+To grant, sign in through the app once with the address being promoted so the
+account exists, then run this with that address:
 
 ```sql
-update public.profiles set is_admin = true
-where id = (select id from auth.users where email = 'you@example.com');
+update public.profiles p
+   set is_admin = true
+  from auth.users u
+ where u.id = p.id
+   and lower(u.email) = lower('you@example.com')
+returning p.id, u.email, p.is_admin;
 ```
 
-There is deliberately no first-user promotion and no way to reach this from
-the client. Admin is a database fact; the app only ever reads it.
+The `returning` line is the point: one row back means it worked, no rows means
+that address has never signed in. Revoking is the same statement with `false`.
+
+It lands on the next page load. `core/auth.js` re-reads `is_admin` from the
+profile every time it loads a session rather than remembering it, because it
+is an authorisation fact and this is a client — so no sign-out is needed,
+though a reload is.
+
+Why it is only ever done here: there is no first-user promotion, no invite
+link, and nothing in the client that can reach this column. `schema.sql`
+revokes `update` on `profiles` from `authenticated` and grants it back on
+`display_name` alone — a column privilege, because a policy can only say
+which *rows* you may touch, never which columns. That one line is what stops
+a signed-in account promoting itself.
 
 ## What signing in changes
 

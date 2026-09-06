@@ -339,7 +339,7 @@ const STRINGS = {
 
     // Admin
     "admin.title": "Admin",
-    "admin.warning": "This is a local view role, not an authenticated account. With no server there is nothing to authenticate against \u2014 treat it as a preview of the moderation UI.",
+    "admin.warning": "Preview of the moderation screen, entered with ?admin=1. It carries no authority and shows this browser's own board. A real admin is granted in the database \u2014 see supabase/admin.sql \u2014 and moderates the shared one.",
     "admin.filter.unanswered": "Needs reply",
     "admin.summary.total": "Posts",
     "admin.summary.needsReply": "Needs reply",
@@ -672,7 +672,7 @@ const STRINGS = {
 
     // Admin
     "admin.title": "\uad00\ub9ac\uc790",
-    "admin.warning": "\uc774 \ud654\uba74\uc740 \uc778\uc99d\ub41c \uacc4\uc815\uc774 \uc544\ub2c8\ub77c \ub85c\uceec \ubcf4\uae30 \uc5ed\ud560\uc785\ub2c8\ub2e4. \uc11c\ubc84\uac00 \uc5c6\uc73c\ubbc0\ub85c \uc778\uc99d\ud560 \ub300\uc0c1\ub3c4 \uc5c6\uc2b5\ub2c8\ub2e4 \u2014 \uad00\ub9ac UI \ubbf8\ub9ac\ubcf4\uae30\ub85c \uc0dd\uac01\ud574 \uc8fc\uc138\uc694.",
+    "admin.warning": "?admin=1\ub85c \ub4e4\uc5b4\uc628 \uc6b4\uc601 \ud654\uba74 \ubbf8\ub9ac\ubcf4\uae30\uc785\ub2c8\ub2e4. \uc544\ubb34 \uad8c\ud55c\ub3c4 \uc5c6\uace0, \uc774 \ube0c\ub77c\uc6b0\uc800\uc5d0\ub9cc \uc800\uc7a5\ub41c \uac8c\uc2dc\ud310\uc744 \ubcf4\uc5ec \uc90d\ub2c8\ub2e4. \uc2e4\uc81c \uad00\ub9ac\uc790\ub294 \ub370\uc774\ud130\ubca0\uc774\uc2a4\uc5d0\uc11c \uc9c0\uc815\ud558\uba70(supabase/admin.sql \ucc38\uace0) \uacf5\uc6a9 \uac8c\uc2dc\ud310\uc744 \uc6b4\uc601\ud569\ub2c8\ub2e4.",
     "admin.filter.unanswered": "\ub2f5\ubcc0 \ud544\uc694",
     "admin.summary.total": "\uc804\uccb4 \uae00",
     "admin.summary.needsReply": "\ub2f5\ubcc0 \ud544\uc694",

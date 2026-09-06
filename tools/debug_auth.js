@@ -307,6 +307,17 @@ async function open(page, url = BASE) {
   await page.click("#admin-list .board-reply .btn-primary");
   await page.waitForTimeout(500);
   check("an admin reply is accepted now", db.comments.some((c) => c.by_admin), JSON.stringify(db.comments.map((c) => c.by_admin)));
+  // A real admin's screen must not describe itself as a powerless preview,
+  // and there is no local role for them to "leave" — admin is revoked in the
+  // database, not by a link on the page.
+  check(
+    "the ?admin=1 preview warning is not shown to a real admin",
+    await page.$eval("#admin-warning", (el) => el.classList.contains("hidden"))
+  );
+  check(
+    "and neither is the leave-preview link",
+    await page.$eval("#admin-signout", (el) => el.classList.contains("hidden"))
+  );
 
   console.log("\n7. Signing out");
   await page.click("#admin-back");

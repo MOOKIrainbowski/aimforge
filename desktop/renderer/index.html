@@ -629,8 +629,12 @@
         <button id="admin-back" class="secondary" type="button" data-i18n="common.back">Back</button>
       </div>
 
-      <p class="board-warning" data-i18n="admin.warning">This is a local view role, not an authenticated account.
-        With no server there is nothing to authenticate against — treat it as a preview of the moderation UI.</p>
+      <!-- Only for the ?admin=1 preview role. A real admin account is
+           moderating the shared board with authority the server grants it,
+           and telling them their own screen is a mock-up would be a lie. -->
+      <p id="admin-warning" class="board-warning hidden" data-i18n="admin.warning">Preview of the moderation screen,
+        entered with ?admin=1. It carries no authority and shows this browser's own board. A real admin is granted in
+        the database — see supabase/admin.sql — and moderates the shared one.</p>
 
       <div id="admin-summary" class="admin-summary"></div>
 
@@ -648,7 +652,10 @@
 
       <div id="admin-list" class="board-list"></div>
 
-      <button id="admin-signout" class="link-button" type="button" data-i18n="admin.signOut">Leave admin mode</button>
+      <!-- Leaves the preview role. There is nothing to leave when the
+           account itself is an admin: that is revoked in the database. -->
+      <button id="admin-signout" class="link-button hidden" type="button" data-i18n="admin.signOut">Leave admin
+        mode</button>
     </div>
   </div>
 

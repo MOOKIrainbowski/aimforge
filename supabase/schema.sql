@@ -167,12 +167,11 @@ create policy post_reads_own on public.post_reads
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- ---------------------------------------------------------------------------
--- Making yourself an admin
+-- Making someone an admin
 -- ---------------------------------------------------------------------------
 --
--- Sign in through the app once so the account exists, then run this with your
--- own address. This is deliberately a manual step: there is no first-user
--- promotion and no way to reach it from the client.
---
---   update public.profiles set is_admin = true
---   where id = (select id from auth.users where email = 'you@example.com');
+-- Not here: see admin.sql, which holds the grant, the revoke, and the queries
+-- that tell you who is an admin and who has ever signed in. It is deliberately
+-- a manual step run by someone with database access — there is no first-user
+-- promotion and no way to reach this column from the client, which is what the
+-- column grant above enforces.

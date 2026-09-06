@@ -7,6 +7,7 @@ import {
   deletePost,
   setAdmin,
   isAdmin,
+  getAccount,
   getUnansweredCount,
   subscribe,
   onBackendChange,
@@ -17,11 +18,20 @@ import { t, getLanguage } from "../i18n.js";
 // reply to a thread (which raises the notification dot on the author's
 // sidebar), and move a post through open -> planned -> resolved/declined.
 //
-// As the on-screen warning says, "admin" here is a local view role. There is
-// no server to authenticate against, so this is the moderation UI made real
-// and usable, with the authorisation left for whenever a backend exists —
-// see the contract note at the bottom of core/suggestions/store.js.
+// Two things can put this screen on the sidebar, and they are not the same
+// thing at all:
+//
+//   A signed-in account whose profiles.is_admin says so. That is real
+//   authority — the server enforces it on every write (supabase/schema.sql),
+//   and it is granted by hand in the database (supabase/admin.sql).
+//
+//   ?admin=1, a local preview role over this browser's own board. It carries
+//   nothing; it exists so the screen can be worked on and looked at.
+//
+// The warning and the "leave admin mode" link belong to the second only.
+// Showing them to a real admin would describe their own screen as a mock-up.
 const screen = document.getElementById("admin-screen");
+const warningEl = document.getElementById("admin-warning");
 const listEl = document.getElementById("admin-list");
 const filterGroup = document.getElementById("admin-filter-group");
 const summaryEl = document.getElementById("admin-summary");
@@ -224,9 +234,17 @@ async function render() {
   for (const post of posts) listEl.append(buildPost(post));
 }
 
+// True when the screen is here because of ?admin=1 rather than because the
+// signed-in account is an admin.
+function isPreviewRole() {
+  return isAdmin() && !getAccount()?.admin;
+}
+
 // Sidebar badge for the admin: how many posts are still waiting on a reply.
 export async function refreshAdminBadge() {
   sidebarEntry.classList.toggle("hidden", !isAdmin());
+  warningEl.classList.toggle("hidden", !isPreviewRole());
+  signOutButton.classList.toggle("hidden", !isPreviewRole());
   const count = await getUnansweredCount();
   badge.textContent = String(count);
   badge.classList.toggle("hidden", !isAdmin() || count === 0);

@@ -180,6 +180,17 @@ async function titles(page, selector) {
   });
   check("the sidebar dot shows one unread reply", !badge.hidden && badge.text === "1", JSON.stringify(badge));
 
+  // The other way onto this screen: ?admin=1, which is what this file uses.
+  // It has to say so, because it is not the same thing as being an admin.
+  check(
+    "the preview role says what it is",
+    await page.$eval("#admin-warning", (el) => !el.classList.contains("hidden"))
+  );
+  check(
+    "and offers a way back out of it",
+    await page.$eval("#admin-signout", (el) => !el.classList.contains("hidden"))
+  );
+
   console.log("\n4. Status and deletion");
   await page.click('#admin-list .admin-status-row .option-group button:nth-child(2)');
   await page.waitForTimeout(250);
